@@ -33,6 +33,79 @@
             </div>
         </div>
     </nav>
-    <!--Continue here also css  setting up the base project directory now and closing-->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sideMenu" aria-labelledby="sideMenuLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sideMenuLabel">Smart Wardrobe</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#featuers" class="nav-link">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#how-it-works" class="nav-link">How it works</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#ontact">Contact</a>
+                </li>
+                <li class="nav-item mt-4">
+                    <a href="login.html" class="btn btn-outline-primary w-100 mb-2">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a href="signup.html" class="btn btn-primary w-100">Sing Up</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <section class="hero-section" id="home">
+        <div class="container">
+            <div class="row alignm-items-center min-vh-100 py-5 py-md-0">
+                <div class="col-lg-6 py-5 py-lg-0">
+                    <h1 class="display-4 fw-bold mb-4">Revolutionize Your Wardrobe Experience</h1>
+                    <p class="lead mb-4">Smart Wardrobe uses RFID technology and AI to transform how you organize,track and select your clothing.Get personalized recommendations and insights about your wardrobe habits.</p>
+                    <div class="d-flex flex-column flex-sm-row gap-3">
+                        <a href="signup.html" class="btn btn-primary btn-lg">Get Started</a>
+                        <a href="signup.html?trial=true" class="btn btn-outline-primary btn-lg">Try free for 7 Days</a>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0">
+                    <div class="hero-image-container">
+                        <img src="https://placehold.co/600x400/f9fafb/6366f1?text=AI+Stylist" alt="AI Stylist" class="img-fluid rounded-4 shadow-lg">
+                        <div class="floating-element floating-element-1">
+                            <i class="bi bi-lighting-charge-fill"></i>
+                            <span>Smart Recommendations</span>
+                        </div>
+                        <div class="floating-element floating-element-2">
+                            <i class="bi bi-tag-fill"></i>
+                            <span>RFID Tracking</span>
+                        </div>
+                        <div class="floating-element floating-element-3">
+                            <i class="bi bi-graph-up"></i>
+                            <span>Usage Analytics</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="footer py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0">&copy; <span id="currentYear">2025</span>Smart Wardrobe. All rights reserved</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="mb-0 text-muted">Designed for a stylish future</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="src/js/utils.js"></script>
+    <script src="src/js/main.js"></script>
 </body>
 </html>
