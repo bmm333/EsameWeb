@@ -1,4 +1,3 @@
-// babel.config.js
 export default {
     presets: [
       [
