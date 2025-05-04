@@ -1,0 +1,20 @@
+{
+  "name": "esameweb",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Web programming methodologies exam repository. Im creating this Repository to be more transparent and also professors can have a better insight on my work flow and how i got things done.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.27.1",
+    "@babel/preset-env": "^7.27.1",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}
