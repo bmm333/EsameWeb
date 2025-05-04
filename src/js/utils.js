@@ -8,7 +8,7 @@ export const Utils={
      */
     setVh:()=>{
         const vh=window.innerHeight*0.01
-        document.document.style.setProperty("--vh",`${vh}px`)
+        document.documentElement.style.setProperty("--vh",`${vh}px`)
     },
     /**
      * curr year
@@ -23,8 +23,8 @@ export const Utils={
         document.body.setAttribute("data-bs-theme",theme)
         localStorage.setItem("theme",theme)
         //Update theme icons
-        const lightIcons=document.querySelector(".theme-icon-light")
-        const darkIcons=document.querySelector(".theme-icon-dark")
+        const lightIcons=document.querySelectorAll(".theme-icon-light")
+        const darkIcons=document.querySelectorAll(".theme-icon-dark")
         lightIcons.forEach((icon)=>{
             if(theme==="dark")
             {
@@ -90,9 +90,9 @@ export const Utils={
     {
         const navLinks=document.querySelectorAll(".offcanvas .nav-link")
         const bsOffcanvas=document.getElementById("sideMenu")
-        if(bsOffcanvas&&navLinks.length>0&&window.boostrap)
+        if(bsOffcanvas&&navLinks.length>0&&window.bootstrap)
         {
-            const offcanvas=window.boostrap.Offcanvas
+            const offcanvas=window.bootstrap.Offcanvas
 
             navLinks.forEach((link)=>{
                 link.addEventListener("click",()=>{
@@ -104,4 +104,4 @@ export const Utils={
             })
         }
     }
-}
+};

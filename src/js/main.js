@@ -1,4 +1,4 @@
-import { Utils } from "./utils";
+import { Utils } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded",()=>
 {
@@ -22,6 +22,6 @@ document.addEventListener("DOMContentLoaded",()=>
     Utils.setupSmoothscrolling()
     Utils.setupOffcanvasClose()
     document.querySelectorAll(".offcanvas").forEach((el)=>{
-        new boostrap.Offcanvas(el)
+        new bootstrap.Offcanvas(el)
     })
 })
