@@ -1,7 +1,6 @@
-// jest.config.mjs
 export default {
     transform: {
-      '^.+\\.js$': 'babel-jest',  // Usa babel-jest per trasformare i file .js
+      '^.+\\.js$': 'babel-jest', 
     },
     testEnvironment: 'jsdom',
     moduleFileExtensions: ['js', 'mjs', 'json', 'node'],
