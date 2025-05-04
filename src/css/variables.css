@@ -1,6 +1,6 @@
 :root {
   --primary-color: #2529e0;
-  --prmary-hover: #941ed8;
+  --primary-hover: #941ed8;
   --text-color: #000000;
   --text-muted: #6b7280;
   --bg-color: #ffffff;
@@ -10,7 +10,7 @@
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
-  --spacing-xl: 2 rem;
+  --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
   --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;

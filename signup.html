@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SingUp - Smart Wardrobe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/css/variables.css">
+    <link rel="stylesheet" href="src/css/base.css">
+    <link rel="stylesheet" href="src/css/components.css">
+    <link rel="stylesheet" href="src/css/layout.css">
+    <link rel="stylesheet" href="src/css/pages/auth.css">
+</head>
+<body data-bs-theme="light" data-page="auth">
+    <nav class="navbar fixed-top">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">Smart Wardrobe</a>
+            <div class="d-flex align-items-center">
+                <button id="themeSwitcher" class="btn btn-link text-decoration-none">
+                    <i class="bi bi-sun-fill theme-icon-light"></i>
+                    <i class="bi bi-moon-fill theme-icon-dark d-none"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    <div class="auth-container">
+        <div class="container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <a href="index.html" class="navbar-brand mb-4 d-block">Smart Wardrobe</a>
+                    <h1 class="h3">Create your account</h1>
+                    <p class="text-muted" id="trialMessage">Start your journey to a smarter wardrobe</p>
+                </div>
+                
+                <form class="auth-form" action="auth-form" id="signupForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" placeholder="John Doe" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email address</label>
+                        <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+                        <div class="form-text">Password must be at least 8 characters long</div>
+                    </div>
+                    
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="termsAgree" required>
+                        <label class="form-check-label" for="termsAgree">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100" id="signupButton">Create Account</button>
+                    
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+                    
+                    <button type="button" class="btn btn-outline-secondary w-100 social-btn" id="googleSignup">
+                        <i class="bi bi-google"></i>
+                        <span>Sign up with Google</span>
+                    </button>
+                    
+                    <div class="text-center mt-4">
+                        <p class="mb-0">Already have an account? <a href="login.html">Sign in</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+    <script src="src/js/pages/auth.js"></script>
+</body>
+</html>
