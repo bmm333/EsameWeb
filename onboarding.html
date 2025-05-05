@@ -1,10 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Complete Singup - Smart Wardrobe</title>
+    <title>Onboarding - Smart Wardrobe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/css/variables.css">
+    <link rel="stylesheet" href="src/css/base.css">
+    <link rel="stylesheet" href="src/css/components.css">
+    <link rel="stylesheet" href="src/css/layout.css">
+    <link rel="stylesheet" href="src/css/onboarding.css">
 </head>
-<body>
-    
+<body data-bs-theme="light" data-page="onboarding">
+    <nav class="navbar fixed-top">
+        <div class="container">
+            <a href="#" class="navbar-brand mx-auto">Smart Wardrobe</a>
+            <div class="d-flex align-items-center">
+                <button id="themeSwitcher" class="btn btn-link text-decoration-none">
+                    <i class="bi bi-sun-fill theme-icon-light"></i>
+                    <i class="bi bi-moon-fill theme-icon-dark d-none"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    <div class="onboarding-container">
+        <div class="container">
+            <div class="onboarding-card">
+                <div class="progress mb-4" role="progressbar" aria-label="Onboarding Progress " aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                </div>
+                <div class="step-indicators mb-4">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Profile</div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Style</div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Colors</div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-label">Finish</div>
+                    </div>
+                </div>
+                <div class="step-content">
+                    <div class="step-pane active" id="step1">
+                        <h2 class="h3 text-center mb-4">Set up your profile</h2>
+                        <form id="profileForm">
+                            <div class="mb-4 text-center">
+                                <div class="avatar-upload">
+                                    <div class="avatar-preview">
+                                        <div id="imagePreview" style="background-image: url('https://placehold.co/200x200/f9fafb/6366f1?text=Upload+Photo');">
+                                        </div>
+                                    </div>
+                                    <div class="avatar-edit">
+                                        <input type="file" id="imageUpload" accept=".png, .jpg, .jpeg">
+                                        <label for="imageUpload"><i class="bi bi-camera"></i></label>
+                                    </div>
+                                </div>
+                                <p class="text-muted small mt-2">Upload a profile photo</p>
+                            </div>
+                            <div class="mb-3">
+                                <label for="fullName" class="form-label">Full Name</label>
+                                <input type="text" class="form-controll" id="fullName" placeholder="John Doe" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nickname" class="form-label">Nickname (optional)</label>
+                                <input type="text" class="form-controll" id="nickname" placeholder="How should we call you?">
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label d-block">Gender</label>
+                                <div class="btn-group w-100" role="group" aria-label="Gender Selection">
+                                    <input type="radio" class="btn-check" name="gender" id="male" value="male" autocomplete="off">
+                                    <label for="male" class="btn btn-outline-primary">Male</label>
+                                    <input type="radio" class="btn-check" name="gender" id="female" value="female" autocomplete="off">
+                                    <label for="female" class="btn btn-outline-primary">Female</label>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-primary next-step">Continue</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="step-pane" id="step2">
+                        <h2 class="h3 text-center mb-4">Select your style</h2>
+                        <p class="text-muted text-center mb-4">Select all the styles that fit you</p>
+                        <div class="style-options">
+                            <div class="style-options">
+                                <input type="checkbox" class="btn-check" id="style1" autocomplete="off">
+                                <label for="style1" class="btn btn-outline-primary">
+                                    <i class="bi bi-briefcase"></i>
+                                    <span>Formal</span>
+                                </label>
+                            </div>
+                            <div class="style-option">
+                                <input type="checkbox" class="btn-check" id="style2" autocomplete="off">
+                                <label for="style2" class="btn btn-outline-primary">
+                                    <i class="bi bi-cup-hot"></i>
+                                    <span>Casual</span>
+                                </label>
+                            </div>
+                            <div class="style-option">
+                                <input type="checkbox" class="btn-check" id="style3" autocomplete="off">
+                                <label for="style3" class="btn btn-outline-primary">
+                                    <i class="bi bi-stars"></i>
+                                    <span>Business Casual</span>
+                                </label>
+                            </div>
+                            <div class="style-option">
+                                <input type="checkbox" class="btn-check" id="style4" autocomplete="off">
+                                <label for="style4" class="btn-outline-primary">
+                                    <i class="bi bi-lightning"></i>
+                                    <span>Sporty</span>
+                                </label>
+                            </div>
+                            <div class="style-option">
+                                <input type="checkbox" class="btn-check" id="style5" autocomplete="off">
+                                <label for="style5" class="btn btn-outline-primary">
+                                    <i class="bi bi-moon-stars"></i>
+                                    <span>Evening</span>
+                                </label>
+                            </div>
+                            <div class="style-option">
+                                <input type="checkbox" class="btn-check" id="style6" autocomplete="off">
+                                <label for="style6" class="btn btn-outline-primary">
+                                    <i class="bi bi-flower1"></i>
+                                    <span>Si vedra</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary prev-step">Back</button>
+                            <button type="button" class="btn btn-primary next-step">Continue</button>
+                        </div>
+                    </div>
+                    <div class="step-pane" id="step3">
+                        <h2 class="h3 text-center mb-4">Color preferences</h2>
+                        <p class="text-muted text-center mb-4">Select colors you prefer to wear</p>
+                        <div class="color-options">
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color1" autocomplete="off">
+                                <label for="color1" class="color-btn" style="background-color: #000000; /*lo so che e sbagliato*/">
+                                    <span class="visually-hidden">Black</span>
+                                </label>
+                            </div>
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color2" autocomplete="off">
+                                <label for="color2" class="color-btn" style="background-color: #ffffff; border: 1px solid #e5e7eb;">
+                                    <span class="visually-hidden">White</span>
+                                </label>
+                            </div>
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color3" autocomplete="off">
+                                <label class="color-btn" for="color3" style="background-color: #6366f1;">
+                                    <span class="visually-hidden">Blue</span>
+                                </label>
+                            </div>
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color4" autocomplete="off">
+                                <label class="color-btn" for="color4" style="background-color: #10b981;">
+                                    <span class="visually-hidden">Green</span>
+                                </label>
+                            </div>
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color5" autocomplete="off">
+                                <label class="color-btn" for="color5" style="background-color: #ef4444;">
+                                    <span class="visually-hidden">Red</span>
+                                </label>
+                            </div>
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color6" autocomplete="off">
+                                <label class="color-btn" for="color6" style="background-color: #f59e0b;">
+                                    <span class="visually-hidden">Yellow</span>
+                                </label>
+                            </div>
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color7" autocomplete="off">
+                                <label class="color-btn" for="color7" style="background-color: #8b5cf6;">
+                                    <span class="visually-hidden">Purple</span>
+                                </label>
+                            </div>
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color8" autocomplete="off">
+                                <label class="color-btn" for="color8" style="background-color: #ec4899;">
+                                    <span class="visually-hidden">Pink</span>
+                                </label>
+                            </div>
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color9" autocomplete="off">
+                                <label class="color-btn" for="color9" style="background-color: #78716c;">
+                                    <span class="visually-hidden">Gray</span>
+                                </label>
+                            </div>
+                            <div class="color-option">
+                                <input type="checkbox" class="btn-check" id="color10" autocomplete="off">
+                                <label class="color-btn" for="color10" style="background-color: #854d0e;">
+                                    <span class="visually-hidden">Brown</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary prev-step">Back</button>
+                            <button type="button" class="btn btn-primary next-step">Continue</button>
+                        </div>
+                    </div>
+                    <!---will be injected with js later, base setup-->
+                    <div class="step-pane" id="step4">
+                        <div class="text-center mb-4">
+                            <div class="success-checkmark">
+                                <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                            </div>
+                            <h2 class="h3 mt-4">You are all set</h2>
+                            <p class="text-muted">Your profile has been created successfully</p>
+                        </div>
+                        <div class="onboarding-summary">
+                            <div class="summary-item">
+                                <div class="summary-label">Name</div>
+                                <div class="summary-value" id="summaryName">Arden Mena</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Style Preferences</div>
+                                <div class="summary-value" id="summaryStyles">Casual,Business</div>
+                            </div>
+                            <div class="summary-item"> 
+                                <div class="summary-label">Color Preferences</div>
+                                <div class="summary-value" id="summaryColors">
+                                    <span class="color-dot" style="background-color: #000000;"></span>
+                                    <span class="color-dot" style="background-color: #6366f1;"></span>
+                                    <span class="color-dot" style="background-color: #10b981;"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary prev-step">Edit Profile</button>
+                            <a href="dashboard.html" class="btn btn-primary">Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+    <script type="module" src="src/js/pages/onboarding.js"></script>
 </body>
 </html>
