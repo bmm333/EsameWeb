@@ -4,11 +4,8 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
-    defaults:
-      run:
-        working-directory: frontend
+  lint:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
