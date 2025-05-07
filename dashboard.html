@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard - Smart Wardrobe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/css/variables.css">
+    <link rel="stylesheet" href="src/css/base.css">
+    <link rel="stylesheet" href="src/css/components.css">
+    <link rel="stylesheet" href="src/css/layout.css">
+    <link rel="stylesheet" href="src/css/pages/dashboard.css">
+</head>
+<body data-bs-theme="light" data-page="dashboard">
+    <!--Usual navi adding some different styles might reuse later-->
+    <nav class="navbar fixed-top">
+        <div class="container-fluid px-4">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#dashboardSidebar">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            <a href="dashboard.html" class="navbar-brand">Smart Wardrobe</a>
+            <div class="d-flex align-items-center">
+                <button id="themeSwitcher" class="btn btn-link text-decoration-none">
+                    <i class="bi bi-sun-fill theme-icon-light"></i>
+                    <i class="bi bi-moon-fill theme-icon-dark d-none"></i>
+                </button>
+                <div class="avatar avatar-sm ms-3">
+                    <img src="https://placehold.co/100x100/f9fafb/6366f1?text=AM" alt="User">
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="dashboard-container">
+        <!---Sidebar-->
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="dashboardSidebar">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title">Smart Wardrobe</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body p-0">
+                <ul class="sidebar-nav">
+                    <li class="sidebar-item active">
+                        <a href="dashboard.html" class="sidebar-link">
+                            <i class="bi bi-grid"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="wardrobe.html" class="sidebar-link">
+                            <i class="bi bi-handbag"></i>
+                            <span>My Wardrobe</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="outfit.html" class="sidebar-link">
+                            <i class="bi bi-palette"></i>
+                            <span>Outfits</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="recommendations.html" class="sidebar-link">
+                            <i class="bi bi-lightbulb"></i>
+                            <span>Recommendations</span>
+                        </a>
+                    </li>
+                    <!--Optional but im going to leave it for now will see how it turns out-->
+                    <li class="sidebar-item">
+                        <a href="settings.html" class="sidebar-link">
+                            <i class="bi bi-gear"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="index.html" class="sidebar-link">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>SingOut</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <!--Main content section-->
+        <main class="dashboard-main"> 
+            <div class="container py-4">
+                <header class="dashboard-header mb-5">
+                    <h1 id="welcomeMessage">Good morning, Arben</h1>
+                    <p class="text-muted">Your Wardrobe Overview</p>
+                </header>
+
+                <div class="row g-4 mb-5">
+                    <div class="col-lg-7">
+                        <div class="dashboard-card">
+                            <div class="dashboard-card-header">
+                                <h2>Todays Outfit</h2>
+                                <div class="weather-badge" id="weatherInfo">
+                                    <i class="bi bi-cloud-sun"></i>
+                                    <span>28C</span>
+                                </div>
+                            </div>
+                            <div class="dashboard-card-body">
+                                <div class="outfit-display" id="todayOutfit">
+                                    <div class="outfit-image">
+                                        <img src="https://placehold.co/400x400/f9fafb/6366f1?text=Outfit" alt="Todays outfit" class="img-fluid rounded">
+                                    </div>
+                                    <div class="outfit-details">
+                                        <h3>Business Casual</h3>
+                                        <ul class="outfit-items" id="outfitItemsList">
+                                            <li>Blue Oxford Shirt</li>
+                                            <li>Navy Chinos</li>
+                                            <li>Brown Loafers</li>
+                                        </ul>
+                                        <button class="btn btn-primary mt-3">View Dettails</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cold-lg-5">
+                        <div class="dashboard-card">
+                            <div class="dashboard-card-header">
+                                <h2>Wardrobe Stats</h2>
+                            </div>
+                            <div class="dashboard-card-body">
+                                <div class="stats-container" id="wardrobeStats">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="totalItems">42</div>
+                                        <div class="stat-label">Total Item</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="totalOutfits">12</div>
+                                        <div class="stat-label">Outfits</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="favoriteItems">8</div>
+                                        <div class="stat-label">Favorites</div>
+                                    </div>
+                                </div>
+                                <div class="most-worn mt-4">
+                                    <h3>Most Worn</h3>
+                                    <div class="most-worn-item" id="mostWornItem">
+                                        <img src="https://placehold.co/60x60/f9fafb/6366f1?text=Item" alt="Most Worn Item" class="rounded">
+                                        <div>
+                                            <h4>Blue Oxford Shirt</h4>
+                                            <p>Worn 12 times</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2>Recent Activity</h2>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <div class="dashboard-card-body p-0">
+                        <ul class="activity-list" id="activityList">
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="bi bi-plus-circle"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p>Added<strong>White T-Shirt</strong>to your wardrobe</p>
+                                    <span class="activity-item">Today</span>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="bi bi-palette"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p>Created a new outfit: <strong>Casual Friday</strong></p>
+                                    <span class="activity-time">Yesterday</span>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="bi bi-star"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p>Marked <strong>Blue Ofxord Shirt</strong> as favourite</p>
+                                    <span class="activity-item">3 days ago</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/js/utils.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+    <script type="module" src="src/js/pages/dashboard.js"></script>
+</body>
+</html>
