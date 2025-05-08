@@ -1,0 +1,226 @@
+.dashboard-container
+{
+    min-height:100vh;
+    min-height: calc(var(--vh,1vh)*100);
+    padding-top:var(--navbar-height);
+}
+.sidebar-nav{
+    list-style:none;
+    padding:var(--spacing-md)0;
+    margin:0;
+}
+.side-item
+{
+    margin-bottom:4px;
+}
+.sidebar-link
+{
+    display:flex;
+    align-items:center;
+    padding:12px var(--spacing-md);
+    color:var(--text-color);
+    border-radius:8px;
+    text-decoration:none;
+    margin:0 var(--spacing-sm);
+    transition:var(--transition);
+}
+.sidebar-link:hover{
+    background-color:var(--bg-secondary);
+    color:var(--primary-color);
+}
+.sidebar-link
+{
+    font-size:1.2rem;
+    margin-right:var(--spacing-md);
+    width:24px;
+    text-align:center;
+}
+.sidebar-item.active .sidebar-link
+{
+    background-color:var(--primary-color);
+    color:white;
+}
+.dashboard-main
+{
+    background-color:var(--bg-secondary);
+    min-height:calc(100vh - var(--navbar-height));
+    min-height:calc((var(--vh,1vh)*100) - var(--navbar-height));
+}
+.dashboard-header h1
+{
+    font-size:1.75rem;
+    font-weight:600;
+    margin-bottom:var(--spacing-xs);
+}
+.dashboard-card
+{
+    background-color:var(--bg-color);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-lg);
+}
+.dashboard-card-header
+{
+    padding:var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.dashboard-card-header h2{
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+.dashboard-card-body
+{
+    padding: var(--spacing-lg);
+}
+.weather-badge
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--bg-secondary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+}
+
+.outfit-display{
+    display: flex;
+    flex-direction: column;
+    gap:var(--spacing-lg);
+}
+
+@media(min-width:768px)
+{
+    .outfit-display{
+        flex-direction: row;
+    }
+    .outfit-image
+    {
+        flex: 1;
+    }
+    .outfit-details
+    {
+        flex: 1;
+    }
+}
+.outfit-image img{
+    max-width: 100%;
+    height: auto;
+}
+.outfit-details h3{
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+}
+.outfit-items
+{
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--spacing-md);
+}
+.outfit-items li{
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.outfit-items li:last-child{
+    border-bottom: none;
+}
+
+.stats-container
+{
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: var(--spacing-md);
+    text-align: center;
+}
+
+.stat-label
+{
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top:4px;
+}
+
+.most-worn h3{
+    font-size:1rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+}
+.most-worn-item
+{
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.most-worn-item img
+{
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+}
+
+.most-worn-item h4{
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+.most-worn-item p{
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+.activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.activity-item 
+{
+  display: flex;
+  align-items: flex-start;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon 
+{
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: rgba(99, 102, 241, 0.1);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.activity-content p 
+{
+  margin: 0 0 4px 0;
+}
+
+.activity-time 
+{
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.view-all 
+{
+  font-size: 0.875rem;
+  color: var(--primary-color);
+  text-decoration: none;
+}
