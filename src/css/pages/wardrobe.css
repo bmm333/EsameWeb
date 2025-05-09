@@ -1,0 +1,201 @@
+.wardrobe-container
+{
+    padding:2rem;
+}
+.items-grid
+{
+    margin-bottom: 3rem;
+}
+
+.empty-state
+{
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+    justify-content:center;
+    padding:5rem 2rem;
+    text-align:center;
+    background-color: var(--bg-secondary);
+    border-radius: 16px;
+    margin: 2rem 0;
+}
+.empty-state-icon
+{
+    font-size:3rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+.empty-state-title
+{
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom:1rem;
+}
+.empty-state-text
+{
+    color: var(--text-muted);
+    max-width: 400px;
+    margin-bottom: 1.5rem;
+}
+.items-details-panel
+{
+    postion:fixed;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 100vh;
+    background-color: var(--bg-color);
+    box-shadow: -5 0 25px rgba(0, 0, 0, 0);
+    z-index: 1050;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    padding: 2rem;
+    overflow-y: auto;
+}
+.items-details-panel.open
+{
+    transform: translateX(0);
+}
+.items-details-header
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.items-details-close
+{
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.items-details-image
+{
+    width: 100%;
+    height: 300px;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+.items-details-image img
+{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.items-details-info
+{
+    margin-bottom: 2rem;
+}
+.items-details-title
+{
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.image-details-meta
+{
+    display: flex;
+    flex-wrap:wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.item-details-tag
+{
+    background-color: var(--bg-secondary);
+    padding: 0.5rem 1rem;
+    border-radius:20px;
+    font-size: 0.8rem;
+}
+.items-detail-stats
+{
+    display:grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.items-detail-stat
+{
+    background-color: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+}
+.items-details-stat-value
+{
+    font-size:1.5rem;
+    font-weight:600;
+    margin-bottom:0.25rem;
+}
+.items-details-stat-label
+{
+    font-size:0.8rem;
+    color:var(--text-muted);
+}
+.items-details-stat-label
+{
+    font-size:0.8rem;
+    color: var(--text-muted);
+}
+.item-details-actions
+{
+    display:flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+/*style for the outfit builder*/
+.outfit-builder
+{
+    margin-top:3rem;
+    padding:2rem;
+    background-color: var(--bg-secondary);
+    border-radius: 16px;
+}
+.outfit-builder-title
+{
+    font-size:1.25rem;
+    font-weight:600;
+    margin-bottom:1.5rem;
+}
+.outfit-slots
+{
+    display:grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.outfit-slot
+{
+    aspect-ratio: 1/1;
+    background-color: var(--bg-tertiary);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.outfit-slot-icon
+{
+    font-size:1.5rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+.outfit-slot-label
+{
+    font-size:0.8rem;
+    color: var(--text-muted);
+}
+.outfit-slot.filled
+{
+    background-color: var(--bg-color);
+    padding: 0.5rem;
+}
+.outfit-slot:hover{
+    background-color: var(--bg-color);
+}
+/*To be continued towmorrow morning first order of the day*/
