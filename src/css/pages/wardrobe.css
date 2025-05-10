@@ -199,3 +199,71 @@
     background-color: var(--bg-color);
 }
 /*To be continued towmorrow morning first order of the day*/
+.outfit-slot.filled
+{
+    background-color:var(--bg-color);
+    padding:0.5rem;
+}
+.outfit-slot.filled img
+{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:8px;
+}
+.seasonal-recommendations{
+    margin-top:3rem;
+}
+.seasonal-recommendations-title
+{
+    font-size:1.25rem;
+    font-weight:600;
+    margin-bottom:1.5rem;
+}
+
+.recommendation-cards
+{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+    gap:1.5rem;
+}
+.recommendation-card
+{
+    background-color:var(--bg-secondary);
+    border-radius:16px;
+    overflow:hidden;
+    transition:transform 0.2s ease;
+}
+.recommendation-card:hover
+{
+    transform:translateY(-5px);
+}
+.recommendation-card-image
+{
+    width:100%;
+    height:150px;
+}
+.recommendation-card-image img
+{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+.recommendation-card-content
+{
+    padding:1.5rem;
+}
+.recommendation-card-title
+{
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.recommendation-card-text
+{
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+/*loading states might add them later here or on components*/
