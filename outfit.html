@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Outfits - Smart Wardrobe</title>
+    <!-- Common CSS imports - keeping the same across all pages -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/css/variables.css">
+    <link rel="stylesheet" href="src/css/components.css">
+    <link rel="stylesheet" href="src/css/base.css">
+    <link rel="stylesheet" href="src/css/layout.css">
+    <link rel="stylesheet" href="src/css/pages/outfit.css">
+    <link rel="stylesheet" href="src/css/pages/dashboard.css">
+</head>
+<body data-bs-theme="light" data-page="outfit">
+    <nav class="navbar fixed-top">
+        <div class="container-fluid px-4">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#dashboardSidebar">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            <a href="dashboard.html" class="navbar-brand">Smart Wardrobe</a>
+            <div class="d-flex align-items-center">
+                <button id="themeSwitcher" class="btn btn-link text-decoration-none"> 
+                    <i class="bi bi-sun-fill theme-icon-light"></i>
+                    <i class="bi bi-moon-fill theme-icon-dark d-none"></i>
+                </button>
+                <div class="avatar avatar-sm ms-3">
+                    <img src="https://placehold.co/100x100/f9fafb/6366f1?text=AM" alt="User">
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="dashboard-container">
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="dashboardSidebar">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title">Smart Wardrobe</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body p-0">
+                <ul class="sidebar-nav">
+                    <li class="sidebar-item">
+                        <a href="dashboard.html" class="sidebar-link">
+                            <i class="bi bi-grid"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="wardrobe.html" class="sidebar-link">
+                            <i class="bi bi-handbag"></i>
+                            <span>My Wardrobe</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item active">
+                        <a href="outfit.html" class="sidebar-link">
+                            <i class="bi bi-palette"></i>
+                            <span>Outfits</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="recommendations.html" class="sidebar-link">
+                            <i class="bi bi-lightbulb"></i>
+                            <span>Recommendations</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="settings.html" class="sidebar-link">
+                            <i class="bi bi-gear"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a href="index.html" class="sidebar-link">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Sign Out</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <main class="dashboard-main">
+            <div class="container py-5">
+                <header class="page-header mb-5">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h1>Outfits</h1>
+                        <button class="app-btn app-btn-primary" data-bs-toggle="modal" data-bs-target="#createOutfitModal"><i class="bi bi-plus-lg"></i>Create Outfit</button>
+                    </div>
+                    <p class="text-muted">Create and manage your outfit combinations</p>
+                </header>
+                <div class="rfid-status-bar mb-5">
+                    <div class="rfid-status-icon">
+                        <i class="bi bi-broadcast"></i>
+                    </div>
+                    <div class="rfid-status-content">
+                        <h3 class="rfid-status-title">RFID Tracking Active</h3>
+                        <p class="rfid-status-text">Your wardrobe is currently tracking 28 items. 22 items are in the Wardrobe, 6 are beign worn</p>
+                    </div>
+                    <div class="rfid-status-actions">
+                        <button class="app-btn app-btn-secondary app-btn-sm" id="refreshRFIDbtn">
+                            <i class="bi bi-arrow-clockwise"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                <ul class="nav nav-tabs outfit-tabs mb-4" id="outfitTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="saved-tab" data-bs-toggle="tab" data-bs-target="#saved-outfits" type="button" role="tab" aria-controls="saved-outfits" aria-selected="true">Saved Outfits</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="create-tab" data-bs-toggle="tab" data-bs-target="#create-outfit" type="button" role="tab" aria-controls="create-outfit" aria-selected="false">Create New</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="suggestions-tab" data-bs-toggle="tab" data-bs-target="#outfit-suggestions" type="button" role="tab" aria-controls="outfit-suggestions" aria-selected="false">Suggestions</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="outfitTabsContent">
+                    <!--For saved outfits-->
+                    <div class="tab-pane fade show active" id="saved-outfits" role="tabpanel" aria-labelledby="saved-tab">
+                        <div class="search-filter-bar mb-4">
+                            <div class="search-box">
+                                <i class="bi bi-search"></i> 
+                                <input type="text" id="searchOutfits" placeholder="Search outfits..">
+                            </div>
+                            <div class="filter-box">
+                                <button class="filter-btn" id="outfitFilterBtn">
+                                    <i class="bi bi-funnel"></i>
+                                    <span>Filter</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-6 col-lg-">
+                                <div class="outfit-card">
+                                    <div class="outfit-card-header">
+                                        <h3 class="outfit-title">Casual Friday</h3>
+                                        <div class="outfit-actions">
+                                            <button class="action-btn favorite-btn active" title="Favorite">
+                                                <i class="bi bi-star-fill"></i>
+                                            </button>
+                                            <button class="action-btn more-btn" title="More Options">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="outfit-items">
+                                        <div class="outfit-item available">
+                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shirt" alt="Blue Oxford Shirt">
+                                            <div class="outfit-item-status">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="outfit-item available">
+                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Pants" alt="Navy Chinos">
+                                            <div class="outfit-item-status">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="outfit-item available">
+                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shoes" alt="Brown Loafers">
+                                            <div class="outfit-item-status">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="outfit-card-footer">
+                                        <div class="outfit-meta">
+                                            <span class="otufit-occasion">Work</span>
+                                            <span class="otufit-season">All Season</span>
+                                        </div>
+                                        <button class="app-btn app-btn-primary app-btn-sm wear-outfit-btn">
+                                            <i class="bi bi-check2"></i>Wear Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="outfit-card">
+                                    <div class="outfit-card-header">
+                                        <h3 class="outfit-title">Weekend Casual</h3>
+                                        <div class="outfit-actions">
+                                            <button class="action-btn favorite-btn" title="Favorite">
+                                                <i class="bi bi-star"></i>
+                                            </button>
+                                            <button class="action-btn more-btn" title="More Options">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="outfit-items">
+                                        <div class="outfit-item available">
+                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=T-Shirt" alt="White T-Shirt">
+                                            <div class="outfit-item-status">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="outfit-item unavailable">
+                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Jeans" alt="Blue Jeans">
+                                            <div class="outfit-item-status">
+                                                <i class="bi bi-x-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="outfit-item available">
+                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Sneakers" alt="White Sneakers">
+                                            <div class="outfit-item-status">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="outfit-card-footer">
+                                        <div class="outfit-meta">
+                                            <span class="outfit-occasion">Casual</span>
+                                            <span class="outfit-season">Spring, Summer</span>
+                                        </div>
+                                        <button class="app-btn app-btn-secondary app-btn-sm wear-outfit-btn" disabled>
+                                            <i class="bi bi-exclamation-triangle"></i> Missing Items
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="outfit-card">
+                                    <div class="outfit-card-header">
+                                        <h3 class="outfit-title">Business Meeting</h3>
+                                        <div class="outfit-actions">
+                                            <button class="action-btn favorite-btn" title="Favorite">
+                                                <i class="bi bi-star"></i>
+                                            </button>
+                                            <button class="action-btn more-btn" title="More Options">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="outfit-items">
+                                        <div class="outfit-item available">
+                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shirt" alt="White Dress Shirt">
+                                            <div class="outfit-item-status">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="outfit-item available">
+                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Suit" alt="Navy Suit">
+                                            <div class="outfit-item-status">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        <div class="outfit-item available">
+                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shoes" alt="Black Oxfords">
+                                            <div class="outfit-item-status">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="outfit-card-footer">
+                                        <div class="outfit-meta">
+                                            <span class="outfit-occasion">Formal</span>
+                                            <span class="outfit-season">All Seasons</span>
+                                        </div>
+                                        <button class="app-btn app-btn-primary app-btn-sm wear-outfit-btn">
+                                            <i class="bi bi-check2"></i> Wear Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="create-outfit" role="tabpanel" aria-labelledby="create-tab">
+                        <div class="outfit-builder-container">
+                            <div class="row">
+                                <div class="col-lg-8">
+                                    <div class="outfit-builder-panel">
+                                        <h3 class="outfit-builder-title">Build Your Outfit</h3>
+                                        <p class="text-muted mb-4">Select Items from your wardrobe to create a new outfit</p>
+                                        <div class="outfit-builder-slots">
+                                            <div class="outfit-slots" data-category="tops">
+                                                <div class="outfit-slot-empty">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                    <span>Add Top</span>
+                                                </div>
+                                                <div class="outfit-slot-filled" style="display: none;">
+                                                    <img src="/placeholder.svg" alt=""> <!--Dont forget to add here-->
+                                                    <button class="outfit-slot-remove">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="outfit-slot" data-category="bottoms">
+                                                <div class="outfit-slot-empty">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                    <span>Add Bottom</span>
+                                                </div>
+                                                <div class="outfit-slot-filled" style="display: none;">
+                                                    <img src="/placeholder.svg" alt="">
+                                                    <button class="outfit-slot-remove">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="outfit-slot" data-category="outerwear">
+                                                <div class="outfit-slot-empty">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                    <span>Add Outerwear</span>
+                                                </div>
+                                                <div class="outfit-slot-filled" style="display: none;">
+                                                    <img src="/placeholder.svg" alt="">
+                                                    <button class="outfit-slot-remove">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="outfit-slot" data-category="shoes">
+                                                <div class="outfit-slot-empty">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                    <span>Add Shoes</span>
+                                                </div>
+                                                <div class="outfit-slot-filled" style="display: none;">
+                                                    <img src="/placeholder.svg" alt="">
+                                                    <button class="outfit-slot-remove">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="outfit-slot" data-category="accessories">
+                                                <div class="outfit-slot-empty">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                    <span>Add Accessory</span>
+                                                </div>
+                                                <div class="outfit-slot-filled" style="display: none;">
+                                                    <img src="/placeholder.svg" alt="">
+                                                    <button class="outfit-slot-remove">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="outfit-builder-form mt-4">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="outfitName" class="form-label">Outfit Name</label>
+                                                    <input type="text" class="form-control" id="outfitName" placeholder="eg. Casual Friday">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="outfitOccasion" class="form-label">Occasion</label>
+                                                    <select class="form-select" id="outfitOccasion">
+                                                        <option value="">Select occasion</option>
+                                                        <option value="casual">Casual</option>
+                                                        <option value="work">Work</option>
+                                                        <option value="formal">Formal</option>
+                                                        <option value="sport">Sport</option>
+                                                        <option value="special">Special Event</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label">Seasons</label>
+                                                    <div class="d-flex flex-wrap gap-3">
+                                                        <div class="form-check">
+                                                            <input type="checkbox" class="form-check-input" value="spring" id="seasonSpring">
+                                                            <label for="seasonSpring" class="form-check-label">Spring</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" value="summer" id="seasonSummer">
+                                                            <label class="form-check-label" for="seasonSummer">Summer</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" value="fall" id="seasonFall">
+                                                            <label class="form-check-label" for="seasonFall">Fall</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" value="winter" id="seasonWinter">
+                                                            <label class="form-check-label" for="seasonWinter">Winter</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" value="all" id="seasonAll">
+                                                            <label class="form-check-label" for="seasonAll">All Seasons</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label for="outfitNotes" class="form-label">Notes</label>
+                                                    <textarea class="form-control" id="outfitNotes" rows="3" placeholder="Add any notes about this outfit..."></textarea>
+                                                </div>
+                                            </div>
+                                             <div class="d-flex justify-content-end mt-4">
+                                                <button type="button" class="app-btn app-btn-secondary me-2" id="resetOutfitBtn">Reset</button>
+                                                <button type="button" class="app-btn app-btn-primary" id="saveOutfitBtn">Save Outfit</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="available-items-panel">
+                                        <div class="available-items-header">
+                                            <h3 class="available-items-title">Available Items</h3>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="showOnlyAvailable" checked>
+                                                <label class="form-check-label" for="showOnlyAvailable">Show only in wardrobe</label>
+                                            </div>
+                                        </div>
+                                        <div class="available-items-filter">
+                                            <div class="search-box w-100">
+                                                <i class="bi bi-search"></i>
+                                                <input type="text" id="searchAvailableItems" placeholder="Search items...">
+                                            </div>
+                                            <div class="category-pills mt-3">
+                                                <button class="category-pill active" data-category="all">All</button>
+                                                <button class="category-pill" data-category="tops">Tops</button>
+                                                <button class="category-pill" data-category="bottoms">Bottoms</button>
+                                                <button class="category-pill" data-category="outerwear">Outerwear</button>
+                                                <button class="category-pill" data-category="shoes">Shoes</button>
+                                                <button class="category-pill" data-category="accessories">Accessories</button>
+                                            </div>
+                                        </div>
+                                        <div class="available-items-list">
+                                            <div class="available-item" data-category="tops" data-in-wardrobe="true">
+                                                <div class="available-item-image">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shirt" alt="Blue Oxford Shirt">
+                                                </div>
+                                                <div class="available-item-content">
+                                                    <h4 class="available-item-title">Blue Oxford Shirt</h4>
+                                                    <span class="available-item-category">Tops</span>
+                                                </div>
+                                                <div class="available-item-status">
+                                                    <span class="status-indicator in-wardrobe" title="In Wardrobe">
+                                                        <i class="bi bi-house-check"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="available-item" data-category="bottoms" data-in-wardrobe="true">
+                                                <div class="available-item-image">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Pants" alt="Navy Chinos">
+                                                </div>
+                                                <div class="available-item-content">
+                                                    <h4 class="available-item-title">Navy Chinos</h4>
+                                                    <span class="available-item-category">Bottoms</span>
+                                                </div>
+                                                <div class="available-item-status">
+                                                    <span class="status-indicator in-wardrobe" title="In Wardrobe">
+                                                        <i class="bi bi-house-check"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="available-item" data-category="bottoms" data-in-wardrobe="false">
+                                                <div class="available-item-image">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Jeans" alt="Blue Jeans">
+                                                </div>
+                                                <div class="available-item-content">
+                                                    <h4 class="available-item-title">Blue Jeans</h4>
+                                                    <span class="available-item-category">Bottoms</span>
+                                                </div>
+                                                <div class="available-item-status">
+                                                    <span class="status-indicator not-in-wardrobe" title="Not In Wardrobe">
+                                                        <i class="bi bi-person-walking"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="available-item" data-category="shoes" data-in-wardrobe="true">
+                                                <div class="available-item-image">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shoes" alt="Brown Loafers">
+                                                </div>
+                                                <div class="available-item-content">
+                                                    <h4 class="available-item-title">Brown Loafers</h4>
+                                                    <span class="available-item-category">Shoes</span>
+                                                </div>
+                                                <div class="available-item-status">
+                                                    <span class="status-indicator in-wardrobe" title="In Wardrobe">
+                                                        <i class="bi bi-house-check"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="available-item" data-category="outerwear" data-in-wardrobe="false">
+                                                <div class="available-item-image">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Jacket" alt="Black Leather Jacket">
+                                                </div>
+                                                <div class="available-item-content">
+                                                    <h4 class="available-item-title">Black Leather Jacket</h4>
+                                                    <span class="available-item-category">Outerwear</span>
+                                                </div>
+                                                <div class="available-item-status">
+                                                    <span class="status-indicator not-in-wardrobe" title="Not In Wardrobe">
+                                                        <i class="bi bi-person-walking"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="outfit-suggestions" role="tabpanel" aria-labelledby="suggestions-tab">
+                        <div class="outfit-suggestions-container">
+                            <div class="outfit-suggestions-header mb-4">
+                                <h3>Outfit Suggestions</h3>
+                                <p class="text-muted">Based on your wardrobe, weather, and preferences</p>
+                            </div>
+                            <div class="outfit-suggestions-filters mb-4">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="filter-label">Occasion</label>
+                                        <select class="app-select" id="suggestionOccasionFilter">
+                                            <option value="all">All Occasions</option>
+                                            <option value="casual">Casual</option>
+                                            <option value="work">Work</option>
+                                            <option value="formal">Formal</option>
+                                            <option value="sport">Sport</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="filter-label">Weather</label>
+                                        <select class="app-select" id="suggestionWeatherFilter">
+                                            <option value="current">Current Weather (72°F, Sunny)</option>
+                                            <option value="cold">Cold</option>
+                                            <option value="cool">Cool</option>
+                                            <option value="warm">Warm</option>
+                                            <option value="hot">Hot</option>
+                                            <option value="rainy">Rainy</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="filter-label">Available Items Only</label>
+                                        <div class="form-check form-switch mt-2">
+                                            <input class="form-check-input" type="checkbox" id="availableItemsOnly" checked>
+                                            <label class="form-check-label" for="availableItemsOnly">Show outfits with available items only</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="outfit-suggestions-list">
+                                <div class="row g-4">
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="suggestion-card">
+                                            <div class="suggestion-card-header">
+                                                <div class="suggestion-meta">
+                                                    <span class="suggestion-occasion">Work</span>
+                                                    <span class="suggestion-weather">
+                                                        <i class="bi bi-sun"></i> 72°F
+                                                    </span>
+                                                </div>
+                                                <div class="suggestion-actions">
+                                                    <button class="action-btn more-btn" title="More Options">
+                                                        <i class="bi bi-three-dots"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="suggestion-items">
+                                                <div class="outfit-item available">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shirt" alt="Blue Oxford Shirt">
+                                                    <div class="outfit-item-status">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="outfit-item available">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Pants" alt="Navy Chinos">
+                                                    <div class="outfit-item-status">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="outfit-item available">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shoes" alt="Brown Loafers">
+                                                    <div class="outfit-item-status">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="suggestion-card-footer">
+                                                <div class="suggestion-confidence">
+                                                    <div class="confidence-label">Match Confidence</div>
+                                                    <div class="confidence-bar">
+                                                        <div class="confidence-level" style="width: 95%;"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="suggestion-actions mt-3">
+                                                    <button class="app-btn app-btn-secondary app-btn-sm me-2">
+                                                        <i class="bi bi-bookmark"></i> Save
+                                                    </button>
+                                                    <button class="app-btn app-btn-primary app-btn-sm">
+                                                        <i class="bi bi-check2"></i> Wear Now
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="suggestion-card">
+                                            <div class="suggestion-card-header">
+                                                <div class="suggestion-meta">
+                                                    <span class="suggestion-occasion">Casual</span>
+                                                    <span class="suggestion-weather">
+                                                        <i class="bi bi-sun"></i> 72°F
+                                                    </span>
+                                                </div>
+                                                <div class="suggestion-actions">
+                                                    <button class="action-btn more-btn" title="More Options">
+                                                        <i class="bi bi-three-dots"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="suggestion-items">
+                                                <div class="outfit-item available">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=T-Shirt" alt="White T-Shirt">
+                                                    <div class="outfit-item-status">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="outfit-item unavailable">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Jeans" alt="Blue Jeans">
+                                                    <div class="outfit-item-status">
+                                                        <i class="bi bi-x-circle-fill"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="outfit-item available">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Sneakers" alt="White Sneakers">
+                                                    <div class="outfit-item-status">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="suggestion-card-footer">
+                                                <div class="suggestion-confidence">
+                                                    <div class="confidence-label">Match Confidence</div>
+                                                    <div class="confidence-bar">
+                                                        <div class="confidence-level" style="width: 80%;"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="suggestion-actions mt-3">
+                                                    <button class="app-btn app-btn-secondary app-btn-sm me-2">
+                                                        <i class="bi bi-bookmark"></i> Save
+                                                    </button>
+                                                    <button class="app-btn app-btn-secondary app-btn-sm" disabled>
+                                                        <i class="bi bi-exclamation-triangle"></i> Missing Items
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="suggestion-card">
+                                            <div class="suggestion-card-header">
+                                                <div class="suggestion-meta">
+                                                    <span class="suggestion-occasion">Formal</span>
+                                                    <span class="suggestion-weather">
+                                                        <i class="bi bi-sun"></i> 72°F
+                                                    </span>
+                                                </div>
+                                                <div class="suggestion-actions">
+                                                    <button class="action-btn more-btn" title="More Options">
+                                                        <i class="bi bi-three-dots"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="suggestion-items">
+                                                <div class="outfit-item available">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shirt" alt="White Dress Shirt">
+                                                    <div class="outfit-item-status">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="outfit-item available">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Suit" alt="Navy Suit">
+                                                    <div class="outfit-item-status">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="outfit-item available">
+                                                    <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shoes" alt="Black Oxfords">
+                                                    <div class="outfit-item-status">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="suggestion-card-footer">
+                                                <div class="suggestion-confidence">
+                                                    <div class="confidence-label">Match Confidence</div>
+                                                    <div class="confidence-bar">
+                                                        <div class="confidence-level" style="width: 90%;"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="suggestion-actions mt-3">
+                                                    <button class="app-btn app-btn-secondary app-btn-sm me-2">
+                                                        <i class="bi bi-bookmark"></i> Save
+                                                    </button>
+                                                    <button class="app-btn app-btn-primary app-btn-sm">
+                                                        <i class="bi bi-check2"></i> Wear Now
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div class="context-menu" id="outfitContextMenu" style="display: none;">
+        <div class="context-menu-item">
+            <i class="bi bi-pencil"></i>
+            <span>Edit Outfit</span>
+        </div>
+        <div class="context-menu-item">
+            <i class="bi bi-arrow-repeat"></i>
+            <span>Log Wear</span>
+        </div>
+        <div class="context-menu-item">
+            <i class="bi bi-star"></i>
+            <span>Toggle Favorite</span>
+        </div>
+        <div class="context-menu-item text-danger">
+            <i class="bi bi-trash"></i>
+            <span>Delete</span>
+        </div>
+    </div>
+    <div class="modal fade" id="createOutfitModal" tabindex="-1" aria-labelledby="createOutfitModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createOutfitModalLabel">Create New Outfit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Choose how you want to create your outfit:</p>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="create-option">
+                                <div class="create-option-icon">
+                                    <i class="bi bi-palette"></i>
+                                </div>
+                                <h4 class="create-option-title">Build Manually</h4>
+                                <p class="create-option-desc">Select items from your wardrobe to create a custom outfit</p>
+                                <button class="app-btn app-btn-primary w-100" id="buildManuallyBtn" data-bs-dismiss="modal">
+                                    Start Building
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="create-option">
+                                <div class="create-option-icon">
+                                    <i class="bi bi-magic"></i>
+                                </div>
+                                <h4 class="create-option-title">AI Suggestion</h4>
+                                <p class="create-option-desc">Get outfit suggestions based on occasion and weather</p>
+                                <button class="app-btn app-btn-primary w-100" id="aiSuggestionBtn" data-bs-dismiss="modal">
+                                    Get Suggestions
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+    <script type="module" src="src/js/utils.js"></script>
+    <script type="module" src="src/js/pages/outfit.js"></script>
+</body>
+</html>

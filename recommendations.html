@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/css/variables.css">
+    <link rel="stylesheet" href="src/css/base.css">
+    <link rel="stylesheet" href="src/css/components.css">
+    <link rel="stylesheet" href="src/css/layout.css">
+    <link rel="stylesheet" href="src/css/pages/recommendations.css">
+</head>
+<body data-bs-theme="light" data-page="recommendations"> 
+    <nav class="navbar fixed-top">
+        <div class="container">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list fs-3"></i>
+            </button>
+            <a href="dashboard.html" class="navbar-brand">Smart Wardrobe</a>
+            <div class="d-flex align-items-center">
+                <button id="themeSwitcher" class="btn btn-link text-decoration-none">
+                    <i class="bi bi-sun-fill theme-icon-light"></i>
+                    <i class="bi bi-moon-fill theme-icon-dark d-none"></i>
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-link text-decoration-none dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://placehold.co/32x32/f9fafb/6366f1?text=AM" alt="User" class="rounded-circle">
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="settings.html">Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="login.html">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sideMenu" aria-labelledby="sideMenuLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sideMenuLabel">Smart Wardrobe</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="dashboard.html" class="nav-link">
+                        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="wardrobe.html" class="nav-link">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>My Wardrobe
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="outfit.html" class="nav-link">
+                        <i class="bi bi-layers me-2"></i>Outfits
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="recommendations.html" class="nav-link active">
+                        <i class="bi bi-lightbulb me-2"></i>Recommendations
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="settings.html" class="nav-link">
+                        <i class="bi bi-gear me-2"></i>Settings
+                    </a>
+                </li>
+                <li class="nav-item mt-4">
+                    <a href="login.html" class="btn btn-outline-primary w-100">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <main class="main-content">
+        <div class="container py-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Style Recommendations</h1>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" id="refreshRecommendations"> 
+                        <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Recommendation Preferences</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="occasionFilter" class="form-label">Occasion</label>
+                            <select class="form-select" id="occasionFilter">
+                                <option value="casual">Casual</option>
+                                <option value="work">Work</option>
+                                <option value="formal">Formal</option>
+                                <option value="sport">Sport</option>
+                                <option value="any" selected>Any</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="weatherFilter" class="form-label">Weather</label>
+                            <select class="form-select" id="weatherFilter">
+                                <option value="current" selected>Current (18, Sunny)</option>
+                                <option value="cold">Cold</option>
+                                <option value="warm">Warm</option>
+                                <option value="hot">Hot</option>
+                                <option value="rainy">Rainy</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="styleFilter" class="form-label">Style</label>
+                            <select class="form-select" id="styleFilter">
+                                <option value="casual">Casual</option>
+                                <option value="business">Business</option>
+                                <option value="streetwear">Streetwear</option>
+                                <option value="minimalist" selected>Minimalist</option>
+                                <option value="any">Any</option>
+                            </select>
+                        </div>
+                        <div class="col-12 d-flex justify-content-end">
+                            <button class="btn btn-outline-primary" id="applyFilter">Apply Filters</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h2 class="h5 mb-3">Todays Reccommendations</h2>
+            <div class="row g-4 mb-5">
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 recommendation-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">Work</span>
+                            <span class="text-muted small">All items Available</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="outfit-preview mb-3">
+                                <img src="https://placehold.co/600x400/f9fafb/6366f1?text=Outfit+Preview" alt="Outfit Preview" class="img-fluid rounded">
+                            </div>
+                            <h5 class="card-title">Business Casual</h5>
+                            <p class="card-text text-muted">Good Match for: meeting with marketing team today at 9:30am</p>
+                            <div class="outfit-items">
+                                <div class="outfit-item d-flex align-items-center mb-2">
+                                    <div class="outfit-item-color bg-primary"></div>
+                                    <span>Navy Blazer</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                                <div class="outfit-item d-flex align-items-center mb-2">
+                                    <div class="outfit-item-color bg-light"></div>
+                                    <span>White Button-Down Shirt</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                                 <div class="outfit-item d-flex align-items-center mb-2">
+                                    <div class="outfit-item-color" style="background-color: #a0a0a0;"></div>
+                                    <span>Gray Slacks</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                                <div class="outfit-item d-flex align-items-center">
+                                    <div class="outfit-item-color" style="background-color: #5e3b28;"></div>
+                                    <span>Brown Leather Shoes</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button class="btn btn-sm btn-outline-primary">Save Outfit</button>
+                            <button class="btn btn-sm btn-primary">Wear Today</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 recommendation-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-info">Casual</span>
+                            <span class="text-warning small">1 item unavailable</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="outfit-preview mb-3">
+                                <img src="https://placehold.co/600x400/f9fafb/6366f1?text=Outfit+Preview" alt="Outfit Preview" class="img-fluid rounded">
+                            </div>
+                            <h5 class="card-title">Weekend Casual</h5>
+                            <p class="card-text text-muted">Comfortable stylish for: Weekend Trip at Lake House.</p>
+                            <div class="outfit-items">
+                                <div class="outfit-item d-flex align-items-center mb-2">
+                                    <div class="outfit-item-color" style="background-color: #3b5998;"></div>
+                                    <span>Blue Denim Jacket</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                                <div class="outfit-item d-flex align-items-center mb-2">
+                                    <div class="outfit-item-color" style="background-color: #f5f5f5;"></div>
+                                    <span>White T-Shirt</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                                <div class="outfit-item d-flex align-items-center mb-2">
+                                    <div class="outfit-item-color" style="background-color: #333333;"></div>
+                                    <span>Black Jeans</span>
+                                    <span class="ms-auto badge bg-secondary">Not in Wardrobe</span>
+                                </div>
+                                <div class="outfit-item d-flex align-items-center">
+                                    <div class="outfit-item-color" style="background-color: #ffffff;"></div>
+                                    <span>White Sneakers</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button class="btn btn-sm btn-outline-primary">Save Outfit</button>
+                            <button class="btn btn-sm btn-primary">Wear Today</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 recommendation-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-success">Sport</span>
+                            <span class="text-muted small">All items available</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="outfit-preview mb-3">
+                                <img src="https://placehold.co/600x400/f9fafb/6366f1?text=Outfit+Preview" alt="Outfit Preview" class="img-fluid rounded">
+                            </div>
+                            <h5 class="card-title">Workout Ready</h5>
+                            <p class="card-text text-muted">Perfect match for: evening gym session.</p>
+                            <div class="outfit-items">
+                                <div class="outfit-item d-flex align-items-center mb-2">
+                                    <div class="outfit-item-color" style="background-color: #222222;"></div>
+                                    <span>Black Performance Tee</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                                <div class="outfit-item d-flex align-items-center mb-2">
+                                    <div class="outfit-item-color" style="background-color: #444444;"></div>
+                                    <span>Gray Athletic Shorts</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                                <div class="outfit-item d-flex align-items-center mb-2">
+                                    <div class="outfit-item-color" style="background-color: #ff4500;"></div>
+                                    <span>Orange Running Shoes</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                                <div class="outfit-item d-flex align-items-center">
+                                    <div class="outfit-item-color" style="background-color: #000000;"></div>
+                                    <span>Black Athletic Socks</span>
+                                    <span class="ms-auto badge bg-success">In Wardrobe</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button class="btn btn-sm btn-outline-primary">Save Outfit</button>
+                            <button class="btn btn-sm btn-primary">Wear Today</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h2 class="h5 mb-3">Your Style Insights</h2>
+            <div class="row g-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Most Worn Colors</h5>
+                        <div class="color-chart">
+                            <div class="color-bar-container">
+                                <div class="color-label">Navy</div>
+                                <div class="color-bar-wrapper">
+                                    <div class="color-bar" style="width: 85%; background: #0a192f;"></div>
+                                </div>
+                                <div class="color-percentage">85%</div>
+                            </div>
+                            <div class="color-bar-container">
+                                <div class="colo-label">White</div>
+                                <div class="color-bar-wrapper">
+                                    <div class="color-bar" style="width: 70%; background-color: #ffffff; border: 1px solid #e0e0e0;"></div>
+                                </div>
+                                <div class="color-percentage">70%</div>
+                            </div>
+                            <div class="color-bar-container">
+                                <div class="color-label">Gray</div>
+                                <div class="color-bar-wrapper">
+                                    <div class="color-bar" style="width: 65%; background-color: #a0a0a0;"></div>
+                                </div>
+                                <div class="color-percentage">60%</div>
+                            </div>
+                            <div class="color-bar-container">
+                                <div class="color-label">Blue</div>
+                                <div class="color-bar-wrapper">
+                                    <div class="color-bar" style="width: 45%; background-color: #3b5998;"></div>
+                                </div>
+                                <div class="color-percentage">45%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Style Preferences</h5>
+                            <div class="style-preferences">
+                                <div class="style-preference">
+                                    <div class="style-name">Minimalist</div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">80%</div>
+                                    </div>
+                                </div>
+                                <div class="style-preference">
+                                    <div class="style-name">Business Casual</div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">65%</div>
+                                    </div>
+                                </div>
+                                <div class="style-preference">
+                                    <div class="style-name">Athletic</div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 45%;" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">45%</div>
+                                    </div>
+                                </div>
+                                <div class="style-preference">
+                                    <div class="style-name">Streetwear</div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
+                                    </div>
+                                </div>
+                                <div class="style-preference">
+                                    <div class="style-name">Formal</div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: 15%;" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">15%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/js/utils.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+    <script module="type" src="src/js/pages/recommendations.js"></script>
+</body>
+</html>

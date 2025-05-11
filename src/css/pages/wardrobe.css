@@ -6,7 +6,6 @@
 {
     margin-bottom: 3rem;
 }
-
 .empty-state
 {
     display:flex;
@@ -39,7 +38,7 @@
 }
 .items-details-panel
 {
-    postion:fixed;
+    position:fixed;
     top: 0;
     right: 0;
     width: 400px;
