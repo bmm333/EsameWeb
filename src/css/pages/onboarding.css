@@ -257,3 +257,8 @@
   align-items: center;
   justify-content: center;
 }
+.step-indicators {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+}
