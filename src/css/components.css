@@ -622,7 +622,7 @@ for a better ux also. Also in this ver better naming and more consistence */
   margin-bottom: 0.5rem;
 }
 .form-check-input:checked{
-  background-color: var(--primary);
+  background-color: limegreen;
   border-color: var(--primary);
 }
 [data-bs-theme="dark"] .action-btn{
@@ -662,4 +662,9 @@ for a better ux also. Also in this ver better naming and more consistence */
     width: 100%;
     justify-content: flex-end;
   }
+}
+.form-switch .form-check-input:not(:checked)
+{
+  background-color: rgb(216, 216, 216);
+  opacity: 1;
 }
