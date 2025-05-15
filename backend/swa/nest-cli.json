@@ -1,6 +1,3 @@
 {
-  "$schema": "https://json.schemastore.org/nest-cli",
-  "language": "js",
-  "collection": "@nestjs/schematics",
-  "sourceRoot": "src"
+    "language":"js"
 }
