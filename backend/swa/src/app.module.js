@@ -8,9 +8,10 @@ import { ItemModule } from './item/item.module';
 import { OutfitModule } from './outfit/outfit.module';
 import { NotificationModule } from './notification/notification.module';
 import { RfidModule } from './rfid/rfid.module';
+import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, ItemModule, OutfitModule, NotificationModule, RfidModule],
+  imports: [UsersModule, AuthModule, ItemModule, OutfitModule, NotificationModule, RfidModule, UserModule],
   controllers: [AppController, UsersController],
   providers: [AppService],
 })

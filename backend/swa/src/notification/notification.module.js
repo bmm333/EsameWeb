@@ -7,4 +7,3 @@ import { NotificationService } from './notification.service';
   providers: [NotificationService]
 })
 export class NotificationModule {}
-/*Testing credentials */
