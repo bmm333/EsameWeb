@@ -8,15 +8,30 @@ import { NotificationModule } from './notification/notification.module';
 import { RfidModule } from './rfid/rfid.module';
 import { UserModule } from './user/user.module';
 import { LoggerMiddleware} from './common/middleware/logger.middleware';
+import { UserController } from './user/user.controller';
+import { APP_PIPE } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 
 @Module({
   imports: [UserModule,AuthModule, ItemModule, OutfitModule, NotificationModule, RfidModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,{
+      provide: APP_PIPE,
+      useFactory: () => {
+        return new ValidationPipe({
+          transform: true,
+          whitelist: true,
+          forbidNonWhitelisted: true,
+          disableErrorMessages: false
+        });
+      }
+    }
+  ],
 })
 export class AppModule {
- /* configure(consumer)
+ configure(consumer)
   {
-    consumer.apply(LoggerMiddleware).forRoutes(aroutewillgohere);
-  }*/
+    consumer.apply(LoggerMiddleware).forRoutes(UserController);
+  }
 }
