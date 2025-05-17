@@ -1,28 +1,34 @@
-const {Column,Entity,PrimaryGeneratedColumn} =require('typeorm');
+import 'reflect-metadata';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity()
-class User{
-    @PrimaryGeneratedColumn()
-    id;
-    @Column({type:'varchar',unique:true})
-    email;
-    @Column({type:'varchar'})
-    passwordHash;
-    @Column({type:'varchar'})
-    name;
-    @Column({default:false,type:'boolean'})
-    isVerfied;
-    @Column({type:'varchar',nullable:true})
-    verificationToken;
-    @Column({default:true,type:'boolean'})
-    isTrial;
-    @Column({type:'date',nullable:true})
-    trialStartDate;
-    @Column({type:'date',nullable:true})
-    trialEndDate;
-    @Column({type:'integer',default:0})
-    apiCallCount;
-    @Column({type:'integer',default:100})
-    apiCallLimit; // <-- Rule's that will be applied to trial users only 
+@Entity('user')
+export class User {
+  @PrimaryGeneratedColumn()
+  id;
+
+  @Column({ type: 'varchar' })
+  firstName;
+
+  @Column({ type: 'varchar' })
+  lastName;
+
+  @Column({ type: 'varchar' })
+  email;
+
+  @Column({ type: 'varchar' })
+  password;
+
+  @Column({ type: 'boolean' })
+  isVerified;
+
+  @Column({ type: 'timestamp' })
+  createdAt;
+
+  @Column({ type: 'timestamp' })
+  updatedAt;
+
+  constructor(partial = {}) {
+    this.isVerified = false;
+    Object.assign(this, partial);
+  }
 }
-module.exports = User;

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -7,31 +8,27 @@ import { OutfitModule } from './outfit/outfit.module';
 import { NotificationModule } from './notification/notification.module';
 import { RfidModule } from './rfid/rfid.module';
 import { UserModule } from './user/user.module';
-import { LoggerMiddleware} from './common/middleware/logger.middleware';
-import { UserController } from './user/user.controller';
-import { APP_PIPE } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationMiddleware } from './common/middleware/validation.middleware';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { dataSourceOptions } from './common/config/database.config';
 
 @Module({
-  imports: [UserModule,AuthModule, ItemModule, OutfitModule, NotificationModule, RfidModule],
-  controllers: [AppController],
-  providers: [
-    AppService,{
-      provide: APP_PIPE,
-      useFactory: () => {
-        return new ValidationPipe({
-          transform: true,
-          whitelist: true,
-          forbidNonWhitelisted: true,
-          disableErrorMessages: false
-        });
-      }
-    }
+  imports: [
+    TypeOrmModule.forRoot(dataSourceOptions),
+    UserModule,
+    AuthModule,
+    ItemModule,
+    OutfitModule,
+    NotificationModule,
+    RfidModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {
- configure(consumer)
-  {
-    consumer.apply(LoggerMiddleware).forRoutes(UserController);
+  configure(consumer) {
+    consumer
+      .apply(LoggerMiddleware, ValidationMiddleware)
+      .forRoutes('user');
   }
 }
