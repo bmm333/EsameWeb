@@ -1,13 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import User from './entities/user.entity';
+import {Injectable} from '@nestjs/common';
+
 
 @Injectable()
-export class UserService {
-    constructor(
-        @InjectRepository(User)
-        userRepository,
-    ){
-        this.userRepository=userRepository;
+export class UserService{
+    findOneById(id)
+    {
+        return {id,name:'User'+id};
     }
 }
-module.exports=UserService;

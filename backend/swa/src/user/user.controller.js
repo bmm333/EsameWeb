@@ -1,15 +1,13 @@
-import { Controller } from '@nestjs/common';
-const UserService=require('./user.service');
+import { Controller, Get, Param, Bind } from '@nestjs/common';
+import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
-    constructor(userService)
-    {
-        this.userService=userService;
-    }
-    @Get(':id')
-    async findOne(@Parm('id')id)
-    {
-        return this.userService.findOneById(praseInt(id,10));
-    }
+  constructor(userService) {}
+
+  @Get(':id')
+  @Bind(Param('id'))
+  async findOne(id) {
+    return this.userService.findOneById(parseInt(id, 10));
+  }
 }

@@ -4,25 +4,25 @@ const {Column,Entity,PrimaryGeneratedColumn} =require('typeorm');
 class User{
     @PrimaryGeneratedColumn()
     id;
-    @Column({unique:true})
+    @Column({type:'varchar',unique:true})
     email;
-    @Column()
+    @Column({type:'varchar'})
     passwordHash;
-    @Column()
+    @Column({type:'varchar'})
     name;
-    @Column({default:false})
+    @Column({default:false,type:'boolean'})
     isVerfied;
-    @Column({nullable:true})
+    @Column({type:'varchar',nullable:true})
     verificationToken;
-    @Column({default:true})
+    @Column({default:true,type:'boolean'})
     isTrial;
     @Column({type:'date',nullable:true})
     trialStartDate;
     @Column({type:'date',nullable:true})
     trialEndDate;
-    @Column({default:0})
+    @Column({type:'integer',default:0})
     apiCallCount;
-    @Column({default:100})
+    @Column({type:'integer',default:100})
     apiCallLimit; // <-- Rule's that will be applied to trial users only 
 }
 module.exports = User;
