@@ -3,10 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
-class UserServiceClass {
-  constructor(userRepository) {
-    this.userRepository = userRepository;
-  }
+
+@Injectable()
+export class UserService {
+  constructor(
+    @InjectRepository(User)
+     userRepository
+) {}
+
   async findAll() {
     return this.userRepository.find({
       select: ['id', 'firstName', 'lastName', 'email', 'isVerified', 'createdAt', 'updatedAt']
@@ -118,4 +122,3 @@ class UserServiceClass {
 Injectable()(UserServiceClass);
 //injecting the User repository
 InjectRepository(User)(UserServiceClass, 'constructor', 0);
-export const UserService = UserServiceClass;
