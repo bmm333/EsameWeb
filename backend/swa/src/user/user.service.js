@@ -1,14 +1,13 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, BadRequestException, NotFoundException,Inject } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectRepository(User)
-     userRepository
-) {}
+  constructor() {
+    this.userRepository = userRepository;
+  }
 
   async findAll() {
     return this.userRepository.find({
@@ -117,7 +116,4 @@ export class UserService {
   }
 }
 
-//Marking class as provider
-Injectable()(UserServiceClass);
-//injecting the User repository
-InjectRepository(User)(UserServiceClass, 'constructor', 0);
+Inject(getRepositoryToken(User))(UserService, undefined, 0);
