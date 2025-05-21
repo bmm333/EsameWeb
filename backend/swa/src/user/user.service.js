@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
-  constructor() {
+  constructor(@Inject(getRepositoryToken(User)) userRepository) {
     this.userRepository = userRepository;
   }
 

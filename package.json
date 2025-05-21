@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.27.1",
+    "babel-plugin-transform-typescript-metadata": "^0.3.2",
     "bcrypt": "^6.0.0"
   }
 }
