@@ -9,7 +9,10 @@ export class AuthService {
   constructor(
     userService,
     jwtService,
-  ) {}
+  ) {
+    this.userService=userService;
+    this.jwtService=jwtService;
+  }
 
   async validateUser(email,password)
   {
@@ -34,9 +37,7 @@ export class AuthService {
       lastName:user.lastName
     };
     return {
-      access_token:this.jwtService.sing(payload),
+      access_token:this.jwtService.sign(payload),
     }
   }
-
-
 }
