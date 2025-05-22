@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDTO } from './dto/create-user.dto';
+import {JwtAuthGuard} from "../auth/guards/jwt-auth.guard";
 
 @Controller('user')
 @Dependencies(UserService)

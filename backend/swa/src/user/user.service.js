@@ -115,5 +115,3 @@ export class UserService {
     }
   }
 }
-
-Inject(getRepositoryToken(User))(UserService, undefined, 0);
