@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { IsString, IsEmail, MinLength, IsDefined } from 'class-validator';
+import { IsString, IsEmail, MinLength, IsDefined, IsOptional, IsBoolean, IsDateString } from 'class-validator';
 
 export class CreateUserDTO {
   @IsDefined({ message: 'First name is required' })
@@ -21,10 +21,20 @@ export class CreateUserDTO {
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   password;
 
+  @IsOptional()
+  @IsBoolean({ message: 'Trial must be a boolean value' })
+  trial;
+
+  @IsOptional()
+  @IsDateString({}, { message: 'Trial expiration must be a valid date' })
+  trialExpires;
+
   constructor(data = {}) {
     this.firstName = data.firstName;
     this.lastName = data.lastName;
     this.email = data.email;
     this.password = data.password;
+    this.trial = data.trial !== undefined ? data.trial : true; //def to trial
+    this.trialExpires = data.trialExpires;
   }
 }

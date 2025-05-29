@@ -33,6 +33,13 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   resetPasswordExpires;
 
+  // Trial user management
+  @Column({ type: 'boolean', default: true })
+  trial; // New users start as trial by default
+
+  @Column({ type: 'timestamp', nullable: true })
+  trialExpires; // When the trial period ends
+
   // this fileds are needed for social login
   @Column({ type: 'varchar', nullable: true })
   googleId; // Google's unique ID for the user
@@ -53,6 +60,10 @@ export class User {
   setCreatedAt() {
     this.createdAt = new Date();
     this.updatedAt = new Date();
+    //will see how long should trial be , adjusting it later on for the exam presentation
+   if (!this.trialExpires && this.trial) {
+      this.trialExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    }
   }
 
   @BeforeUpdate()
@@ -63,10 +74,16 @@ export class User {
   constructor(partial = {}) {
     this.isVerified = false;
     this.provider = 'local';
+    this.trial = true;
     Object.assign(this, partial);
   }
 
-  // Helper method to create a safe user object without sensitive data
+  isTrialExpired() {
+    if (!this.trial) return false;
+    if (!this.trialExpires) return false;
+    return new Date() > this.trialExpires;
+  }
+
   toJSON() {
     const { password, verificationToken, resetPasswordToken, ...safeUser } = this;
     return safeUser;
