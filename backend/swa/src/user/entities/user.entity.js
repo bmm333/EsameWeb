@@ -62,7 +62,7 @@ export class User {
     this.updatedAt = new Date();
     //will see how long should trial be , adjusting it later on for the exam presentation
    if (!this.trialExpires && this.trial) {
-      this.trialExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      this.trialExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days tried with this.trialExpires = new Date(Date.now() + 10*60*100);
     }
   }
 
