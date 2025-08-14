@@ -1,40 +1,58 @@
 import 'reflect-metadata';
-import { IsString, IsEmail, MinLength, IsDefined, IsOptional, IsBoolean, IsDateString } from 'class-validator';
+import { 
+  IsString, 
+  IsEmail, 
+  MinLength, 
+  IsDefined, 
+  IsOptional, 
+  IsBoolean, 
+  IsDateString,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+  IsPhoneNumber,
+  Matches
+} from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
-export class CreateUserDTO {
+export class CreateUserDto {
   @IsDefined({ message: 'First name is required' })
   @IsString({ message: 'First name must be a string' })
   @MinLength(1, { message: 'First name cannot be empty' })
+  @Transform(({ value }) => value?.trim())
   firstName;
 
-  @IsDefined({ message: 'Last name is required' })
+  @IsOptional()
   @IsString({ message: 'Last name must be a string' })
-  @MinLength(1, { message: 'Last name cannot be empty' })
+  @Transform(({ value }) => value?.trim() || '')
   lastName;
 
   @IsDefined({ message: 'Email is required' })
   @IsEmail({}, { message: 'Email must be valid' })
+  @Transform(({ value }) => value?.toLowerCase().trim())
   email;
 
   @IsDefined({ message: 'Password is required' })
   @IsString({ message: 'Password must be a string' })
-  @MinLength(6, { message: 'Password must be at least 6 characters long' })
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+    message: 'Password must contain at least one lowercase letter, one uppercase letter, and one number'
+  })
   password;
 
   @IsOptional()
-  @IsBoolean({ message: 'Trial must be a boolean value' })
-  trial;
+  @IsPhoneNumber('ZZ', { message: 'Invalid phone number format' })
+  phoneNumber;
 
   @IsOptional()
-  @IsDateString({}, { message: 'Trial expiration must be a valid date' })
-  trialExpires;
+  @IsDateString({}, { message: 'Date of birth must be a valid date' })
+  dateOfBirth;
+
+  @IsOptional()
+  @IsEnum(['male', 'female'])
+  gender;
 
   constructor(data = {}) {
-    this.firstName = data.firstName;
-    this.lastName = data.lastName;
-    this.email = data.email;
-    this.password = data.password;
-    this.trial = data.trial !== undefined ? data.trial : true; //def to trial
-    this.trialExpires = data.trialExpires;
+    Object.assign(this, data);
   }
 }

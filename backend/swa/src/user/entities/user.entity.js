@@ -1,23 +1,129 @@
 import 'reflect-metadata';
-import { Entity, Column, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
 @Entity('user')
 export class User {
   @PrimaryGeneratedColumn()
   id;
 
-  @Column({ type: 'varchar' })
+  // Basic Profile Information
+  @Column({ type: 'varchar', length: 50 })
   firstName;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', length: 50 })
   lastName;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true })
   email;
 
-  @Column({ type: 'varchar', nullable: true })
-  password; // Nullable bcs we will add  social login users
+  @Column({ type: 'varchar' })
+  password;
 
+  @Column({ type: 'varchar', length: 15, nullable: true })
+  phoneNumber;
+
+  @Column({ type: 'date', nullable: true })
+  dateOfBirth;
+
+  @Column({ 
+    type: 'enum', 
+    enum: ['male', 'female'], 
+    nullable: true 
+  })
+  gender;
+
+  // Wardrobe & Style Preferences
+  @Column({ type: 'json', nullable: true })
+  stylePreferences; // ['casual', 'formal', 'business', 'sporty', 'trendy', 'classic']
+
+  @Column({ type: 'json', nullable: true })
+  colorPreferences; // ['black', 'white', 'blue', 'red', etc.]
+
+  @Column({ type: 'json', nullable: true })
+  favoriteShops; // ['Zara', 'H&M', 'Nike', etc.]
+
+  @Column({ type: 'json', nullable: true })
+  sizes; // { tops: 'M', bottoms: '32', shoes: '9' }
+
+  @Column({ 
+    type: 'enum', 
+    enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], 
+    nullable: true 
+  })
+  primarySize;
+
+  // Physical Characteristics
+
+  @Column({ 
+    type: 'enum', 
+    enum: ['cool', 'warm', 'neutral'], 
+    nullable: true 
+  })
+  skinTone;
+
+  // Lifestyle & Occasions
+  @Column({ type: 'json', nullable: true })
+  lifestyle; // ['work-from-home', 'office-worker', 'student', 'parent', 'traveler']
+
+  @Column({ type: 'json', nullable: true })
+  occasions; // ['work', 'casual', 'formal-events', 'gym', 'travel']
+
+  @Column({ 
+    type: 'enum', 
+    enum: ['conservative', 'moderate', 'bold'], 
+    default: 'moderate' 
+  })
+  riskTolerance;
+
+
+  @Column({ type: 'boolean', default: false })
+  sustainabilityFocus;
+
+  @Column({ type: 'json', nullable: true })
+  avoidMaterials; // ['wool', 'leather', 'synthetic']
+
+  // Climate & Location
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  location;
+
+  @Column({ 
+    type: 'enum', 
+    enum: ['tropical', 'temperate', 'cold', 'arid'], 
+    nullable: true 
+  })
+  climate;
+
+  // Smart Wardrobe Features
+  @Column({ type: 'boolean', default: true })
+  enableRecommendations;
+
+  @Column({ type: 'boolean', default: true })
+  enableWeatherNotifications;
+
+  @Column({ type: 'boolean', default: false })
+  enableOutfitReminders;
+
+  @Column({ type: 'time', nullable: true })
+  morningNotificationTime;
+
+  // Subscription & Trial
+  @Column({ type: 'boolean', default: true })
+  trial;
+
+  @Column({ type: 'timestamp', nullable: true })
+  trialExpires;
+
+  @Column({ 
+    type: 'enum', 
+    enum: ['free', 'premium', 'pro'], 
+    default: 'free' 
+  })
+  subscriptionTier;
+
+  @Column({ type: 'timestamp', nullable: true })
+  subscriptionExpires;
+
+  // Account Status
   @Column({ type: 'boolean', default: false })
   isVerified;
 
@@ -33,59 +139,31 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   resetPasswordExpires;
 
-  // Trial user management
-  @Column({ type: 'boolean', default: true })
-  trial; // New users start as trial by default
-
-  @Column({ type: 'timestamp', nullable: true })
-  trialExpires; // When the trial period ends
-
-  // this fileds are needed for social login
+  // OAuth & External Auth
   @Column({ type: 'varchar', nullable: true })
-  googleId; // Google's unique ID for the user
+  googleId;
 
-  @Column({ type: 'varchar', default: 'local' })
-  provider; // 'local', 'google', etc.
+  @Column({ 
+    type: 'enum', 
+    enum: ['local', 'google'], 
+    default: 'local' 
+  })
+  provider;
 
   @Column({ type: 'varchar', nullable: true })
   profilePicture;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  // Privacy Settings
+  @Column({ type: 'json', nullable: true })
+  privacySettings;
+
+  // Timestamps
+  @CreateDateColumn()
   createdAt;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn()
   updatedAt;
 
-  @BeforeInsert()
-  setCreatedAt() {
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
-    //will see how long should trial be , adjusting it later on for the exam presentation
-   if (!this.trialExpires && this.trial) {
-      this.trialExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days tried with this.trialExpires = new Date(Date.now() + 10*60*100);
-    }
-  }
-
-  @BeforeUpdate()
-  setUpdatedAt() {
-    this.updatedAt = new Date();
-  }
-
-  constructor(partial = {}) {
-    this.isVerified = false;
-    this.provider = 'local';
-    this.trial = true;
-    Object.assign(this, partial);
-  }
-
-  isTrialExpired() {
-    if (!this.trial) return false;
-    if (!this.trialExpires) return false;
-    return new Date() > this.trialExpires;
-  }
-
-  toJSON() {
-    const { password, verificationToken, resetPasswordToken, ...safeUser } = this;
-    return safeUser;
-  }
+  @Column({ type: 'timestamp', nullable: true })
+  lastLoginAt;
 }

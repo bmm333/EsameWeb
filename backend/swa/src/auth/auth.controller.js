@@ -1,17 +1,14 @@
-// backend/swa/src/auth/auth.controller.js
-import { Bind, Body, Controller, Dependencies, HttpCode, HttpStatus, Post, UseGuards, Request } from '@nestjs/common';
+import { Bind, Body, Controller, Dependencies, HttpCode, HttpStatus, Post, UseGuards, Request, Get, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { UserService } from '../user/user.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 @Dependencies(AuthService)
-@Dependencies(UserService)
 export class AuthController {
-  constructor(authService, userService) {
+  constructor(authService) {
     this.authService = authService;
-    this.userService = userService;
   }
 
   @UseGuards(LocalAuthGuard)
@@ -20,13 +17,55 @@ export class AuthController {
   @Bind(Request(), Body())
   async login(req, loginDto) {
     const dto = new LoginDto(loginDto);
-
     return this.authService.login(req.user);
   }
 
   @Post('register')
   @Bind(Body())
-  async register(createUserDto) {
-    return this.userService.create(createUserDto);
+  async register(signupData) {
+    return this.authService.signup(signupData);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  @Bind(Request(), Res())
+  async logout(req, res) {
+    const token = this.extractTokenFromRequest(req);
+    const result = await this.authService.logout(token);
+
+    // Set no-cache headers bcs of security reasons
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    return res.json(result);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  @Bind(Request())
+  async getProfile(req) {
+    return req.user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('verify')
+  @Bind(Request(), Res())
+  async verifyToken(req, res) {
+    // Set no-cache headers for auth verification
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    return res.json({ valid: true, user: req.user });
+  }
+
+  extractTokenFromRequest(request) {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
   }
 }

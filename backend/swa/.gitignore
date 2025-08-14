@@ -386,6 +386,9 @@ Temporary Items
 .apdisk
 
 =======
-# Local
+# Local Env
 dokcer-compose.yml
 .env
+.env.local
+.env.development
+.env.production

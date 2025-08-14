@@ -10,7 +10,7 @@ import { RfidModule } from './rfid/rfid.module';
 import { UserModule } from './user/user.module';
 import { ValidationMiddleware } from './common/middleware/validation.middleware';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
-import { dataSourceOptions } from './common/config/database.config';
+import { dataSourceOptions } from '../database.config.js';
 
 @Module({
   imports: [
