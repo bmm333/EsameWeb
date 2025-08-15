@@ -104,22 +104,25 @@ export class UserService {
       trialExpires.setDate(trialExpires.getDate() + 30);
 
       const newUser = this.userRepository.create({
-        firstName: dto.firstName,
-        lastName: dto.lastName || '',
-        email: dto.email,
-        password: hashedPassword,
-        phoneNumber: dto.phoneNumber,
-        dateOfBirth: dto.dateOfBirth,
-        gender: dto.gender,
-        trial: true,
-        trialExpires,
-        subscriptionTier: 'free',
-        enableRecommendations: true,
-        enableWeatherNotifications: true,
-        riskTolerance: 'moderate',
-        provider: 'local',
-        isVerified: false
-      });
+      firstName: userData.firstName,
+      lastName: userData.lastName || '',
+      email: userData.email,
+      password: userData.password,
+      phoneNumber: userData.phoneNumber,
+      dateOfBirth: userData.dateOfBirth,
+      gender: userData.gender,
+      verificationToken: userData.verificationToken,
+      verificationTokenExpires: userData.verificationTokenExpires,
+      passwordChangedAt: userData.passwordChangedAt,
+      trial: true,
+      trialExpires,
+      subscriptionTier: 'free',
+      enableRecommendations: true,
+      enableWeatherNotifications: true,
+      riskTolerance: 'moderate',
+      provider: 'local',
+      isVerified: false
+    });
 
       const savedUser = await this.userRepository.save(newUser);
       
@@ -206,6 +209,67 @@ export class UserService {
       throw new BadRequestException('Error updating user preferences');
     }
   }
+  async updateUserRecord(userId, updateData) {
+  try {
+    await this.userRepository.update(userId, {
+      ...updateData,
+      updatedAt: new Date()
+    });
+    return this.findOneById(userId);
+  } catch (error) {
+    console.error(`Error updating user record ${userId}:`, error);
+    throw new BadRequestException('Error updating user record');
+  }
+}
+async updateLastLogin(userId) {
+  try {
+    await this.userRepository.update(userId, { 
+      lastLoginAt: new Date() 
+    });
+  } catch (error) {
+    console.error(`Error updating last login for user ${userId}:`, error);
+  }
+}
+async verifyUser(userId) {
+  try {
+    await this.userRepository.update(userId, {
+      isVerified: true,
+      verificationToken: null,
+      verificationTokenExpires: null,
+      updatedAt: new Date()
+    });
+    return this.findOneById(userId);
+  } catch (error) {
+    console.error(`Error verifying user ${userId}:`, error);
+    throw new BadRequestException('Error verifying user');
+  }
+}
+
+async setVerificationToken(userId, token, expires) {
+  try {
+    await this.userRepository.update(userId, {
+      verificationToken: token,
+      verificationTokenExpires: expires,
+      updatedAt: new Date()
+    });
+  } catch (error) {
+    console.error(`Error setting verification token for user ${userId}:`, error);
+    throw new BadRequestException('Error setting verification token');
+  }
+}
+
+async setResetPasswordToken(userId, token, expires) {
+  try {
+    await this.userRepository.update(userId, {
+      resetPasswordToken: token,
+      resetPasswordExpires: expires,
+      updatedAt: new Date()
+    });
+  } catch (error) {
+    console.error(`Error setting reset password token for user ${userId}:`, error);
+    throw new BadRequestException('Error setting reset password token');
+  }
+}
 
   async updateNotificationSettings(userId, settings) {
     try {
@@ -227,6 +291,44 @@ export class UserService {
       }
       console.error(`Error updating notification settings for user ${userId}:`, error);
       throw new BadRequestException('Error updating notification settings');
+    }
+  }  
+  async findByVerificationToken(token) {
+    try {
+      return await this.userRepository.findOne({
+        where: { verificationToken: token }
+      });
+    } catch (error) {
+      console.error(`Error finding user by verification token:`, error);
+      return null;
+    }
+  }
+  
+  async findByResetToken(token) {
+    try {
+      return await this.userRepository.findOne({
+        where: { resetPasswordToken: token }
+      });
+    } catch (error) {
+      console.error(`Error finding user by reset token:`, error);
+      return null;
+    }
+  }
+  
+  async updatePassword(userId, hashedPassword) {
+    try {
+      await this.userRepository.update(userId, {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+        passwordChangedAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      return this.findOneById(userId);
+    } catch (error) {
+      console.error(`Error updating password for user ${userId}:`, error);
+      throw new BadRequestException('Error updating password');
     }
   }
 }

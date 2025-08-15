@@ -63,6 +63,37 @@ export class AuthController {
     
     return res.json({ valid: true, user: req.user });
   }
+  
+  @Post('verify-email')
+  @Bind(Body())
+  async verifyEmail({ token }) {
+    return this.authService.verifyEmail(token);
+  }
+  
+  @Post('resend-verification')
+  @Bind(Body())
+  async resendVerification({ email }) {
+    return this.authService.resendVerificationEmail(email);
+  }
+  
+  @Post('forgot-password')
+  @Bind(Body())
+  async forgotPassword({ email }) {
+    return this.authService.requestPasswordReset(email);
+  }
+  
+  @Post('reset-password')
+  @Bind(Body())
+  async resetPassword({ token, newPassword }) {
+    return this.authService.resetPassword(token, newPassword);
+  }
+  
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @Bind(Request(), Body())
+  async changePassword(req, { currentPassword, newPassword }) {
+    return this.authService.changePassword(req.user.sub, currentPassword, newPassword);
+  }
 
   extractTokenFromRequest(request) {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];

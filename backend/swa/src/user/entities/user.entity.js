@@ -31,6 +31,31 @@ export class User {
     nullable: true 
   })
   gender;
+  @Column({ type: 'boolean', default: false })
+  isVerified;
+
+  @Column({ type: 'varchar', nullable: true })
+  verificationToken;
+
+  @Column({ type: 'timestamp', nullable: true })
+  verificationTokenExpires;
+
+  // Password Reset Fields
+  @Column({ type: 'varchar', nullable: true })
+  resetPasswordToken;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetPasswordExpires;
+
+  // Password Security
+  @Column({ type: 'timestamp', nullable: true })
+  passwordChangedAt;
+
+  @Column({ type: 'integer', default: 0 })
+  failedLoginAttempts;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lockedUntil;
 
   // Wardrobe & Style Preferences
   @Column({ type: 'json', nullable: true })
