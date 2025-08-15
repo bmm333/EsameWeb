@@ -7,7 +7,7 @@ import {
   IsObject,
   IsString,
   ValidateNested,
-  IsTimeString
+  Matches
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -113,7 +113,10 @@ export class UserProfileSetupDto {
   enableOutfitReminders;
 
   @IsOptional()
-  @IsTimeString({}, { message: 'Morning notification time must be a valid time format (HH:mm)' })
+  @IsString()
+  @Matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'morningNotificationTime must be in HH:MM format'
+  })
   morningNotificationTime;
 
   constructor(data = {}) {
