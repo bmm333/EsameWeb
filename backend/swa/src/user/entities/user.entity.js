@@ -40,6 +40,11 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   verificationTokenExpires;
 
+  @Column({type:'boolean',nullable:false,default:false})
+  profileSetupCompleted;
+
+  @Column({type:'timestamp',nullable:true})
+  profileSetupCompletedAt;
   // Password Reset Fields
   @Column({ type: 'varchar', nullable: true })
   resetPasswordToken;

@@ -10,9 +10,10 @@ import {
   BadRequestException,
   Dependencies,
   Bind,
+  UseGuards,
+  Request
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDTO } from './dto/create-user.dto';
 import {JwtAuthGuard} from "../auth/guards/jwt-auth.guard";
 
 @Controller('user')
@@ -69,6 +70,45 @@ export class UserController {
       return await this.userService.remove(parseInt(id, 10));
     } catch (error) {
       console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
+  //Against DDD but im going with this for now should refactor later or maybe now 
+  @Post('profile/setup')
+  @UseGuards(JwtAuthGuard)
+  @Bind(Request(), Body())
+  async setupProfile(req, profileData) {
+    try {
+      const userId = req.user.id;
+      return await this.userService.setupUserProfile(userId, profileData);
+    } catch (error) {
+      console.error('Error setting up user profile:', error);
+      throw error;
+    }
+  }
+
+  @Get('profile/setup-status')
+  @UseGuards(JwtAuthGuard)
+  @Bind(Request())
+  async getProfileSetupStatus(req) {
+    try {
+      const userId = req.user.id;
+      return await this.userService.checkProfileSetupStatus(userId);
+    } catch (error) {
+      console.error('Error checking profile setup status:', error);
+      throw error;
+    }
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @Bind(Request())
+  async getProfile(req) {
+    try {
+      const userId = req.user.id;
+      return await this.userService.findOneById(userId);
+    } catch (error) {
+      console.error('Error getting user profile:', error);
       throw error;
     }
   }
