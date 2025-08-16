@@ -22,7 +22,7 @@ export class MailingService {
     });
   }
   async sendVerificationEmail(user, verificationToken) {
-    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${'http://localhost:5502'}/verify-email.html?token=${verificationToken}`;
     
     const mailOptions = {
       from: process.env.EMAIL_FROM || 'smartwrdrobe@gmail.com',

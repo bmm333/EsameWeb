@@ -1,4 +1,10 @@
-import { Dependencies, Injectable, BadRequestException } from '@nestjs/common';
+import { 
+  Dependencies, 
+  Injectable, 
+  BadRequestException, 
+  UnauthorizedException, 
+  NotFoundException 
+} from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcrypt';
@@ -60,7 +66,46 @@ export class AuthService {
       lockedUntil:null
     });
   }
+  async signin(user) {
+    try {
+      console.log('AuthService: Processing signin for validated user:', user.email);
+      
+      // Check if user is verified
+      if (!user.isVerified) {
+        throw new UnauthorizedException('Please verify your email before signing in');
+      }
 
+      // Update last login
+      await this.userService.updateLastLogin(user.id);
+
+      // Create JWT payload
+      const payload = { 
+        sub: user.id, 
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName 
+      };
+      const token = this.jwtService.sign(payload);
+      const { verificationToken, resetPasswordToken, ...userResponse } = user;
+      
+      return {
+        statusCode: 200,
+        message: 'Sign in successful',
+        token,
+        user: userResponse,
+        needsProfileSetup: !user.profileSetupCompleted
+      };
+
+    } catch (error) {
+      console.error('AuthService signin error:', error);
+      
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      
+      throw new BadRequestException('Sign in failed. Please try again.');
+    }
+  }
   async login(user) {
     await this.userService.updateLastLogin(user.id);
 

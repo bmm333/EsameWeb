@@ -41,6 +41,7 @@ export class UserService {
           'enableWeatherNotifications', 'enableOutfitReminders',
           'morningNotificationTime', 'subscriptionTier', 'trial',
           'trialExpires', 'isVerified', 'profilePicture',
+          'profileSetupCompleted', 'profileSetupCompletedAt',
           'createdAt', 'updatedAt', 'lastLoginAt'
         ]
       });
@@ -329,6 +330,71 @@ async setResetPasswordToken(userId, token, expires) {
     } catch (error) {
       console.error(`Error updating password for user ${userId}:`, error);
       throw new BadRequestException('Error updating password');
+    }
+  }
+  async setupUserProfile(userId,profileData){
+    try{
+      const user=await this.findOneById(userId);
+      if(user.profileSetupCompleted)
+      {
+        throw new BadRequestException('Profile setup already completed');
+      }
+      const dto=plainToClass(UserProfileSetupDto,profileData);
+      const validationError=await validate(dto);
+      if(validationError.length>0)
+      {
+        const errorMessages=validationError.map(error=>Object.values(error.constraints)).flat();
+        throw new BadRequestException(`Validation failed: ${errorMessages.join(', ')}`);
+      }
+      const updateData={
+        stylePreferences: dto.stylePreferences,
+        colorPreferences: dto.colorPreferences,
+        favoriteShops: dto.favoriteShops,
+        sizes: dto.sizes,
+        primarySize: dto.primarySize,
+        lifestyle: dto.lifestyle,
+        occasions: dto.occasions,
+        riskTolerance: dto.riskTolerance || 'moderate',
+        sustainabilityFocus: dto.sustainabilityFocus || false,
+        avoidMaterials: dto.avoidMaterials,
+        location: dto.location,
+        climate: dto.climate,
+        enableRecommendations: dto.enableRecommendations ?? true,
+        enableWeatherNotifications: dto.enableWeatherNotifications ?? true,
+        enableOutfitReminders: dto.enableOutfitReminders || false,
+        morningNotificationTime: dto.morningNotificationTime,
+        profileSetupCompleted: true,
+        profileSetupCompletedAt: new Date(),
+        updatedAt: new Date()
+      };
+      await this.userRepository.update(userId, updateData);
+      return this.findOneById(userId);
+    }catch(error)
+    {
+      if(error instanceof BadRequestException || error instanceof NotFoundException)
+      {
+        throw error;
+      }
+      console.error(`Error setting up user profile for user ${userId}:`, error);
+      throw new BadRequestException('Error setting up user profile');
+    }
+  }
+  async checkProfileSetupStatus(userId)
+  {
+    try{
+      const user=await this.findOneById(userId);
+      return {
+        profileSetupCompleted: user.profileSetupCompleted,
+        profileSetupCompletedAt:user.profileSetupCompletedAt,
+        needsProfileSetup:!user.profileSetupCompleted
+      };
+    }catch(error){
+      if(error instanceof NotFoundException)
+      {
+        throw error;
+      }
+      console.log(`Error checking profile setup status for user ${userId}: `,error);
+      throw new BadRequestException('Error checking profile setup status');
     }
   }
 }
