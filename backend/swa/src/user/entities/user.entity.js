@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('user')
 export class User {
@@ -31,6 +31,8 @@ export class User {
     nullable: true 
   })
   gender;
+
+  // Account Verification
   @Column({ type: 'boolean', default: false })
   isVerified;
 
@@ -40,11 +42,13 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   verificationTokenExpires;
 
-  @Column({type:'boolean',nullable:false,default:false})
+  // Profile Setup Status
+  @Column({ type: 'boolean', nullable: false, default: false })
   profileSetupCompleted;
 
-  @Column({type:'timestamp',nullable:true})
+  @Column({ type: 'timestamp', nullable: true })
   profileSetupCompletedAt;
+
   // Password Reset Fields
   @Column({ type: 'varchar', nullable: true })
   resetPasswordToken;
@@ -83,7 +87,6 @@ export class User {
   primarySize;
 
   // Physical Characteristics
-
   @Column({ 
     type: 'enum', 
     enum: ['cool', 'warm', 'neutral'], 
@@ -104,7 +107,6 @@ export class User {
     default: 'moderate' 
   })
   riskTolerance;
-
 
   @Column({ type: 'boolean', default: false })
   sustainabilityFocus;
@@ -152,22 +154,6 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   subscriptionExpires;
-
-  // Account Status
-  @Column({ type: 'boolean', default: false })
-  isVerified;
-
-  @Column({ type: 'varchar', nullable: true })
-  verificationToken;
-
-  @Column({ type: 'timestamp', nullable: true })
-  verificationTokenExpires;
-
-  @Column({ type: 'varchar', nullable: true })
-  resetPasswordToken;
-
-  @Column({ type: 'timestamp', nullable: true })
-  resetPasswordExpires;
 
   // OAuth & External Auth
   @Column({ type: 'varchar', nullable: true })

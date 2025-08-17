@@ -74,28 +74,45 @@ export class UserController {
     }
   }
   //Against DDD but im going with this for now should refactor later or maybe now 
-  @Post('profile/setup')
   @UseGuards(JwtAuthGuard)
+  @Post('profile/setup')
   @Bind(Request(), Body())
   async setupProfile(req, profileData) {
     try {
-      const userId = req.user.id;
-      return await this.userService.setupUserProfile(userId, profileData);
+      const userId = req.user.id || req.user.userId || req.user.sub;
+      console.log('UserController: Setting up profile for user:', userId);
+      console.log('UserController: Profile data:', profileData);
+
+      const result = await this.userService.setupUserProfile(userId, profileData);
+
+      return {
+        statusCode: 200,
+        message: 'Profile setup completed successfully',
+        user: result
+      };
     } catch (error) {
-      console.error('Error setting up user profile:', error);
+      console.error('Profile setup controller error:', error);
       throw error;
     }
   }
 
-  @Get('profile/setup-status')
   @UseGuards(JwtAuthGuard)
+  @Get('profile/setup-status')
   @Bind(Request())
   async getProfileSetupStatus(req) {
     try {
-      const userId = req.user.id;
-      return await this.userService.checkProfileSetupStatus(userId);
+      const userId = req.user.id || req.user.userId || req.user.sub;
+      console.log('UserController: Getting profile setup status for user:', userId);
+
+      const status = await this.userService.checkProfileSetupStatus(userId);
+
+      return {
+        profileSetupCompleted: status.profileSetupCompleted,
+        profileSetupCompletedAt: status.profileSetupCompletedAt,
+        needsProfileSetup: !status.profileSetupCompleted
+      };
     } catch (error) {
-      console.error('Error checking profile setup status:', error);
+      console.error('Profile setup status error:', error);
       throw error;
     }
   }

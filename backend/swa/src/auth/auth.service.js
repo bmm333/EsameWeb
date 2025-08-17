@@ -376,6 +376,51 @@ export class AuthService {
       throw new BadRequestException('Password change failed');
     }
   }
+  async verifyToken(user) {
+    console.log('AuthService verifyToken: User from JWT:', user);
+    
+    return {
+      statusCode: 200,
+      valid: true,
+      user: {
+        id: user.id || user.userId,
+        userId: user.id || user.userId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isVerified: user.isVerified,
+        profileSetupCompleted: user.profileSetupCompleted,
+        profilePicture: user.profilePicture
+      }
+    };
+  }
+  async getProfile(user) {
+    console.log('AuthService getProfile: Getting profile for user:', user.email);
+    
+    // Get fresh user data from database to ensure we have the latest info
+    const freshUser = await this.userService.findOneById(user.id || user.userId);
+    
+    return {
+      statusCode: 200,
+      user: {
+        id: freshUser.id,
+        email: freshUser.email,
+        firstName: freshUser.firstName,
+        lastName: freshUser.lastName,
+        profilePicture: freshUser.profilePicture,
+        isVerified: freshUser.isVerified,
+        profileSetupCompleted: freshUser.profileSetupCompleted,
+        stylePreferences: freshUser.stylePreferences,
+        colorPreferences: freshUser.colorPreferences,
+        phoneNumber: freshUser.phoneNumber,
+        dateOfBirth: freshUser.dateOfBirth,
+        gender: freshUser.gender,
+        createdAt: freshUser.createdAt,
+        updatedAt: freshUser.updatedAt,
+        lastLoginAt: freshUser.lastLoginAt
+      }
+    };
+  }
 
   // Additional authentication methods can go here:
   // - requestPasswordReset()
