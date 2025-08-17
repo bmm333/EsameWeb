@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RfidDevice } from './entities/rfid-device.entity';
 import { UserService } from '../user/user.service';
+import { NotFoundError, scan } from '../../node_modules/rxjs/dist/types/index';
 
 @Injectable()
 @Dependencies([InjectRepository(RfidDevice),'RfidDeviceRepository'],
@@ -51,5 +52,104 @@ export class RfidService {
             status:'configured'
         });
         return {message:'Device configured successfully'};
+    }
+    async activateDevice(deviceSerial)
+    {
+        const device=await this.rfidDeviceRepository.findOne({
+            where:{serialNumber:deviceSerial},
+            relations:['user']
+        });
+        if(!device)
+        {
+            throw new NotFoundException('Device not found');
+        }
+        await this.rfidDeviceRepository.update(device.id, {
+            status:'active',
+            lastHeartbeat:new Date()
+        });
+        await this.userService.update(device.userId,{
+            deviceSetupStatus:'active',
+            deviceSetupCompletedAt:new Date()
+        });
+        return {message:'Device activated succesfully'};
+    }
+    async processRfidScan(scanData){
+        const device=await this.rfidDeviceRepository.findOne({
+            where:{serialNumber:scanData.deviceSerial},
+            relations:['user']
+        });
+        if(!device)
+        {
+            throw new NotFoundException('Device not found');
+        }
+        await this.rfidDeviceRepository.update(device.id,{
+            lastHeartbeat:new Date()
+        });
+        let tag=await this.rfidTagRepository.findOne({
+            where:{tagId:scanData.tagId,deviceId:device.id}
+        });
+        if(!tag)
+        {
+            tag=this.rfidTagRepository.create({
+                tagId:scanData.tagId,
+                deviceId:device.id,
+                userId:device.userId,
+                location:scanData.event==='detected'?'in_wardrobe':'unknown',
+                lastDetected:new Date()
+            });
+        }else{
+            tag.location=scanData.event==='detected'?'in_wardrobe':'being_worn';
+            tag.lastDetected=new Date();
+        }await this.rfidTagRepository.save(tag);
+        return {
+            message:'Rfid scan Processed successfully',
+                tag:tag
+        };
+    }
+    async getUserDevice(userId)
+    {
+        return this.rfidDeviceRepository.find({
+            where:{userId},
+            relations:['tags']
+        });
+    }
+    async getUserTags(userId)
+    {
+        return this.rfidTagRepository.find({
+            where:{userId},
+            relations:['device']
+        });
+    }
+    async getDeviceStatus(userId)
+    {
+        const devices=await this.getUserDevice(userId);
+        const tags=await this.getUserTags(userId);
+        const activeDevices=devices.filter(d=>d.status==='active');
+        const inWardrobe=tags.filter(t=>t.location==='in_wardrobe').length;
+        const beingWorn=tags.filter(t=>t.location==='being_worn').length;
+        return {
+            deviceCount:devices.length,
+            activeDevices:activeDevices.length,
+            totalTags:tags.length,
+            inWardrobe,
+            beingWorn,
+            lastSync:activeDevices[0]?.lastHeartbeat||null
+        };
+    }
+    async updateDeviceHeartbeat(deviceSerial) {
+        const device = await this.rfidDeviceRepository.findOne({
+        where: { serialNumber: deviceSerial }
+        });
+
+        if (!device) {
+        throw new NotFoundException('Device not found');
+        }
+
+        await this.rfidDeviceRepository.update(device.id, {
+        lastHeartbeat: new Date(),
+        status: 'active'
+        });
+
+        return { status: 'ok', timestamp: new Date() };
     }
 }
