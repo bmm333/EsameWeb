@@ -13,6 +13,21 @@
 {
     margin-bottom:4px;
 }
+#userAvatar {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+}
+.dropdown-toggle {
+  max-width: 200px;
+  overflow: hidden;
+}
+img[src^="data:"] {
+  max-width: 100%;
+  height: auto;
+}
 .sidebar-link
 {
     display:flex;

@@ -182,4 +182,19 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   lastLoginAt;
+  
+  @Column({ default: false })
+  hasRfidDevice;
+
+  @Column({ type: 'varchar', length: 20, default: 'none' })
+  deviceSetupStatus;
+
+  @Column({ type: 'datetime', nullable: true })
+  deviceSetupCompletedAt;
+
+  @OneToMany(() => RfidDevice, device => device.user)
+  rfidDevices;
+
+  @OneToMany(() => RfidTag, tag => tag.user)
+  rfidTags;
 }
