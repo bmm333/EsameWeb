@@ -1,17 +1,30 @@
 import 'reflect-metadata';
-import { 
-  IsOptional, 
-  IsArray, 
-  IsEnum, 
-  IsBoolean, 
-  IsObject,
-  IsString,
-  ValidateNested,
-  Matches
-} from 'class-validator';
+import { IsOptional, IsString, IsArray, IsEnum, IsBoolean, IsDateString, Matches, ValidateNested } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 class SizesDto {
+   @IsOptional()
+  @IsString()
+  firstName;
+
+  @IsOptional()
+  @IsString()
+  lastName;
+
+  @IsOptional()
+  @IsString()
+  nickname;
+
+  @IsOptional()
+  @IsEnum(['male', 'female'], {
+    message: 'Gender must be one of: male, female'
+  })
+  gender;
+
+  @IsOptional()
+  @IsDateString()
+  dateOfBirth;
+
   @IsOptional()
   @IsString()
   tops;
@@ -118,6 +131,9 @@ export class UserProfileSetupDto {
     message: 'morningNotificationTime must be in HH:MM format'
   })
   morningNotificationTime;
+  @IsOptional()
+  @IsString()
+  profilePicture;
 
   constructor(data = {}) {
     Object.assign(this, data);

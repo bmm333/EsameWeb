@@ -139,51 +139,6 @@ export class UserService {
     }
   }
 
-  async setupUserProfile(userId, profileData) {
-    try {
-      const user = await this.findOneById(userId);
-      
-      const dto = plainToClass(UserProfileSetupDto, profileData);
-      const validationErrors = await validate(dto);
-      
-      if (validationErrors.length > 0) {
-        const errorMessages = validationErrors
-          .map(error => Object.values(error.constraints))
-          .flat();
-        throw new BadRequestException(`Validation failed: ${errorMessages.join(', ')}`);
-      }
-
-      const updateData = {
-        stylePreferences: dto.stylePreferences,
-        colorPreferences: dto.colorPreferences,
-        favoriteShops: dto.favoriteShops,
-        sizes: dto.sizes,
-        primarySize: dto.primarySize,
-        lifestyle: dto.lifestyle,
-        occasions: dto.occasions,
-        riskTolerance: dto.riskTolerance || 'moderate',
-        sustainabilityFocus: dto.sustainabilityFocus || false,
-        avoidMaterials: dto.avoidMaterials,
-        location: dto.location,
-        climate: dto.climate,
-        enableRecommendations: dto.enableRecommendations ?? true,
-        enableWeatherNotifications: dto.enableWeatherNotifications ?? true,
-        enableOutfitReminders: dto.enableOutfitReminders || false,
-        morningNotificationTime: dto.morningNotificationTime,
-        updatedAt: new Date()
-      };
-      
-      await this.userRepository.update(userId, updateData);
-      return this.findOneById(userId);
-      
-    } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
-        throw error;
-      }
-      console.error(`Error setting up profile for user ${userId}:`, error);
-      throw new BadRequestException('Error setting up user profile');
-    }
-  }
 
   async updateUserPreferences(userId, preferences) {
     try {
@@ -347,26 +302,32 @@ async setResetPasswordToken(userId, token, expires) {
         throw new BadRequestException(`Validation failed: ${errorMessages.join(', ')}`);
       }
       const updateData={
-        stylePreferences: dto.stylePreferences,
-        colorPreferences: dto.colorPreferences,
-        favoriteShops: dto.favoriteShops,
-        sizes: dto.sizes,
-        primarySize: dto.primarySize,
-        lifestyle: dto.lifestyle,
-        occasions: dto.occasions,
-        riskTolerance: dto.riskTolerance || 'moderate',
-        sustainabilityFocus: dto.sustainabilityFocus || false,
-        avoidMaterials: dto.avoidMaterials,
-        location: dto.location,
-        climate: dto.climate,
-        enableRecommendations: dto.enableRecommendations ?? true,
-        enableWeatherNotifications: dto.enableWeatherNotifications ?? true,
-        enableOutfitReminders: dto.enableOutfitReminders || false,
-        morningNotificationTime: dto.morningNotificationTime,
-        profileSetupCompleted: true,
-        profileSetupCompletedAt: new Date(),
-        updatedAt: new Date()
-      };
+      stylePreferences: dto.stylePreferences,
+      colorPreferences: dto.colorPreferences,
+      favoriteShops: dto.favoriteShops,
+      sizes: dto.sizes,
+      primarySize: dto.primarySize,
+      lifestyle: dto.lifestyle,
+      occasions: dto.occasions,
+      riskTolerance: dto.riskTolerance || 'moderate',
+      sustainabilityFocus: dto.sustainabilityFocus || false,
+      avoidMaterials: dto.avoidMaterials,
+      location: dto.location,
+      climate: dto.climate,
+      enableRecommendations: dto.enableRecommendations ?? true,
+      enableWeatherNotifications: dto.enableWeatherNotifications ?? true,
+      enableOutfitReminders: dto.enableOutfitReminders || false,
+      morningNotificationTime: dto.morningNotificationTime,
+      profilePicture: dto.profilePicture,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      gender: dto.gender,
+      dateOfBirth: dto.dateOfBirth,
+      phoneNumber: dto.phoneNumber,
+      profileSetupCompleted: true,
+      profileSetupCompletedAt: new Date(),
+      updatedAt: new Date()
+    };
       await this.userRepository.update(userId, updateData);
       return this.findOneById(userId);
     }catch(error)
@@ -379,22 +340,24 @@ async setResetPasswordToken(userId, token, expires) {
       throw new BadRequestException('Error setting up user profile');
     }
   }
-  async checkProfileSetupStatus(userId)
-  {
-    try{
-      const user=await this.findOneById(userId);
-      return {
-        profileSetupCompleted: user.profileSetupCompleted,
-        profileSetupCompletedAt:user.profileSetupCompletedAt,
-        needsProfileSetup:!user.profileSetupCompleted
-      };
-    }catch(error){
-      if(error instanceof NotFoundException)
-      {
-        throw error;
+  async checkProfileSetupStatus(userId) {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        select: ['id', 'profileSetupCompleted', 'profileSetupCompletedAt']
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
       }
-      console.log(`Error checking profile setup status for user ${userId}: `,error);
-      throw new BadRequestException('Error checking profile setup status');
+
+      return {
+        profileSetupCompleted: user.profileSetupCompleted || false,
+        profileSetupCompletedAt: user.profileSetupCompletedAt
+      };
+    } catch (error) {
+      console.error('UserService checkProfileSetupStatus error:', error);
+      throw error;
     }
   }
 }
