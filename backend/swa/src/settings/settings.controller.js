@@ -20,4 +20,10 @@ export class SettingsController{
     async updateSettings(req, settingsDto) {
         return this.settingsService.updateUserSettings(req.user.id || req.user.userId, settingsDto);
     }
+    @UseGuards(JwtAuthGuard)
+    @Delete()
+    @Bind(Request())
+    async deleteAccount(req) {
+        return this.settingsService.deleteUserAccount(req.user.id || req.user.userId);
+    }
 }

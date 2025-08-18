@@ -360,4 +360,16 @@ async setResetPasswordToken(userId, token, expires) {
       throw error;
     }
   }
+  async remove(userId)
+  {
+    try{
+      await this.userRepository.delete(userId);
+      return {success:true};
+    }
+    catch(error)
+    {
+      console.error(`Error deleting user ${userId}:`, error);
+      throw new BadRequestException('Error deleting user');
+    }
+  }
 }
