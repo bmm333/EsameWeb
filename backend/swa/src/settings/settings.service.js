@@ -61,4 +61,9 @@ export class SettingService {
         await this.userService.update(userId,settingsDto);
         return {success:true};
     }
+    
+    async deleteUserAccount(userId) {
+        await this.userService.delete(userId);
+        return {success:true,message:'Account deleted Succesfully'};
+    }
 }
