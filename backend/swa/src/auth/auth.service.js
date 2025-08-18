@@ -396,7 +396,6 @@ export class AuthService {
   }
   async getProfile(user) {
     console.log('AuthService getProfile: Getting profile for user:', user.email);
-    
     // Get fresh user data from database to ensure we have the latest info
     const freshUser = await this.userService.findOneById(user.id || user.userId);
     

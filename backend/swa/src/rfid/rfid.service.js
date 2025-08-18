@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RfidDevice } from './entities/rfid-device.entity';
 import { UserService } from '../user/user.service';
-import { NotFoundError, scan } from '../../node_modules/rxjs/dist/types/index';
 
 @Injectable()
 @Dependencies([InjectRepository(RfidDevice),'RfidDeviceRepository'],
