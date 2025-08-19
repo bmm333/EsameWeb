@@ -1,5 +1,7 @@
 import 'reflect-metadata';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,OneToMany } from 'typeorm';
+import { RfidDevice } from '../../rfid/entities/rfid-device.entity.js';
+import { RfidTag } from '../../rfid/entities/rfid-tag.entity.js';
 
 @Entity('user')
 export class User {
@@ -154,6 +156,10 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   subscriptionExpires;
+  
+  @Column({ type: 'boolean', default: false })
+  hasRfidDevice;
+
 
   // OAuth & External Auth
   @Column({ type: 'varchar', nullable: true })
@@ -183,13 +189,10 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   lastLoginAt;
   
-  @Column({ default: false })
-  hasRfidDevice;
-
   @Column({ type: 'varchar', length: 20, default: 'none' })
   deviceSetupStatus;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   deviceSetupCompletedAt;
 
   @OneToMany(() => RfidDevice, device => device.user)

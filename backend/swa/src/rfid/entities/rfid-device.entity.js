@@ -1,18 +1,20 @@
+import 'reflect-metadata';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity.js';
+import { RfidTag } from './rfid-tag.entity.js';
 
 @Entity('rfid_device')
 export class RfidDevice {
   @PrimaryGeneratedColumn()
   id;
 
-  @Column({ unique: true, length: 50 })
+  @Column({ type: 'varchar', length: 50, unique: true })
   serialNumber;
 
-  @Column({ length: 100 })
+  @Column({ type: 'varchar', length: 100 })
   deviceName;
 
-  @Column({ length: 20, default: 'inactive' })
+  @Column({ type: 'varchar', length: 20, default: 'inactive' })
   status;
 
   @Column({ type: 'json', nullable: true })
@@ -21,13 +23,13 @@ export class RfidDevice {
   @Column({ type: 'json', nullable: true })
   wifiConfig;
 
-  @Column({ length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   firmwareVersion;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   lastHeartbeat;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   lastSyncAt;
 
   @Column({ type: 'json', nullable: true })
@@ -36,7 +38,7 @@ export class RfidDevice {
   @ManyToOne(() => User, user => user.rfidDevices)
   user;
 
-  @Column()
+  @Column({ type: 'int' })
   userId;
 
   @OneToMany(() => RfidTag, tag => tag.device)

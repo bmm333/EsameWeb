@@ -1,17 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import { RfidDevice } from './entities/rfid-device.entity';
-import { UserService } from '../user/user.service';
+import { Injectable, Dependencies, NotFoundException, Inject } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RfidDevice } from './entities/rfid-device.entity.js';
+import { RfidTag } from './entities/rfid-tag.entity.js';
+import { UserService } from '../user/user.service.js';
 
 @Injectable()
-@Dependencies([InjectRepository(RfidDevice),'RfidDeviceRepository'],
-            [InjectRepository(RfidTag),'RfidTagRepository'],
-            UserService)
 export class RfidService {
-    constructor(rfidDeviceRepository, rfidTagRepository, userService) {
-        this.rfidDeviceRepository = rfidDeviceRepository;
-        this.rfidTagRepository = rfidTagRepository;
-        this.userService = userService;
-    }
+  constructor(
+    @InjectRepository(RfidDevice) rfidDeviceRepository,
+    @InjectRepository(RfidTag) rfidTagRepository,
+    @Inject(UserService) userService
+  ) {
+    this.rfidDeviceRepository = rfidDeviceRepository;
+    this.rfidTagRepository = rfidTagRepository;
+    this.userService = userService;
+  }
     async registerDevice(userId,deviceData){
         const user=await this.userService.findOneById(userId);
         if(user.subscriptionTier==='free'&&!user.trial){

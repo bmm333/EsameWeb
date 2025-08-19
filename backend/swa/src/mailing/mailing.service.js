@@ -216,4 +216,84 @@ export class MailingService {
       return { success: false, error: error.message };
     }
   }
+  async sendEmailChangeNotification(oldEmail, newEmail) {
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || '"Smart Wardrobe" <noreply@smartwardrobe.com>',
+      to: oldEmail,
+      subject: 'Email Address Changed - Smart Wardrobe',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Email Address Changed</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #ffc107; color: #333; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+            .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 15px 0; }
+            .security-notice { background: #e7f3ff; border: 1px solid #b3d9ff; padding: 15px; border-radius: 6px; margin: 15px 0; }
+            .new-email { background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; border-radius: 4px; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⚠️ Email Address Changed</h1>
+            </div>
+            <div class="content">
+              <h2>Security Alert</h2>
+              <p>The email address for your Smart Wardrobe account has been successfully changed.</p>
+              
+              <div class="security-notice">
+                <strong>🔐 Change Details:</strong>
+                <ul>
+                  <li><strong>Previous email:</strong> ${oldEmail}</li>
+                  <li><strong>New email:</strong> <span class="new-email">${newEmail}</span></li>
+                  <li><strong>Changed on:</strong> ${new Date().toLocaleString()}</li>
+                </ul>
+              </div>
+              
+              <div class="warning">
+                <strong>⚠️ Important Security Notice:</strong>
+                <p>If you did not make this change, your account may have been compromised. Please:</p>
+                <ul>
+                  <li>Contact our support team immediately</li>
+                  <li>Change your password if you still have access</li>
+                  <li>Review your account activity</li>
+                </ul>
+              </div>
+              
+              <p><strong>What happens next:</strong></p>
+              <ul>
+                <li>Future account notifications will be sent to your new email address</li>
+                <li>You'll need to verify your new email address to ensure delivery</li>
+                <li>This old email address will no longer receive Smart Wardrobe notifications</li>
+              </ul>
+              
+              <p>If you made this change, no further action is required. Your account remains secure.</p>
+              
+              <p>If you have any questions or concerns, please contact our support team.</p>
+            </div>
+            <div class="footer">
+              <p>&copy; 2024 Smart Wardrobe. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    };
+
+    try {
+      const result = await this.transporter.sendMail(mailOptions);
+      console.log('Email change notification sent to old address:', result.messageId);
+      return { success: true, messageId: result.messageId };
+    } catch (error) {
+      console.error('Error sending email change notification:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
