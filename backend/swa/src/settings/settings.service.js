@@ -66,4 +66,7 @@ export class SettingService {
         await this.userService.delete(userId);
         return {success:true,message:'Account deleted Succesfully'};
     }
+    
 }
+/*started designing user profile wrong, a refactoring should be taking place right now but, time is not promising so i will go with this design for now 
+and will be more careful not to break clean architecture anymore*/
