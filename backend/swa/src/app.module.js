@@ -12,6 +12,7 @@ import { ValidationMiddleware } from './common/middleware/validation.middleware'
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { dataSourceOptions } from '../database.config.js';
 import { MailingModule } from './mailing/mailing.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { MailingModule } from './mailing/mailing.module';
     OutfitModule,
     NotificationModule,
     RfidModule,
-    MailingModule
+    MailingModule,
+    SettingsModule
   ],
   controllers: [AppController],
   providers: [AppService],
