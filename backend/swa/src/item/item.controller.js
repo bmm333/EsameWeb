@@ -1,10 +1,14 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, Query, UseGuards, Request, Bind, Dependencies, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Body, Param, Query, UseGuards, Request, Bind, Dependencies, UseInterceptors, UploadedFile, UsePipes, ValidationPipe } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ItemService } from './item.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { ItemAssociateDto } from './dto/item-associate.dto.js';
+import { UpdateItemDto } from './dto/update-item.dto.js';
+import { LocationUpdateDto } from './dto/location-update.dto.js';
 
 @Controller('item')
 @Dependencies(ItemService)
+@UsePipes(new ValidationPipe({ transform: true }))
 export class ItemController {
     constructor(itemService) {
         this.itemService = itemService;
@@ -32,7 +36,8 @@ export class ItemController {
     @Bind(Request(), Body())
     async associateItem(req, body) {
         const userId = req.user.id || req.user.userId;
-        const { tagId, itemData, override } = body;
+        const dto = new ItemAssociateDto(body);
+        const { tagId, itemData, override } = dto;
         return await this.itemService.addOrUpdateItem(userId, tagId, itemData, override);
     }
 
@@ -55,9 +60,19 @@ export class ItemController {
     @UseGuards(JwtAuthGuard)
     @Put(':tagId')
     @Bind(Request(), Param('tagId'), Body())
-    async updateItem(req, tagId, itemData) {
+    async updateItem(req, tagId, body) {
         const userId = req.user.id || req.user.userId;
-        return await this.itemService.updateItem(userId, tagId, itemData);
+        const dto = new UpdateItemDto(body);
+        return await this.itemService.updateItem(userId, tagId, dto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Put(':tagId/location')
+    @Bind(Request(), Param('tagId'), Body())
+    async updateLocation(req, tagId, body) {
+        const userId = req.user.id || req.user.userId;
+        const dto = new LocationUpdateDto(body);
+        return await this.itemService.updateLocation(userId, tagId, dto.location);
     }
 
     @UseGuards(JwtAuthGuard)
@@ -66,15 +81,6 @@ export class ItemController {
     async logWear(req, tagId) {
         const userId = req.user.id || req.user.userId;
         return await this.itemService.logWear(userId, tagId);
-    }
-
-    @UseGuards(JwtAuthGuard)
-    @Put(':tagId/location')
-    @Bind(Request(), Param('tagId'), Body())
-    async updateLocation(req, tagId, body) {
-        const userId = req.user.id || req.user.userId;
-        const { location } = body;
-        return await this.itemService.updateLocation(userId, tagId, location);
     }
 
     @UseGuards(JwtAuthGuard)
