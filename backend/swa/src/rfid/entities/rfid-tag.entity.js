@@ -1,46 +1,35 @@
-import 'reflect-metadata';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { RfidDevice } from './rfid-device.entity.js';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity.js';
+import { Item } from '../../item/entities/item.entity.js';
 
-@Entity('rfid_tag')
+@Entity('rfid_tags')
 export class RfidTag {
-  @PrimaryGeneratedColumn()
-  id;
+    @PrimaryGeneratedColumn()
+    id;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
-  tagId;
+    @Column({ unique: true })
+    tagId;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  itemName;
+    @Column({ default: 'active' })
+    status;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  itemCategory;
+    @Column({ type: 'datetime', nullable: true })
+    lastScanned;
 
-  @Column({ type: 'varchar', length: 20, default: 'unknown' })
-  location;
+    @CreateDateColumn()
+    registeredAt;
 
-  @Column({ type: 'timestamp', nullable: true })
-  lastDetected;
+    @UpdateDateColumn()
+    lastUpdated;
 
-  @Column({ type: 'json', nullable: true })
-  itemMetadata;
+    // Relations
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userId' })
+    user;
 
-  @ManyToOne(() => RfidDevice, device => device.tags)
-  device;
+    @Column()
+    userId;
 
-  @Column({ type: 'int' })
-  deviceId;
-
-  @ManyToOne(() => User, user => user.rfidTags)
-  user;
-
-  @Column({ type: 'int' })
-  userId;
-
-  @CreateDateColumn()
-  createdAt;
-
-  @UpdateDateColumn()
-  updatedAt;
+    @OneToOne(() => Item, item => item.rfidTag, { nullable: true })
+    item;
 }
