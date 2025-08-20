@@ -3,7 +3,7 @@ import { IsOptional, IsString, IsArray, IsEnum, IsBoolean, IsDateString, Matches
 import { Transform, Type } from 'class-transformer';
 
 class SizesDto {
-   @IsOptional()
+  @IsOptional()
   @IsString()
   firstName;
 
