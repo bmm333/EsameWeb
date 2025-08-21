@@ -23,6 +23,6 @@ export class UserLifestyle {
     @JoinColumn({ name: 'userId' })
     user;
 
-    @Column()
-    userId;
+    @Column({ type: 'int' })
+    userId; 
 }

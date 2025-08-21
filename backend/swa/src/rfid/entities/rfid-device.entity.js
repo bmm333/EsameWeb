@@ -1,52 +1,41 @@
-import 'reflect-metadata';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity.js';
 import { RfidTag } from './rfid-tag.entity.js';
 
-@Entity('rfid_device')
+@Entity('rfid_devices')
 export class RfidDevice {
-  @PrimaryGeneratedColumn()
-  id;
+    @PrimaryGeneratedColumn()
+    id;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
-  serialNumber;
+    @Column({ type: 'varchar', length: 100, unique: true })
+    deviceId;
 
-  @Column({ type: 'varchar', length: 100 })
-  deviceName;
+    @Column({ type: 'varchar', length: 100 })
+    name;
 
-  @Column({ type: 'varchar', length: 20, default: 'inactive' })
-  status;
+    @Column({ type: 'varchar', length: 100, nullable: true })
+    location;
 
-  @Column({ type: 'json', nullable: true })
-  bluetoothConfig;
+    @Column({ type: 'varchar', length: 20, default: 'active' })
+    status;
 
-  @Column({ type: 'json', nullable: true })
-  wifiConfig;
+    @Column({ type: 'timestamp', nullable: true })
+    lastSeen;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
-  firmwareVersion;
+    @CreateDateColumn()
+    registeredAt;
 
-  @Column({ type: 'timestamp', nullable: true })
-  lastHeartbeat;
+    @UpdateDateColumn()
+    lastUpdated;
 
-  @Column({ type: 'timestamp', nullable: true })
-  lastSyncAt;
+    // Relations
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userId' })
+    user;
 
-  @Column({ type: 'json', nullable: true })
-  settings;
+    @Column({ type: 'int' })
+    userId;
 
-  @ManyToOne(() => User, user => user.rfidDevices)
-  user;
-
-  @Column({ type: 'int' })
-  userId;
-
-  @OneToMany(() => RfidTag, tag => tag.device)
-  tags;
-
-  @CreateDateColumn()
-  createdAt;
-
-  @UpdateDateColumn()
-  updatedAt;
+    @OneToMany(() => RfidTag, tag => tag.device)
+    tags;
 }

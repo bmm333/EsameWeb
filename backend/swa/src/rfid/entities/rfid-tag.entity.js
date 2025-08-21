@@ -8,13 +8,13 @@ export class RfidTag {
     @PrimaryGeneratedColumn()
     id;
 
-    @Column({ unique: true })
+    @Column({ type: 'varchar',unique: true })
     tagId;
 
-    @Column({ default: 'active' })
+    @Column({type: 'varchar', default: 'active' })
     status;
 
-    @Column({ type: 'datetime', nullable: true })
+    @Column({ type: 'timestamp', nullable: true })
     lastScanned;
 
     @CreateDateColumn()
@@ -28,7 +28,7 @@ export class RfidTag {
     @JoinColumn({ name: 'userId' })
     user;
 
-    @Column()
+    @Column({ type: 'int' })
     userId;
 
     @OneToOne(() => Item, item => item.rfidTag, { nullable: true })
@@ -37,6 +37,6 @@ export class RfidTag {
     @JoinColumn({name:'deviceId'})
     device;
     
-    @Column({nullable:true})
+    @Column({type: 'int',nullable:true})
     deviceId;
 }

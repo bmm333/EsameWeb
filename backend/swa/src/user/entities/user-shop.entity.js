@@ -7,16 +7,16 @@ export class UserFavoriteShop {
     @PrimaryGeneratedColumn()
     id;
 
-    @Column({ length: 100 })
+    @Column({ type: 'varchar', length: 100 })
     shopName;
 
-    @Column({ length: 50, nullable: true })
+    @Column({ type: 'varchar', length: 50, nullable: true })
     category; // 'clothing', 'shoes', 'accessories'
 
     @Column({ type: 'decimal', precision: 3, scale: 2, nullable: true })
     rating; // 1.00 to 5.00
 
-    @Column({ text: true, nullable: true })
+    @Column({ type: 'text', nullable: true })
     notes;
 
     @CreateDateColumn()
@@ -26,6 +26,6 @@ export class UserFavoriteShop {
     @JoinColumn({ name: 'userId' })
     user;
 
-    @Column()
+    @Column({ type: 'int' })
     userId;
 }

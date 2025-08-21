@@ -1,8 +1,5 @@
 import 'dotenv/config';
-
-import * as UserEntities from './src/user/entities/index.js';
-import * as RfidEntities from './src/rfid/entities/index.js';
-import * as ItemEntities from './src/item/entities/index.js';
+import { DataSource } from "typeorm";
 
 export const dataSourceOptions = {
   type: "postgres",
@@ -11,11 +8,10 @@ export const dataSourceOptions = {
   username: process.env.POSTGRES_USERNAME || 'postgres',
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DATABASE || 'swadb',
-  entities: [
-    ...Object.values(UserEntities),
-    ...Object.values(RfidEntities),
-    ...Object.values(ItemEntities)
-  ],
-  synchronize: process.env.NODE_ENV === 'development',
+  entities: ['src/**/*.entity.js'],
+  synchronize: process.env.NODE_ENV === 'development', 
   logging: process.env.NODE_ENV === 'development'
 };
+
+const dataSource = new DataSource(dataSourceOptions);
+export default dataSource;

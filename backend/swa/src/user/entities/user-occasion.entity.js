@@ -23,6 +23,6 @@ export class UserOccasion {
     @JoinColumn({ name: 'userId' })
     user;
 
-    @Column()
+    @Column({type:'int'})
     userId;
 }

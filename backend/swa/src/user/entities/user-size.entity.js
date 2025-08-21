@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, UpdateDa
 import { User } from './user.entity.js';
 
 @Entity('user_sizes')
-@Index(['userId', 'category']) // One record per category per user
+@Index(['userId', 'category'])
 export class UserSize {
     @PrimaryGeneratedColumn()
     id;
@@ -13,10 +13,10 @@ export class UserSize {
     })
     category;
 
-    @Column({ length: 10 })
+    @Column({ type: 'varchar', length: 10 })
     size; // 'M', '32', '9', etc.
 
-    @Column({ length: 20, nullable: true })
+    @Column({ type: 'varchar', length: 20, nullable: true })
     brand; // Different brands have different sizing
 
     @Column({ type: 'text', nullable: true })
@@ -30,6 +30,6 @@ export class UserSize {
     @JoinColumn({ name: 'userId' })
     user;
 
-    @Column()
+    @Column({ type: 'int' })
     userId;
 }

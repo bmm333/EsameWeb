@@ -7,7 +7,7 @@ export class Item {
     @PrimaryGeneratedColumn()
     id;
 
-    @Column({ length: 100 })
+    @Column({type:'varchar', length: 100 })
     name;
 
     @Column({ 
@@ -16,7 +16,7 @@ export class Item {
     })
     category;
 
-    @Column({ nullable: true })
+    @Column({ type:'varchar',nullable: true })
     imageUrl;
 
     @Column({ 
@@ -29,25 +29,25 @@ export class Item {
     @Column({ type: 'int', default: 0 })
     wearCount;
 
-    @Column({ type: 'datetime', nullable: true })
+    @Column({ type: 'timestamp', nullable: true })
     lastWorn;
 
     @Column({ type: 'json', nullable: true })
     wearHistory; // Array of wear events
 
-    @Column({ default: false })
+    @Column({type:'boolean', default: false })
     isFavorite;
 
     @Column({ type: 'json', nullable: true })
     tags; // Array of strings like ['formal', 'casual']
 
-    @Column({ length: 50, nullable: true })
+    @Column({type:'varchar', length: 50, nullable: true })
     color;
 
-    @Column({ length: 50, nullable: true })
+    @Column({type:'varchar', length: 50, nullable: true })
     brand;
 
-    @Column({ length: 20, nullable: true })
+    @Column({type:'varchar', length: 20, nullable: true })
     size;
 
     @Column({ type: 'json', nullable: true })
@@ -68,20 +68,20 @@ export class Item {
     @UpdateDateColumn()
     lastUpdated;
 
-    @Column({ type: 'datetime', nullable: true })
+    @Column({ type: 'timestamp', nullable: true })
     lastLocationUpdate;
 
     @ManyToOne(() => User, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userId' })
     user;
 
-    @Column()
+    @Column({ type: 'int' })
     userId;
 
     @ManyToOne(() => RfidTag,tag=>tag.item, { nullable: true })
     @JoinColumn({ name: 'rfidTagId' })
     rfidTag;
 
-    @Column({ nullable: true })
+    @Column({ type: 'int', nullable: true })
     rfidTagId;
 }
