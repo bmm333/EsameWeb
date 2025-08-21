@@ -78,7 +78,7 @@ export class Item {
     @Column()
     userId;
 
-    @ManyToOne(() => RfidTag, { nullable: true })
+    @ManyToOne(() => RfidTag,tag=>tag.item, { nullable: true })
     @JoinColumn({ name: 'rfidTagId' })
     rfidTag;
 
