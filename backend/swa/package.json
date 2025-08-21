@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Nest Babel starter repository",
   "license": "MIT",
-  "type": "module",
+
   "scripts": {
     "format": "prettier --write \"**/*.js\"",
     "start": "babel-node index.js",
@@ -39,7 +39,7 @@
     "pg": "^8.16.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.24"
+    "typeorm": "^0.3.26"
   },
   "devDependencies": {
     "@babel/cli": "^7.27.2",

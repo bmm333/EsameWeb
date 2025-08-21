@@ -7,10 +7,10 @@ export class UserColorPreference {
     @PrimaryGeneratedColumn()
     id;
 
-    @Column({ length: 30 })
+    @Column({ type: 'varchar', length: 30 })
     color;
 
-    @Column({ length: 7, nullable: true })
+    @Column({ type: 'varchar', length: 7, nullable: true })
     hexCode; // #FF0000
 
     @Column({ type: 'int', default: 1 })
@@ -23,6 +23,6 @@ export class UserColorPreference {
     @JoinColumn({ name: 'userId' })
     user;
 
-    @Column()
+    @Column({ type: 'int' })
     userId;
 }

@@ -3,13 +3,13 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { RfidDevice } from '../../rfid/entities/rfid-device.entity.js';
 import { RfidTag } from '../../rfid/entities/rfid-tag.entity.js';
 import { Item } from '../../item/entities/item.entity.js';
-import { UserStylePreference } from './user-style-preference.entity.js';
-import { UserColorPreference } from './user-color-preference.entity.js';
-import { UserFavoriteShop } from './user-favorite-shop.entity.js';
+import { UserStylePreference } from './user-style-preferences.entity.js'; 
+import { UserColorPreference } from './user-color-preferences.entity.js';
+import { UserFavoriteShop } from './user-shop.entity.js';
 import { UserSize } from './user-size.entity.js';
 import { UserLifestyle } from './user-lifestyle.entity.js';
 import { UserOccasion } from './user-occasion.entity.js';
-import { UserAvoidMaterial } from './user-avoid-material.entity.js';
+import { UserAvoidMaterial } from './user-avoid.entity.js';
 
 @Entity('user')
 @Index(['email']) // For login queries
