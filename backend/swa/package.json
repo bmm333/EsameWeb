@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "description": "Nest Babel starter repository",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "format": "prettier --write \"**/*.js\"",
     "start": "babel-node index.js",
     "start:dev": "nodemon",
     "test": "jest",
     "test:cov": "jest --coverage",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "migration:generate": "typeorm migration:generate -d src/data-source.js --outputJs",
+    "migration:run": "typeorm migration:run -d src/data-source.js",
+    "migration:revert": "typeorm migration:revert -d src/data-source.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.3",
