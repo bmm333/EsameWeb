@@ -12,7 +12,7 @@ export class Outfit {
     name;
 
     @Column({ type: 'json' })
-    items; // Array of item IDs/tagIds
+    items;
 
     @Column({ 
         type: 'enum', 
@@ -52,7 +52,6 @@ export class Outfit {
     @UpdateDateColumn()
     updatedAt;
 
-    // Relationships
     @ManyToOne(() => User, user => user.outfits, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userId' })
     user;
