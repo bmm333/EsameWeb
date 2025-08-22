@@ -99,7 +99,9 @@ export class ItemService {
         
         return { success: true, item };
     }
-
+    async getItemsByCategory(userId, category) {
+        return this.getAllItems(userId, { category });
+    }
     async getAllItems(userId, filters = {}) {
         const queryBuilder = this.itemRepository
             .createQueryBuilder('item')
