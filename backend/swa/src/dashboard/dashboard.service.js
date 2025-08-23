@@ -6,16 +6,18 @@ import { Outfit } from '../outfit/entities/outfit.entity.js';
 import { User } from '../user/entities/user.entity.js';
 
 @Injectable()
-@Dependencies('ItemRepository', 'OutfitRepository', 'UserRepository')
+@Dependencies('ItemRepository', 'OutfitRepository', 'UserRepository',AnalyticsService)
 export class DashboardService {
     constructor(
         @InjectRepository(Item) itemRepository,
         @InjectRepository(Outfit) outfitRepository,
-        @InjectRepository(User) userRepository
+        @InjectRepository(User) userRepository,
+        analyticsService
     ) {
         this.itemRepository = itemRepository;
         this.outfitRepository = outfitRepository;
         this.userRepository = userRepository;
+        this.analyticsService = analyticsService;
     }
 
     async getDashboardData(userId)
@@ -37,19 +39,7 @@ export class DashboardService {
 
     async getWardrobeStats(userId)
     {
-        const totalItems=await this.itemRepository.count({where:{userId}});
-        const favoriteItems=await this.itemRepository.count({where:{userId,isFavorite:true}});
-        const itemsInWardrobe=await this.itemRepository.count({where:{userId,isInWardrobe:true}});
-        const totalOutfits=await this.outfitRepository.count({where:{userId}});
-        const favoriteOutfits=await this.outfitRepository.count({where:{userId,isFavorite:true}});
-
-        return{
-            totalItems,
-            favoriteItems,
-            itemsInWardrobe,
-            totalOutfits,
-            favoriteOutfits
-        };
+        return await this.analyticsService.getBasicWardrobeStats(userId);
     }
     //implement first analytics and import here partially showing in dashboard , a quick preview
     //but a full view in dedicated page of analytics
