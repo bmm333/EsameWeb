@@ -1,9 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Dependencies, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Outfit } from './entities/outfit.entity.js';
+import { Item } from '../item/entities/item.entity.js';
 
 @Injectable()
-@Dependencies(OutfitRepository, ItemRepository)
+@Dependencies('OutfitRepository', 'ItemRepository')
 export class OutfitService {
-    constructor(outfitRepository, itemRepository) {
+    constructor(
+        @InjectRepository(Outfit) outfitRepository,
+        @InjectRepository(Item) itemRepository
+    ) {
         this.outfitRepository = outfitRepository;
         this.itemRepository = itemRepository;
     }

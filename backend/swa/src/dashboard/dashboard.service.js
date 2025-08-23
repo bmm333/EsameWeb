@@ -1,13 +1,18 @@
 import { Injectable, Dependencies } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Item } from '../item/entities/item.entity.js';
 import { Outfit } from '../outfit/entities/outfit.entity.js';
 import { User } from '../user/entities/user.entity.js';
 
 @Injectable()
-@Dependencies(ItemRepository,OutfitRepository,UserRepository)
+@Dependencies('ItemRepository', 'OutfitRepository', 'UserRepository')
 export class DashboardService {
-    constructor(itemRepository,outfitRepository,userRepository) {
+    constructor(
+        @InjectRepository(Item) itemRepository,
+        @InjectRepository(Outfit) outfitRepository,
+        @InjectRepository(User) userRepository
+    ) {
         this.itemRepository = itemRepository;
         this.outfitRepository = outfitRepository;
         this.userRepository = userRepository;
