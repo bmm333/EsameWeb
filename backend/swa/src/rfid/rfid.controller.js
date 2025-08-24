@@ -1,68 +1,109 @@
-import { Controller, Post, Get, Put, Body, Param, UseGuards, Request, Dependencies, Bind } from '@nestjs/common';
+import { Controller,Delete, Post, Get, Put, Body, Param, Headers, UseGuards, Request, Dependencies, Bind } from '@nestjs/common';
 import { RfidService } from './rfid.service.js';
+import { DeviceRegistrationDto } from './dto/device-registration.dto.js';
+import { WiFiConfigDto } from './dto/wifi-config.dto.js';
+import { RfidRealtimeDto } from './dto/rfid-realtime.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 @Controller('rfid')
 @Dependencies(RfidService)
 export class RfidController {
-  constructor(rfidService) {
-    this.rfidService = rfidService;
-  }
-  //Device reg (during onboarding)
-  @UseGuards(JwtAuthGuard)
-  @Post('device/register')
-  @Bind(Request(), Body())
-  async registerDevice(req, deviceData) {
-    const userId = req.user.id || req.user.userId;
-    return this.rfidService.registerDevice(userId, deviceData);
-  }
-
-  // Device configuration (WiFi setup via Bluetooth)
-  @Put('device/:serial/configure')
-  @Bind(Param('serial'), Body())
-  async configureDevice(serial, config) {
-    return this.rfidService.configureDevice(serial, config);
-  }
-
-  // Device activation
-  @Post('device/:serial/activate')
-  @Bind(Param('serial'))
-  async activateDevice(serial) {
-    return this.rfidService.activateDevice(serial);
-  }
-
-  // RFID scan data
-  @Post('scan')
-  @Bind(Body())
-  async processScan(scanData) {
-    return this.rfidService.processRfidScan(scanData);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('status')
-  @Bind(Request())
-  async getStatus(req) {
-    const userId = req.user.id || req.user.userId;
-    return this.rfidService.getDeviceStatus(userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('devices')
-  @Bind(Request())
-  async getUserDevices(req) {
-    const userId = req.user.id || req.user.userId;
-    return this.rfidService.getUserDevices(userId);
-  }
-  @UseGuards(JwtAuthGuard)
-  @Get('tags')
-  @Bind(Request())
-  async getUserTags(req) {
-    const userId = req.user.id || req.user.userId;
-    return this.rfidService.getUserTags(userId);
-  }
-  @Post('device/:serial/heartbeat')
-  @Bind(Param('serial'))
-  async deviceHeartbeat(serial) {
-    return this.rfidService.updateDeviceHeartbeat(serial);
-  }
+    constructor(rfidService) {
+        this.rfidService = rfidService;
+    }
+    @UseGuards(JwtAuthGuard)
+    @Post('device/register')
+    @Bind(Request(), Body())
+    async registerDevice(req, deviceData) {
+        const userId = req.user.id || req.user.userId;
+        return this.rfidService.registerDevice(userId, deviceData);
+    }
+    @Put('device/:serial/wifi-confirm')
+    @Bind(Param('serial'), Body())
+    async confirmWiFiConfiguration(serial, wifiConfig) {
+        return this.rfidService.confirmWiFiConfiguration(serial, wifiConfig);
+    }
+    @Post('device/:serial/activate')
+    @Bind(Param('serial'), Body())
+    async activateDevice(serial, activationData) {
+        return this.rfidService.activateDevice(serial, activationData?.ipAddress);
+    }
+    @Post('scan')
+    @Bind(Headers(), Body())
+    async processRealtimeScan(headers, scanData) {
+        const apiKey = headers['x-api-key'];
+        if (!apiKey) {
+            throw new Error('API key required in x-api-key header');
+        }
+        return this.rfidService.processRealtimeRfidScan(apiKey, scanData);
+    }
+    /**
+     * Device heartbeat (Pi calls with API key)
+     * Headers: x-api-key: <deviceApiKey>
+     */
+    @Post('heartbeat')
+    @Bind(Headers())
+    async deviceHeartbeat(headers) {
+        const apiKey = headers['x-api-key'];
+        if (!apiKey) {
+            throw new Error('API key required in x-api-key header');
+        }
+        return this.rfidService.updateDeviceHeartbeat(apiKey);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Post('tags/:tagId/associate')
+    @Bind(Request(), Param('tagId'), Body())
+    async associateTag(req, tagId, body) {
+        const userId = req.user.id || req.user.userId;
+        const { itemId, forceOverride = false } = body; 
+        
+        return this.rfidService.associateTagWithItem(userId, tagId, itemId, forceOverride);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Delete('tags/:tagId/associate')
+    @Bind(Request(), Param('tagId'))
+    async dissociateTag(req, tagId) {
+        const userId = req.user.id || req.user.userId;
+        return this.rfidService.dissociateTagFromItem(userId, tagId);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Get('tags/:tagId/info')
+    @Bind(Request(), Param('tagId'))
+    async getTagInfo(req, tagId) {
+        const userId = req.user.id || req.user.userId;
+        return this.rfidService.getTagInfo(userId, tagId);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Get('status')
+    @Bind(Request())
+    async getDeviceStatus(req) {
+        const userId = req.user.id || req.user.userId;
+        return this.rfidService.getDeviceStatus(userId);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Get('tags/unassociated')
+    @Bind(Request())
+    async getUnassociatedTags(req) {
+        const userId = req.user.id || req.user.userId;
+        return this.rfidService.getUnassociatedTags(userId);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Get('tags')
+    @Bind(Request())
+    async getUserTags(req) {
+        const userId = req.user.id || req.user.userId;
+        return this.rfidService.getUserTags(userId);
+    }
+    @UseGuards(JwtAuthGuard)
+    @Get('devices')
+    @Bind(Request())
+    async getUserDevices(req) {
+        const userId = req.user.id || req.user.userId;
+        const status = await this.rfidService.getDeviceStatus(userId);
+        return {
+            devices: status.hasDevice ? [status.device] : [],
+            totalDevices: status.hasDevice ? 1 : 0,
+            setupRequired: !status.hasDevice
+        };
+    }
 }

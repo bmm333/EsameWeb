@@ -158,6 +158,9 @@ export class User {
     @Column({ type: 'json', nullable: true })
     privacySettings;
 
+    @Column({ type: 'text', nullable:true})
+    pushSubscription; //json
+    
     // Timestamps
     @CreateDateColumn()
     createdAt;

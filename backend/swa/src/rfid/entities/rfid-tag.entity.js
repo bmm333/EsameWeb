@@ -8,14 +8,26 @@ export class RfidTag {
     @PrimaryGeneratedColumn()
     id;
 
-    @Column({ type: 'varchar',unique: true })
-    tagId;
+    @Column({ type: 'varchar', unique: true })
+    tagId; // RFID tag UID
 
-    @Column({type: 'varchar', default: 'active' })
-    status;
+    @Column({ type: 'varchar', default: 'detected' })
+    status; // 'detected', 'missing', 'inactive'
+
+    @Column({ type: 'varchar', default: 'wardrobe' })
+    location; // 'wardrobe', 'being_worn', 'laundry', 'unknown'
 
     @Column({ type: 'timestamp', nullable: true })
-    lastScanned;
+    lastDetected;
+
+    @Column({ type: 'timestamp', nullable: true })
+    lastSeen;
+
+    @Column({ type: 'int', default: 0 })
+    signalStrength; // RSSI value
+
+    @Column({ type: 'boolean', default: true })
+    isActive;
 
     @CreateDateColumn()
     registeredAt;
@@ -23,7 +35,6 @@ export class RfidTag {
     @UpdateDateColumn()
     lastUpdated;
 
-    // Relations
     @ManyToOne(() => User, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userId' })
     user;
@@ -32,11 +43,16 @@ export class RfidTag {
     userId;
 
     @OneToOne(() => Item, item => item.rfidTag, { nullable: true })
+    @JoinColumn({ name: 'itemId' })
     item;
-    @ManyToOne(()=>RfidDevice,device=>device.tags,{nullable:true})
-    @JoinColumn({name:'deviceId'})
+
+    @Column({ type: 'int', nullable: true })
+    itemId;
+
+    @ManyToOne(() => RfidDevice, device => device.tags)
+    @JoinColumn({ name: 'deviceId' })
     device;
     
-    @Column({type: 'int',nullable:true})
+    @Column({ type: 'int' })
     deviceId;
 }

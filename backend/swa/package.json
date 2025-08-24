@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Nest Babel starter repository",
   "license": "MIT",
-
   "scripts": {
     "format": "prettier --write \"**/*.js\"",
     "start": "babel-node index.js",
@@ -21,6 +20,7 @@
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/schedule": "^6.0.0",
     "@nestjs/typeorm": "^11.0.0",
     "aws-sdk": "^2.1692.0",
     "babel-plugin-transform-typescript-metadata": "^0.3.2",
@@ -39,7 +39,8 @@
     "pg": "^8.16.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.26"
+    "typeorm": "^0.3.26",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@babel/cli": "^7.27.2",
