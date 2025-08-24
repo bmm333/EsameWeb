@@ -1,3 +1,8 @@
+import { Injectable, Dependencies, BadRequestException, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Schedule } from './entities/scheldue.entity.js';
+
 @Injectable()
 @Dependencies('ScheduleRepository')
 export class SchedulingService{
@@ -69,6 +74,32 @@ export class SchedulingService{
                 throw error;
             }
             throw new BadRequestException('Failed to fetch schedule');
+        }
+    }
+    async processTriggeredSchedules() {
+        try {
+            const triggeredSchedules = await this.getTriggeredSchedules();
+            const results = [];
+
+            for (const schedule of triggeredSchedules) {
+                const recommendations = await this.recommendationService.generateScheduledRecommendations(
+                    schedule.userId,
+                    schedule.occasion || 'any',
+                    schedule.includeWeatherCheck ? await this.getWeatherData() : null
+                );
+
+                results.push({
+                    scheduleId: schedule.id,
+                    userId: schedule.userId,
+                    scheduleName: schedule.name,
+                    recommendations: recommendations.recommendations,
+                    message: schedule.message
+                });
+            }
+
+            return results;
+        } catch (error) {
+            throw new BadRequestException('Failed to process triggered schedules');
         }
     }
     async updateSchedule(userId, scheduleId, updateScheduleDto) {

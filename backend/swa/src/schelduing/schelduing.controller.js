@@ -1,13 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req, UseGuards, ParseIntPipe } from '@nestjs/common';
-import { SchedulingService } from './scheduling.service.js';
-import { CreateScheduleDto } from './dto/create-schedule.dto.js';
-import { UpdateScheduleDto } from './dto/update-schedule.dto.js';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req, UseGuards, ParseIntPipe, Inject, Dependencies } from '@nestjs/common';
+import { CreateScheduleDto } from './dto/create-scheldue.dto.js';
+import { UpdateScheduleDto } from './dto/update-scheldue.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { SchedulingService } from './schelduing.service.js';
+
 
 @Controller('scheduling')
 @UseGuards(JwtAuthGuard)
+@Dependencies(SchedulingService)
 export class SchedulingController {
-    constructor(schedulingService) {
+    constructor(@Inject(SchedulingService) schedulingService) {
         this.schedulingService = schedulingService;
     }
 

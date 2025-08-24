@@ -5,11 +5,13 @@ import { RfidService } from './rfid.service.js';
 import { RfidDevice } from './entities/rfid-device.entity.js';
 import { RfidTag } from './entities/rfid-tag.entity.js';
 import { UserModule } from '../user/user.module.js';
+import { NotificationModule } from '../notification/notification.module.js';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([RfidDevice, RfidTag]),
-    UserModule
+    UserModule,
+    NotificationModule
   ],
   controllers: [RfidController],
   providers: [RfidService],
