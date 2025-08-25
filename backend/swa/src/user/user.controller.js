@@ -1,18 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
-  Body,
-  NotFoundException,
-  BadRequestException,
-  Dependencies,
-  Bind,
-  UseGuards,
-  Request
-} from '@nestjs/common';
+import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Request, Body, BadRequestException,Dependencies,Get,Bind,Param,Put,Delete,Patch } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import {JwtAuthGuard} from "../auth/guards/jwt-auth.guard";
 
@@ -74,17 +61,26 @@ export class UserController {
     }
   }
   //Against DDD but im going with this for now should refactor later or maybe now 
-  @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
   @Post('profile/setup')
-  @Bind(Request(), Body())
-  async setupProfile(req, profileData) {
+  @UseInterceptors(FileInterceptor('profilePicture'))
+  async setupProfile(@Request() req, @Body() body, @UploadedFile() profilePictureFile) {
     try {
-      const userId = req.user.id || req.user.userId || req.user.sub;
-      console.log('UserController: Setting up profile for user:', userId);
-      console.log('UserController: Profile data:', profileData);
+      const userId = req.user.id || req.user.userId;
 
-      const result = await this.userService.setupUserProfile(userId, profileData);
+      // Parse JSON fields if they exist
+      const profileData = { ...body };
+      ['stylePreferences', 'colorPreferences', 'favoriteShops', 'sizes', 'lifestyles', 'occasions', 'avoidMaterials'].forEach(key => {
+        if (profileData[key] && typeof profileData[key] === 'string') {
+          try {
+            profileData[key] = JSON.parse(profileData[key]);
+          } catch (e) {
+            // If not JSON, leave as is
+          }
+        }
+      });
 
+      const result = await this.userService.setupUserProfile(userId, profileData, profilePictureFile);
       return {
         statusCode: 200,
         message: 'Profile setup completed successfully',
@@ -92,9 +88,10 @@ export class UserController {
       };
     } catch (error) {
       console.error('Profile setup controller error:', error);
-      throw error;
+      throw new BadRequestException(`Error setting up user profile: ${error.message}`);
     }
   }
+
 
   @UseGuards(JwtAuthGuard)
   @Get('profile/setup-status')

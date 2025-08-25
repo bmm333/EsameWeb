@@ -1,5 +1,5 @@
-import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { Injectable, BadRequestException, NotFoundException, Inject,Dependencies } from '@nestjs/common';
+import { getRepositoryToken,InjectRepository } from '@nestjs/typeorm';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 import { User } from './entities/user.entity.js';
@@ -13,6 +13,7 @@ import { UserLifestyle } from './entities/user-lifestyle.entity.js';
 import { UserOccasion } from './entities/user-occasion.entity.js';
 import { UserAvoidMaterial } from './entities/user-avoid.entity.js';
 import * as bcrypt from 'bcrypt';
+import {MediaService} from '../media/media.service.js';
 
 @Injectable()
 export class UserService {
@@ -24,7 +25,8 @@ export class UserService {
     @Inject(getRepositoryToken(UserSize)) userSizeRepository,
     @Inject(getRepositoryToken(UserLifestyle)) userLifestyleRepository,
     @Inject(getRepositoryToken(UserOccasion)) userOccasionRepository,
-    @Inject(getRepositoryToken(UserAvoidMaterial)) userAvoidMaterialRepository
+    @Inject(getRepositoryToken(UserAvoidMaterial)) userAvoidMaterialRepository,
+    @Inject(MediaService)mediaService
   ) {
     this.userRepository = userRepository;
     this.stylePreferenceRepository = stylePreferenceRepository;
@@ -34,6 +36,7 @@ export class UserService {
     this.userLifestyleRepository = userLifestyleRepository;
     this.userOccasionRepository = userOccasionRepository;
     this.userAvoidMaterialRepository = userAvoidMaterialRepository;
+    this.mediaService = mediaService;
   }
 
   async findAll() {
@@ -183,32 +186,31 @@ export class UserService {
     }
   }
 
-  async setupUserProfile(userId, profileData) {
+  async setupUserProfile(userId, profileData, profilePictureFile = null) {
     try {
-      console.log('🔧 setupUserProfile called with userId:', userId);
-      console.log('🔧 setupUserProfile profileData:', JSON.stringify(profileData, null, 2));
-      
       const user = await this.findOneById(userId);
       if (user.profileSetupCompleted) {
         throw new BadRequestException('Profile setup already completed');
       }
-
       const dto = plainToClass(UserProfileSetupDto, profileData);
-      console.log('🔧 DTO after transformation:', JSON.stringify(dto, null, 2));
-      
       const validationErrors = await validate(dto);
       if (validationErrors.length > 0) {
-        console.error('🔧 Validation errors:', validationErrors);
         const errorMessages = validationErrors
-          .map(error => {
-            console.error('🔧 Field:', error.property, 'Constraints:', error.constraints);
-            return Object.values(error.constraints || {});
-          })
+          .map(error => Object.values(error.constraints || {}))
           .flat();
         throw new BadRequestException(`Validation failed: ${errorMessages.join(', ')}`);
       }
-      
-      // Prepare scalar update data with proper defaults
+
+      let profilePictureUrl = dto.profilePicture || null;
+      if (profilePictureFile) {
+        const uploadResult = await this.mediaService.uploadImage(
+          userId,
+          profilePictureFile,
+          { folder: 'profiles', removeBackground: false }
+        );
+        profilePictureUrl = uploadResult.media.url;
+      }
+
       const scalarUpdateData = {
         firstName: dto.firstName || user.firstName,
         lastName: dto.lastName || user.lastName,
@@ -225,39 +227,26 @@ export class UserService {
         enableWeatherNotifications: dto.enableWeatherNotifications ?? true,
         enableOutfitReminders: dto.enableOutfitReminders ?? false,
         morningNotificationTime: dto.morningNotificationTime || null,
-        profilePicture: dto.profilePicture || null,
+        profilePicture: profilePictureUrl,
         profileSetupCompleted: true,
         profileSetupCompletedAt: new Date(),
         updatedAt: new Date()
       };
-      
-      console.log('🔧 Scalar update data:', JSON.stringify(scalarUpdateData, null, 2));
-      
-      // Update user record
+
       await this.userRepository.update(userId, scalarUpdateData);
-      
-      // Handle user relations (preferences)
       await this.handleUserRelations(userId, dto);
-      
       return this.findOneById(userId);
     } catch (error) {
-      console.error('🔧 setupUserProfile error:', error);
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
         throw error;
       }
-      console.error(`Error setting up user profile for user ${userId}:`, error);
       throw new BadRequestException(`Error setting up user profile: ${error.message}`);
     }
   }
 
   async handleUserRelations(userId, dto) {
     try {
-      console.log('🔧 handleUserRelations called with userId:', userId);
-      console.log('🔧 handleUserRelations dto:', JSON.stringify(dto, null, 2));
-      
-      // Style Preferences
       if (dto.stylePreferences && Array.isArray(dto.stylePreferences)) {
-        console.log('🔧 Processing style preferences:', dto.stylePreferences);
         await this.stylePreferenceRepository.delete({ userId });
         if (dto.stylePreferences.length > 0) {
           const stylePrefs = dto.stylePreferences.map(style => 
@@ -270,10 +259,7 @@ export class UserService {
           await this.stylePreferenceRepository.save(stylePrefs);
         }
       }
-      
-      // Color Preferences
       if (dto.colorPreferences && Array.isArray(dto.colorPreferences)) {
-        console.log('🔧 Processing color preferences:', dto.colorPreferences);
         await this.colorPreferenceRepository.delete({ userId });
         if (dto.colorPreferences.length > 0) {
           const colorPrefs = dto.colorPreferences.map(color => 
@@ -281,16 +267,13 @@ export class UserService {
               userId,
               color: typeof color === 'string' ? color : color.color || color.colorName,
               hexCode: typeof color === 'object' ? color.hexCode : null,
-              preference: 'liked'
+              preference: this.mapPreferenceToInteger(color.preference)
             })
           );
           await this.colorPreferenceRepository.save(colorPrefs);
         }
       }
-      
-      // Favorite Shops
       if (dto.favoriteShops && Array.isArray(dto.favoriteShops)) {
-        console.log('🔧 Processing favorite shops:', dto.favoriteShops);
         await this.favoriteShopRepository.delete({ userId });
         if (dto.favoriteShops.length > 0) {
           const shopPrefs = dto.favoriteShops.map(shop => 
@@ -304,10 +287,7 @@ export class UserService {
           await this.favoriteShopRepository.save(shopPrefs);
         }
       }
-      
-      // Sizes
       if (dto.sizes && Array.isArray(dto.sizes)) {
-        console.log('🔧 Processing sizes:', dto.sizes);
         await this.userSizeRepository.delete({ userId });
         if (dto.sizes.length > 0) {
           const sizePrefs = dto.sizes.map(size => 
@@ -321,10 +301,8 @@ export class UserService {
           await this.userSizeRepository.save(sizePrefs);
         }
       }
-      
-      // Lifestyles
+
       if (dto.lifestyles && Array.isArray(dto.lifestyles)) {
-        console.log('🔧 Processing lifestyles:', dto.lifestyles);
         await this.userLifestyleRepository.delete({ userId });
         if (dto.lifestyles.length > 0) {
           const lifestylePrefs = dto.lifestyles.map(lifestyle => 
@@ -340,7 +318,6 @@ export class UserService {
       
       // Occasions
       if (dto.occasions && Array.isArray(dto.occasions)) {
-        console.log('🔧 Processing occasions:', dto.occasions);
         await this.userOccasionRepository.delete({ userId });
         if (dto.occasions.length > 0) {
           const occasionPrefs = dto.occasions.map(occasion => 
@@ -356,7 +333,6 @@ export class UserService {
       
       // Avoid Materials
       if (dto.avoidMaterials && Array.isArray(dto.avoidMaterials)) {
-        console.log('🔧 Processing avoid materials:', dto.avoidMaterials);
         await this.userAvoidMaterialRepository.delete({ userId });
         if (dto.avoidMaterials.length > 0) {
           const avoidMaterialPrefs = dto.avoidMaterials.map(material => 
@@ -370,13 +346,18 @@ export class UserService {
           await this.userAvoidMaterialRepository.save(avoidMaterialPrefs);
         }
       }
-      
-      console.log('🔧 handleUserRelations completed successfully');
     } catch (error) {
-      console.error('🔧 handleUserRelations error:', error);
       throw new BadRequestException(`Error saving user preferences: ${error.message}`);
     }
   }
+  mapPreferenceToInteger(preference) {
+  const preferenceMap = {
+    liked: 1,
+    neutral: 0,
+    disliked: -1
+  };
+  return preferenceMap[preference] || 0; // Default to "neutral" if not found
+}
   async updateLastLogin(userId) {
     try {
       await this.userRepository.update(userId, { 

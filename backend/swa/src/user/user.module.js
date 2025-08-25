@@ -10,6 +10,7 @@ import { UserSize } from './entities/user-size.entity.js';
 import { UserLifestyle } from './entities/user-lifestyle.entity.js';
 import { UserOccasion } from './entities/user-occasion.entity.js';
 import { UserAvoidMaterial } from './entities/user-avoid.entity.js';
+import { MediaModule } from '../media/media.module.js';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { UserAvoidMaterial } from './entities/user-avoid.entity.js';
       UserLifestyle,
       UserOccasion,
       UserAvoidMaterial
-    ])
+    ]),
+    MediaModule
   ],
   controllers: [UserController],
   providers: [UserService],

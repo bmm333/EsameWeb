@@ -6,13 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Handle login form
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
       loginForm.addEventListener('submit', handleLogin);
     }
-
-    // Handle signup form
     const signupForm = document.getElementById('signupForm');
     if (signupForm) {
       signupForm.addEventListener('submit', handleSignup);
@@ -114,13 +111,11 @@ async function handleSignup(e) {
 }
 
 function showAlert(message, type = 'info') {
-  // Remove existing alerts
   const existingAlert = document.querySelector('.alert');
   if (existingAlert) {
     existingAlert.remove();
   }
 
-  // Create new alert
   const alert = document.createElement('div');
   alert.className = `alert alert-${type} alert-dismissible fade show`;
   alert.innerHTML = `
@@ -128,7 +123,6 @@ function showAlert(message, type = 'info') {
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   `;
 
-  // Insert alert at the top of the form
   const authCard = document.querySelector('.auth-card');
   const authHeader = document.querySelector('.auth-header');
   if (authHeader) {
@@ -137,7 +131,6 @@ function showAlert(message, type = 'info') {
     authCard.insertBefore(alert, authCard.firstChild);
   }
 
-  // Auto-dismiss after 5 seconds
   setTimeout(() => {
     if (alert.parentNode) {
       alert.remove();

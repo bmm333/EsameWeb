@@ -110,7 +110,7 @@ export class AuthService {
         message: 'Sign in successful',
         token,
         user: userResponse,
-        needsProfileSetup: !user.profileSetupCompleted
+        needsProfileSetup: user.profileSetupCompleted ? false : true
       };
 
     } catch (error) {
@@ -395,7 +395,6 @@ export class AuthService {
   }
   async getProfile(user) {
     console.log('AuthService getProfile: Getting profile for user:', user.email);
-    // Get fresh user data from database to ensure we have the latest info
     const freshUser = await this.userService.findOneById(user.id || user.userId);
     
     return {
@@ -419,11 +418,4 @@ export class AuthService {
       }
     };
   }
-
-  // Additional authentication methods can go here:
-  // - requestPasswordReset()
-  // - resetPassword()
-  // - verifyEmail()
-  // - resendVerification()
-  // - refreshToken()
 }
