@@ -23,20 +23,40 @@ export class AuthService {
   }
 
   async validateUser(email, password) {
+    console.log('validateUser called with:', { email, passwordLength: password?.length });
+    
     const user = await this.userService.findByEmail(email);
+    console.log('User found:', { 
+      id: user?.id, 
+      email: user?.email, 
+      hasPassword: !!user?.password,
+      passwordHash: user?.password?.substring(0, 20) + '...',
+      isVerified: user?.isVerified 
+    });
+    
     if (!user) {
+      console.log('No user found');
       return null;
     }
-    if(user.lockedUntil&&new Date()<new Date(user.lockedUntil))
-    {
+    
+    if(user.lockedUntil && new Date() < new Date(user.lockedUntil)) {
+      console.log('Account locked until:', user.lockedUntil);
       throw new UnauthorizedException('Account is temporarily locked due to too many failed login attempts');
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    const normalizedPassword = password.trim();
+    console.log('Comparing normalized password...');
+    
+    const isPasswordValid = await bcrypt.compare(normalizedPassword, user.password);
+    console.log('Password comparison result:', isPasswordValid);
+    
     if (!isPasswordValid) {
-      //inc failed login attempts;
+      console.log('Password invalid, handling failed login');
       await this.handleFailedLogin(user);
       return null;
     }
+    
+    console.log('Password valid, resetting failed attempts');
     await this.resetFailedLoginAttempts(user.id);
     return user;
   }
@@ -49,7 +69,7 @@ export class AuthService {
     {
       const lockUntil=new Date();
       lockUntil.setMinutes(lockUntil.getMinutes()+lockTimeMinutes);
-      await this.userService.update(user.id,{
+      await this.userService.updateUserRecord(user.id,{
         failedLoginAttempts:failedAttempts,
         lockedUntil:lockUntil
       });
@@ -70,15 +90,12 @@ export class AuthService {
     try {
       console.log('AuthService: Processing signin for validated user:', user.email);
       
-      // Check if user is verified
       if (!user.isVerified) {
         throw new UnauthorizedException('Please verify your email before signing in');
       }
 
-      // Update last login
       await this.userService.updateLastLogin(user.id);
 
-      // Create JWT payload
       const payload = { 
         sub: user.id, 
         email: user.email,
@@ -129,69 +146,51 @@ export class AuthService {
   }
 
   async signup(signupData) {
+    const { email, password, firstName, lastName } = signupData;
+    const normalizedPassword = password.trim();
+    console.log('Signup - Normalized password length:', normalizedPassword.length);
+    
     try {
-      console.log('AuthService: Processing signup for:', signupData.email);
-      const missingFields = [];
-      if (!signupData.firstName) missingFields.push('firstName');
-      if (!signupData.email) missingFields.push('email');
-      if (!signupData.password) missingFields.push('password');
-
-      if (missingFields.length > 0) {
-        throw new BadRequestException({
-          message: 'Validation failed - missing required fields',
-          missingFields
-        });
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(signupData.email)) {
-        throw new BadRequestException('Invalid email format');
-      }
-      if (signupData.password.length < 8) {
-        throw new BadRequestException('Password must be at least 8 characters long');
-      }
-      const existingUser = await this.userService.findByEmail(signupData.email);
+      const existingUser = await this.userService.findByEmail(email);
       if (existingUser) {
-        throw new BadRequestException('User with this email already exists');
+        throw new BadRequestException('Email already exists');
       }
-
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(signupData.password, salt);
-      const verificationToken=crypto.randomBytes(32).toString('hex');
-      const verificationExpires=new Date();
-      verificationExpires.setHours(verificationExpires.getHours() + 24); //it will expire in 24 hrs
-
-
-
+      const passwordValidation = this.validatePasswordStrength(normalizedPassword);
+      if (!passwordValidation.isValid) {
+        throw new BadRequestException(passwordValidation.message);
+      }
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const now = new Date();
+      const expires = new Date(now);
+      expires.setDate(expires.getDate() + 1); 
+      const trialExpires = new Date(now);
+      trialExpires.setDate(trialExpires.getDate() + 30);
       const userData = {
-        firstName: signupData.firstName,
-        lastName: signupData.lastName || '',
-        email: signupData.email.toLowerCase(),
-        password: hashedPassword,
-        isVerified: false, 
-        provider: 'local',
+        email,
+        password: normalizedPassword,
+        firstName,
+        lastName,
         verificationToken,
-        verificationTokenExpires: verificationExpires,
-        passwordChangedAt: new Date()
+        verificationTokenExpires: expires,
+        passwordChangedAt: now,
+        trial: true,
+        trialExpires,
+        provider: 'local'
       };
-
       const savedUser = await this.userService.createUser(userData);
-
-      try{
-        await this.mailingService.sendVerificationEmail(savedUser,verificationToken);
+      try {
+        await this.mailingService.sendVerificationEmail(savedUser, verificationToken);
         console.log('Verification mail sent successfully');
-      }catch(error)
-      {
-        console.error('Failed to send verification email:',error);//not failing the signup since user can request new verification email,or eventually change the email
+      } catch (error) {
+        console.error('Failed to send verification email:', error);
       }
-      const { password, ...userResponse } = savedUser;
-
-
+      
+      const { password: _, ...userResponse } = savedUser;
       return {
         statusCode: 201,
         message: 'User registered successfully. Please check your email for verification.',
         user: userResponse
       };
-
     } catch (error) {
       console.error('AuthService signup error:', error);
       

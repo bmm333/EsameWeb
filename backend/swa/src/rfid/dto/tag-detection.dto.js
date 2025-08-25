@@ -1,6 +1,5 @@
 import { IsString, IsNotEmpty, IsOptional, IsEnum, IsInt, IsArray } from 'class-validator';
 
-
 export class TagDetectionDto {
     @IsString()
     @IsNotEmpty()
@@ -10,7 +9,7 @@ export class TagDetectionDto {
     event;
 
     @IsOptional()
-    signalStrength; // RSSI
+    signalStrength; 
 
     @IsOptional()
     timestamp;

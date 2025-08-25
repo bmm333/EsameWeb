@@ -25,6 +25,36 @@ export class AuthController {
   constructor(authService) {
     this.authService = authService;
   }
+  @Post('debug-reset-password')
+@Bind(Body())
+async debugResetPassword(@Body() body) {
+  const { email, password } = body;
+  const bcrypt = await import('bcrypt');
+  
+  try {
+    const user = await this.authService.userService.findByEmail(email);
+    if (!user) {
+      return { success: false, message: 'User not found' };
+    }
+    
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    await this.authService.userService.updateUserRecord(user.id, { 
+      password: hashedPassword,
+      failedLoginAttempts: 0,
+      lockedUntil: null
+    });
+    
+    return { 
+      success: true, 
+      message: `Password reset to "${password}" for ${email}. You can now login.` 
+    };
+  } catch (error) {
+    console.error('Debug password reset error:', error);
+    return { success: false, error: error.message };
+  }
+}
 
   @UseGuards(LocalAuthGuard)
   @Post('signin')
