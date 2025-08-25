@@ -15,9 +15,9 @@ export class GenerateRecommendationDto {
 
     @IsOptional()
     @IsString({ message: 'Base item ID must be a string' })
-    baseItemId; // For RFID-triggered recommendations
+    baseItemId; 
 
     @IsOptional()
     @IsObject({ message: 'Filters must be an object' })
-    filters; // Additional filters (style, color preference, etc.)
+    filters;
 }

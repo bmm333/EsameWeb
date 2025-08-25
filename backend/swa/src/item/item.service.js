@@ -3,64 +3,28 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Item } from './entities/item.entity.js';
 import { Repository, Not, IsNull } from 'typeorm';
 import { RfidTag } from '../rfid/entities/rfid-tag.entity.js';
-import AWS from 'aws-sdk';
+import { MediaService } from '../media/media.service.js';
 
 @Injectable()
-@Dependencies('ItemRepository', 'RfidTagRepository')
+@Dependencies('ItemRepository', 'RfidTagRepository',MediaService)
 export class ItemService {
     constructor(
         @InjectRepository(Item) itemRepository,
-        @InjectRepository(RfidTag) rfidTagRepository
+        @InjectRepository(RfidTag) rfidTagRepository,
+        mediaService
     ) {
         this.itemRepository = itemRepository;
         this.rfidTagRepository = rfidTagRepository;
-        this.s3 = new AWS.S3({
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            region: process.env.AWS_REGION
+        this.mediaService = mediaService;
+    }
+    async uploadItemImage(userId,file,itemData={})
+    {
+        return this.mediaService.uploadImage(userId,file,{
+            folder:'items',
+            removeBackground:true,
+            metadata:itemData
         });
-        this.bucketName = process.env.AWS_S3_BUCKET_NAME;
     }
-
-    async uploadImageToS3(userId, file) {
-        try {
-            if (!file) {
-                throw new Error('No file provided');
-            }
-            const timestamp = Date.now();
-            const ext = file.originalname.split('.').pop();
-            const key = `items/${userId}/${timestamp}.${ext}`;
-            const uploadParams = {
-                Bucket: this.bucketName,
-                Key: key,
-                Body: file.buffer,
-                ContentType: file.mimetype,
-                ACL: 'public-read'
-            };
-            const result = await this.s3.upload(uploadParams).promise();
-            return {
-                success: true,
-                imageUrl: result.Location,
-                key: result.Key 
-            };
-        } catch (error) {
-            throw new Error(`Image upload failed: ${error.message}`);
-        }
-    }
-
-    async deleteImageFromS3(imageUrl) {
-        try {
-            if (!imageUrl) return;
-            const key = imageUrl.split('.amazonaws.com/')[1];
-            await this.s3.deleteObject({
-                Bucket: this.bucketName,
-                Key: key
-            }).promise();
-        } catch (error) {
-            console.error('S3 delete error:', error);
-        }
-    }
-
     async addOrUpdateItem(userId, tagId, itemData, override = false) {
         const tag = await this.rfidTagRepository.findOne({ 
             where: { tagId, userId },

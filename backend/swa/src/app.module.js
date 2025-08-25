@@ -13,6 +13,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { dataSourceOptions } from '../database.config.js';
 import { MailingModule } from './mailing/mailing.module';
 import { SettingsModule } from './settings/settings.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { SettingsModule } from './settings/settings.module';
     NotificationModule,
     RfidModule,
     MailingModule,
-    SettingsModule
+    SettingsModule,
+    MediaModule
   ],
   controllers: [AppController],
   providers: [AppService],

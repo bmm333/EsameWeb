@@ -81,13 +81,13 @@ class OnboardingPageManager extends OnboardingManager {
   }
 
   saveStylePreferences() {
-    // Map UI labels to backend values
+    //ui->Backend values
     const styleMap = {
       'Formal': 'formal',
       'Casual': 'casual',
       'Business Casual': 'business',
       'Sporty': 'sporty',
-      'Evening': 'classic', // If you want "Evening" to map to "classic"
+      'Evening': 'classic', //just a mapping rule for now 
       'Trendy': 'trendy'
     };
 
@@ -238,45 +238,64 @@ class OnboardingPageManager extends OnboardingManager {
     }
   }
   
-  
   async finishSetup() {
-    try {
-      this.saveStepData(this.currentStep);
-      
-      const finishBtn = document.querySelector('.finish-setup') || document.querySelector('.btn-primary[href="dashboard.html"]');
-      if (finishBtn) {
-        const originalText = finishBtn.textContent;
-        finishBtn.disabled = true;
-        finishBtn.textContent = 'Completing setup...';
-        
-        console.log('Final profile data:', this.profileData);
-        
-        const result = await window.authManager.setupProfile(this.profileData);
-        
-        if (result.success) {
-          this.showAlert('Profile setup completed successfully!', 'success');
-          setTimeout(() => {
-            window.location.href = '/dashboard.html';
-          }, 2000);
+  try {
+    this.saveStepData(this.currentStep);
+
+    const finishBtn = document.querySelector('.finish-setup');
+    if (finishBtn) {
+      const originalText = finishBtn.textContent;
+      finishBtn.disabled = true;
+      finishBtn.textContent = 'Completing setup...';
+      const formData = new FormData();
+      for (const [key, value] of Object.entries(this.profileData)) {
+      if (key !== 'profilePicture') {
+        if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
         } else {
-          this.showAlert(result.error || 'Failed to complete profile setup', 'danger');
-          finishBtn.disabled = false;
-          finishBtn.textContent = originalText;
+          formData.append(key, value);
         }
       }
-    } catch (error) {
-      console.error('Profile setup error:', error);
-      this.showAlert('An unexpected error occurred. Please try again.', 'danger');
-      
-      const finishBtn = document.querySelector('.finish-setup');
-      if (finishBtn) {
-        finishBtn.disabled = false;
-        finishBtn.textContent = 'Complete Setup';
+    }
+      const imageInput = document.getElementById('imageUpload');
+      if (imageInput && imageInput.files && imageInput.files[0]) {
+        formData.append('profilePicture', imageInput.files[0]);
       }
+
+        const apiBase = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://localhost:3001';
+        const response = await fetch(`${apiBase}/user/profile/setup`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${window.authManager.token}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.statusCode === 200 || result.success) {
+        this.showAlert('Profile setup completed successfully!', 'success');
+        setTimeout(() => {
+          window.location.href = '/dashboard.html';
+        }, 2000);
+      } else {
+        this.showAlert(result.error || 'Failed to complete profile setup', 'danger');
+        finishBtn.disabled = false;
+        finishBtn.textContent = originalText;
+      }
+    }
+  } catch (error) {
+    console.error('Profile setup error:', error);
+    this.showAlert('An unexpected error occurred. Please try again.', 'danger');
+
+    const finishBtn = document.querySelector('.finish-setup');
+    if (finishBtn) {
+      finishBtn.disabled = false;
+      finishBtn.textContent = 'Complete Setup';
+    }
     }
   }
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
   const initOnboarding = () => {
