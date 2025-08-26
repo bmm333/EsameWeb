@@ -7,7 +7,7 @@ import { RfidTag } from './entities/rfid-tag.entity.js';
 import { UserService } from '../user/user.service.js';
 import { NotificationService } from '../notification/notification.service.js';
 import crypto from 'crypto';
-//console logs only for now need to take them off after testing 
+
 @Injectable()
 @Dependencies('RfidDeviceRepository', 'RfidTagRepository', UserService, NotificationService)
 export class RfidService {
@@ -23,16 +23,13 @@ export class RfidService {
         this.notificationService = notificationService;
     }
 
-
+    //went the short route here 
     async registerDevice(userId, deviceData) {
         try {
             console.log(`Registering device for user ${userId}:`, deviceData.serialNumber);
             const user = await this.userService.findOneById(userId);
             if (!user) {
                 throw new NotFoundException('User not found');
-            }
-            if (user.subscriptionTier === 'free' && !user.trial) {
-                throw new BadRequestException('RFID device requires premium subscription or trial');
             }
             const existingUserDevice = await this.rfidDeviceRepository.findOne({
                 where: { userId }
@@ -43,42 +40,60 @@ export class RfidService {
             const existingDevice = await this.rfidDeviceRepository.findOne({
                 where: { serialNumber: deviceData.serialNumber }
             });
-            if (existingDevice) {
+
+            if (!existingDevice) {
+                throw new BadRequestException('Device serial not recognized. Provision the device in the backend first.');
+            }
+            if (existingDevice.userId && existingDevice.userId !== userId) {
                 throw new BadRequestException('Device already registered to another account');
             }
+
+            if (existingDevice.userId === userId) {
+                return {
+                    device: {
+                        id: existingDevice.id,
+                        serialNumber: existingDevice.serialNumber,
+                        deviceName: existingDevice.deviceName,
+                        status: existingDevice.status,
+                        apiKey: existingDevice.apiKey
+                    },
+                    nextStep: existingDevice.status === 'active' ? 'ready' : 'bluetooth_pairing',
+                    message: 'Device already registered for this account.'
+                };
+            }
+
+            // Claim device for this user
             const apiKey = this.generateApiKey();
-            const device = this.rfidDeviceRepository.create({
-                serialNumber: deviceData.serialNumber,
-                apiKey: apiKey,
-                deviceName: deviceData.deviceName || `Smart Wardrobe Device`,
-                macAddress: deviceData.macAddress,
-                firmwareVersion: deviceData.firmwareVersion,
+            await this.rfidDeviceRepository.update(existingDevice.id, {
+                userId,
+                apiKey,
                 status: 'pairing',
-                userId: userId,
-                bluetoothConfig: {
-                    macAddress: deviceData.macAddress,
+                bluetoothConfig: Object.assign({}, existingDevice.bluetoothConfig, {
+                    macAddress: deviceData.macAddress || existingDevice.bluetoothConfig?.macAddress,
                     pairedAt: new Date()
-                }
+                })
             });
-            const savedDevice = await this.rfidDeviceRepository.save(device);
+
+            const claimed = await this.rfidDeviceRepository.findOne({ where: { id: existingDevice.id } });
+
             await this.userService.updateUserRecord(userId, {
                 hasRfidDevice: true,
                 deviceSetupStatus: 'pairing',
-                deviceId: savedDevice.serialNumber
+                deviceId: claimed.serialNumber
             });
-            console.log(`Device registered: ${savedDevice.serialNumber}`);
+
+            console.log(`Device claimed: ${claimed.serialNumber}`);
             return {
                 device: {
-                    id: savedDevice.id,
-                    serialNumber: savedDevice.serialNumber,
-                    deviceName: savedDevice.deviceName,
-                    status: savedDevice.status,
-                    apiKey: apiKey // Return API key for frontend to send to Pi
+                    id: claimed.id,
+                    serialNumber: claimed.serialNumber,
+                    deviceName: claimed.deviceName,
+                    status: claimed.status,
+                    apiKey: apiKey
                 },
                 nextStep: 'bluetooth_pairing',
                 message: 'Device registered. Use Web Bluetooth to send WiFi credentials and API key to device.'
             };
-
         } catch (error) {
             console.error('Error registering device:', error);
             throw error;

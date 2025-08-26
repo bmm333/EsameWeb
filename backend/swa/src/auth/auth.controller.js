@@ -47,7 +47,7 @@ async debugResetPassword(@Body() body) {
     });
     
     return { 
-      success: true, 
+      success: true,  
       message: `Password reset to "${password}" for ${email}. You can now login.` 
     };
   } catch (error) {
