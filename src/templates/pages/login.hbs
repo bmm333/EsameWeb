@@ -1,0 +1,43 @@
+<div class="auth-container">
+    <div class="container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="#" class="navbar-brand mb-4 d-block" onclick="router.navigate('landing')">Smart Wardrobe</a>
+                <h1 class="h3">Welcome back</h1>
+                <p class="text-muted">Sign in to your account</p>
+            </div>
+            
+            <form class="auth-form" id="loginForm">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="password" class="form-label mb-0">Password</label>
+                        <a href="#" class="small">Forgot Password?</a>
+                    </div>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                </div>
+                <div class="mb-4 form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe">Remember me</label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" id="loginBtn">
+                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    Sign In
+                </button>
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                <button type="button" class="btn btn-outline-secondary w-100 social-btn mb-3" id="googleLogin">
+                    <i class="bi bi-google"></i>
+                    <span>Sign In with Google</span>
+                </button>
+                <div class="text-center mt-4">
+                    <p class="mb-0">Don't have an account? <a href="#" onclick="router.navigate('signup')">Sign up</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
