@@ -48,10 +48,6 @@ export class CreateItemDto {
     @MaxLength(50, { message: 'Brand cannot exceed 50 characters' })
     brand;
 
-    @IsOptional()
-    @IsString({ message: 'Size must be a string' })
-    @MaxLength(20, { message: 'Size cannot exceed 20 characters' })
-    size;
 
     @IsOptional()
     @IsArray({ message: 'Season must be an array' })
@@ -62,12 +58,7 @@ export class CreateItemDto {
     season;
 
     @IsOptional()
-    @IsString({ message: 'Notes must be a string' })
-    @MaxLength(500, { message: 'Notes cannot exceed 500 characters' })
-    notes;
-
-    @IsOptional()
-    override;
+    override;//if user decides to delete old clothing associated to  tag
 
     constructor(data = {}) {
         Object.assign(this, data);
