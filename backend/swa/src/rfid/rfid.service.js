@@ -266,6 +266,11 @@ export class RfidService {
                     tag.location = 'wardrobe';
                 } else if (tagData.event === 'removed') {
                     tag.location = 'being_worn';
+                    const recommendation = await this.recommendationService.generateRfidTriggeredRecommendation(
+                    device.userId, 
+                    item.id,
+                    user.baseLocation
+                    );
                 }
 
                 if (wasOffline && tagData.event === 'detected') {

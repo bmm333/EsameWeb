@@ -7,22 +7,26 @@ import { MailingService } from '../mailing/mailing.service.js';
 import { User } from '../user/entities/user.entity.js';
 import { SchedulingService } from '../schelduing/schelduing.service.js';
 import webpush from 'web-push';
+import { WeatherService } from '../weather/weather.service.js';
+
 
 @Injectable()
-@Dependencies('NotificationRepository', 'UserRepository', SchedulingService, RecommendationService, MailingService)
+@Dependencies('NotificationRepository', 'UserRepository', SchedulingService, RecommendationService, MailingService, WeatherService)
 export class NotificationService {
     constructor(
         @InjectRepository(Notification) notificationRepository,
         @InjectRepository(User) userRepository,
         schedulingService,
         recommendationService,
-        mailingService
+        mailingService,
+        weatherService
     ) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.schedulingService = schedulingService;
         this.recommendationService = recommendationService;
         this.mailingService = mailingService;
+        this.weatherService=weatherService;
         this.initializeWebPush();
     }
 
@@ -367,14 +371,36 @@ export class NotificationService {
         if (hour < 17) return 'afternoon';
         return 'evening';
     }
-    async getWeatherData() {
-        //should integrate weather api here instead
-        return {
-            temperature: 20,
-            condition: 'partly cloudy',
-            humidity: 65,
-            windSpeed: 10
-        };
+    async getWeatherData(location=null) {
+       if (!location) {
+            // Default location or get from user
+            return {
+                temperature: 20,
+                condition: 'partly cloudy',
+                humidity: 65,
+                windSpeed: 10
+            };
+        }
+
+        try {
+            const weather = await this.weatherService.getCurrentWeather(location);
+            return {
+                temperature: weather.temperature,
+                condition: weather.condition,
+                humidity: weather.humidity,
+                windSpeed: weather.windSpeed,
+                location: weather.location,
+                description: weather.description
+            };
+        } catch (error) {
+            console.warn('Weather fetch failed in notification:', error.message);
+            return {
+                temperature: 20,
+                condition: 'partly cloudy',
+                humidity: 65,
+                windSpeed: 10
+            };
+        }
     }
     @Cron(CronExpression.EVERY_WEEK)
     async cleanupOldNotifications() {

@@ -1,14 +1,22 @@
-import { Injectable, Dependencies, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Dependencies, BadRequestException, NotFoundException ,forwardRef} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Schedule } from './entities/scheldue.entity.js';
+import { UserService } from '../user/user.service';
+import { RecommendationService } from '../recommendation/recommendation.service';
+import { NotificationService } from '../notification/notification.service.js';
+import { WeatherService } from '../weather/weather.service.js';
+
 
 @Injectable()
-@Dependencies('ScheduleRepository')
+@Dependencies('ScheduleRepository',UserService,RecommendationService,[forwardRef(() => NotificationService)],WeatherService)
 export class SchedulingService{
-    constructor(@InjectRepository(Schedule)scheduleRepository)
+    constructor(@InjectRepository(Schedule)scheduleRepository,userService,notificationService,recommendationService,weatherService)
     {
         this.scheduleRepository=scheduleRepository;
+        this.userService=userService;
+        this.notificationService=notificationService;
+        this.recommendationService=recommendationService;
+        this.weatherService=weatherService;
     }
     async createSchedule(userId,createScheduleDto)
     {
@@ -82,17 +90,26 @@ export class SchedulingService{
             const results = [];
 
             for (const schedule of triggeredSchedules) {
+                let weatherData = null;
+                if (schedule.headedTo) {
+                    try {
+                        weatherData = await this.weatherService.getCurrentWeather(schedule.headedTo);
+                    } catch (error) {
+                        console.warn(`Weather fetch failed for ${schedule.headedTo}:`, error.message);
+                    }
+                }
                 const recommendations = await this.recommendationService.generateScheduledRecommendations(
                     schedule.userId,
                     schedule.occasion || 'any',
-                    schedule.includeWeatherCheck ? await this.getWeatherData() : null
+                    weatherData,
+                    schedule.headedTo
                 );
-
                 results.push({
                     scheduleId: schedule.id,
                     userId: schedule.userId,
                     scheduleName: schedule.name,
                     recommendations: recommendations.recommendations,
+                    weather: weatherData,
                     message: schedule.message
                 });
             }

@@ -4,55 +4,106 @@ import { Recommendation } from './entities/recommendation.entity.js';
 import { Item } from '../item/entities/item.entity.js';
 import { Outfit } from '../outfit/entities/outfit.entity.js';
 import { User } from '../user/entities/user.entity.js';
+import { WeatherService } from '../weather/weather.service.js';
 
 @Injectable()
-@Dependencies('RecommendationRepository', 'ItemRepository', 'OutfitRepository', 'UserRepository')
+@Dependencies('RecommendationRepository', 'ItemRepository', 'OutfitRepository', 'UserRepository',WeatherService)
 export class RecommendationService {
     constructor(
         @InjectRepository(Recommendation) recommendationRepository,
         @InjectRepository(Item) itemRepository,
         @InjectRepository(Outfit) outfitRepository,
-        @InjectRepository(User) userRepository
+        @InjectRepository(User) userRepository,
+        weatherService
     ) {
         this.recommendationRepository = recommendationRepository;
         this.itemRepository = itemRepository;
         this.outfitRepository = outfitRepository;
         this.userRepository = userRepository;
+        this.weatherService = weatherService;
     }
 
-    async generateScheduledRecommendations(userId, occasion = 'any', weatherData = null) {
+    async generateScheduledRecommendations(userId, occasion = 'any', weatherData = null, location = null) {
         try {
-            const recommendations = await this.generateOutfitRecommendations(userId, {
-                type: 'scheduled',
-                occasion,
-                weatherData
+            if (location && !weatherData) {
+                try {
+                weatherData = await this.weatherService.getCurrentWeather(location);
+                } catch (error) {
+                console.warn('Weather fetch failed, continuing without weather data:', error.message);
+                }
+        }
+        const recommendations = await this.generateOutfitRecommendations(userId, {
+            type: 'scheduled',
+            occasion,
+            weatherData
+        });
+        const savedRecommendations = [];
+        for (const rec of recommendations) {
+            const recommendation = this.recommendationRepository.create({
+            userId,
+            type: 'scheduled',
+            occasion,
+            outfitSuggestion: rec.outfit,
+            weatherData,
+            confidenceScore: rec.score,
+            reasoning: rec.reasoning
             });
-            const savedRecommendations = [];
-            for (const rec of recommendations) {
-                const recommendation = this.recommendationRepository.create({
-                    userId,
-                    type: 'scheduled',
-                    occasion,
-                    outfitSuggestion: rec.outfit,
-                    weatherData,
-                    confidenceScore: rec.score,
-                    reasoning: rec.reasoning
-                });
-                savedRecommendations.push(await this.recommendationRepository.save(recommendation));
-            }
+            savedRecommendations.push(await this.recommendationRepository.save(recommendation));
+        }
 
-            return {
-                recommendations: savedRecommendations,
-                count: savedRecommendations.length,
-                occasion,
-                generatedAt: new Date()
-            };
-        } catch (error) {
+        return {
+            recommendations: savedRecommendations,
+            count: savedRecommendations.length,
+            occasion,
+            weather: weatherData,
+            generatedAt: new Date()
+        };
+        }catch (error) {
             throw new BadRequestException('Failed to generate scheduled recommendations');
         }
     }
+    scoreWeatherMatch(outfit, weatherData) {
+        if (!weatherData || !weatherData.temperature) return 0.5;
+        const temp = weatherData.temperature;
+        const condition = weatherData.condition.toLowerCase();
+        const isRaining = condition.includes('rain');
+        const isSnowing = condition.includes('snow');
+        let score = 0.5;
+        const hasOuterwear = outfit.items.some(item => 
+        item.category.toLowerCase().includes('jacket') || 
+        item.category.toLowerCase().includes('coat') ||
+        item.category.toLowerCase().includes('outerwear')
+        );
+        const hasLightweight = outfit.items.some(item =>
+        item.category.toLowerCase().includes('t-shirt') ||
+        item.category.toLowerCase().includes('tank') ||
+        item.name.toLowerCase().includes('light')
+        );
+        if (temp < 10) {
+        if (hasOuterwear) score += 0.4;
+        if (outfit.items.some(item => item.name.toLowerCase().includes('warm'))) score += 0.2;
+        }
+        else if (temp > 25) {
+        if (hasLightweight) score += 0.4;
+        if (!hasOuterwear) score += 0.2;
+        }
+        else {
+        score += 0.3;
+        }
+        if (isRaining || isSnowing) {
+        const hasWaterproof = outfit.items.some(item => 
+            item.name.toLowerCase().includes('waterproof') ||
+            item.name.toLowerCase().includes('rain') ||
+            item.category.toLowerCase().includes('boots')
+        );
+        if (hasWaterproof) score += 0.2;
+    }
 
-    async generateRfidTriggeredRecommendation(userId, baseItemId) {
+    return Math.min(1.0, score);
+  }
+  
+
+    async generateRfidTriggeredRecommendation(userId, baseItemId,userLocation=null) {
         try {
             const baseItem = await this.itemRepository.findOne({
                 where: { id: baseItemId, userId },
@@ -70,8 +121,17 @@ export class RecommendationService {
                     baseItem
                 };
             }
-
-            const outfitSuggestion = await this.buildOutfitAroundItem(userId, baseItem);
+            let weatherData=null;
+            if(userLocation)
+            {
+                try{
+                    weatherData=await this.weatherService.getCurrentWeather(userLocation);
+                }catch(error)
+                {
+                    throw new BadRequestException('Failed to fetch weather data');
+                }
+            }
+            const outfitSuggestion = await this.buildOutfitAroundItem(userId, baseItem,weatherData);
 
             if (!outfitSuggestion) {
                 return {
@@ -86,6 +146,7 @@ export class RecommendationService {
                 type: 'rfid-triggered',
                 occasion: outfitSuggestion.occasion,
                 outfitSuggestion: outfitSuggestion.outfit,
+                weatherData,
                 confidenceScore: outfitSuggestion.score,
                 reasoning: outfitSuggestion.reasoning
             });
@@ -319,9 +380,9 @@ export class RecommendationService {
         }
         if (outfit.items.length >= 3) {
             return {
-                outfit,
-                score: this.scoreOutfit(outfit, {}, null, outfit.occasion),
-                reasoning: { main: `Built around your ${baseItem.name}` }
+            outfit,
+            score: this.scoreOutfit(outfit, {}, weatherData, outfit.occasion),
+            reasoning: this.generateReasoning(outfit, weatherData, outfit.occasion)
             };
         }
 

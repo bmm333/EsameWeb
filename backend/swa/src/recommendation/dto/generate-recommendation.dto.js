@@ -12,6 +12,10 @@ export class GenerateRecommendationDto {
     @IsOptional()
     @IsObject({ message: 'Weather data must be an object' })
     weatherData;
+    
+    @IsOptional()
+    @IsString({ message: 'Location must be a string' })
+    location;
 
     @IsOptional()
     @IsString({ message: 'Base item ID must be a string' })
