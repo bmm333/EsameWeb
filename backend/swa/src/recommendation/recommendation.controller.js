@@ -23,7 +23,7 @@ export class RecommendationController {
     async generateScheduledRecommendations(@Req() req, @Body() body) {
         const userId = req.user.id;
         const { occasion = 'any', weatherData = null } = body;
-        return await this.recommendationService.generateScheduledRecommendations(userId, occasion, weatherData);
+        return await this.recommendationService.generateScheduledRecommendations(userId, occasion, null,location);
     }
 
     @Post('rfid-trigger')
@@ -32,6 +32,7 @@ export class RecommendationController {
         const { itemId } = body;
         return await this.recommendationService.generateRfidTriggeredRecommendation(userId, itemId);
     }
+    
 
     @Put(':id/feedback')
     async updateFeedback(@Req() req, @Param('id', ParseIntPipe) recommendationId, @Body() feedback) {

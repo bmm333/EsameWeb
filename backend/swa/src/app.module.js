@@ -5,7 +5,6 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ItemModule } from './item/item.module';
 import { OutfitModule } from './outfit/outfit.module';
-import { NotificationModule } from './notification/notification.module';
 import { RfidModule } from './rfid/rfid.module';
 import { UserModule } from './user/user.module';
 import { ValidationMiddleware } from './common/middleware/validation.middleware';
@@ -14,6 +13,9 @@ import { dataSourceOptions } from '../database.config.js';
 import { MailingModule } from './mailing/mailing.module';
 import { SettingsModule } from './settings/settings.module';
 import { MediaModule } from './media/media.module';
+import { NotificationModule } from './notification/notification.module';
+
+
 
 @Module({
   imports: [
@@ -26,7 +28,8 @@ import { MediaModule } from './media/media.module';
     RfidModule,
     MailingModule,
     SettingsModule,
-    MediaModule
+    MediaModule,
+    NotificationModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -6,12 +6,13 @@ import { Recommendation } from './entities/recommendation.entity.js';
 import { Item } from '../item/entities/item.entity.js';
 import { Outfit } from '../outfit/entities/outfit.entity.js';
 import { User } from '../user/entities/user.entity.js';
+import { WeatherService } from '../weather/weather.service.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Recommendation, Item, Outfit, User])
+    TypeOrmModule.forFeature([Recommendation, Item, Outfit, User]),
   ],
-  providers: [RecommendationService], 
+  providers: [RecommendationService,WeatherService], 
   controllers: [RecommendationController],
   exports: [RecommendationService] 
 })

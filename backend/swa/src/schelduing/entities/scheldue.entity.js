@@ -23,6 +23,9 @@ export class Schedule {
 
     @Column({ type: 'varchar', length: 50, nullable: true })
     occasion; // 'work', 'casual', 'formal', 'sport'
+    
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    headedTo;
 
     @Column({ type: 'boolean', default: true })
     isActive;
