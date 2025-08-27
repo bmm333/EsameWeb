@@ -29,7 +29,6 @@ import { NotificationModule } from './notification/notification.module';
     MailingModule,
     SettingsModule,
     MediaModule,
-    NotificationModule
   ],
   controllers: [AppController],
   providers: [AppService],
