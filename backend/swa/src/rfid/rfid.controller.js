@@ -60,7 +60,7 @@ export class RfidController {
         return this.rfidService.associateTagWithItem(userId, tagId, itemId, forceOverride);
     }
     @UseGuards(JwtAuthGuard)
-    @Delete('tags/:tagId/associate')
+    @Delete('tags/:tagId/dissociate')
     @Bind(Request(), Param('tagId'))
     async dissociateTag(req, tagId) {
         const userId = req.user.id || req.user.userId;
