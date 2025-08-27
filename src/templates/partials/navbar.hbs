@@ -1,0 +1,91 @@
+<nav class="navbar fixed-top">
+    <div class="container">
+        {{#if showMenuButton}}
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu">
+            <i class="bi bi-list fs-3"></i>
+        </button>
+        {{/if}}
+        
+        <a href="#" class="navbar-brand" onclick="router.navigate('landing')">Smart Wardrobe</a>
+        
+        <div class="d-flex align-items-center">
+            {{#if showThemeSwitcher}}
+            <button id="themeSwitcher" class="btn btn-link text-decoration-none">
+                <i class="bi bi-sun-fill theme-icon-light"></i>
+                <i class="bi bi-moon-fill theme-icon-dark d-none"></i>
+            </button>
+            {{/if}}
+            
+            {{#if showUserMenu}}
+            <div class="dropdown">
+                <button class="btn btn-link text-decoration-none dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                    <img src="{{user.avatar}}" alt="User" class="rounded-circle" style="width: 32px; height: 32px;">
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" onclick="router.navigate('settings')">Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="auth.logout()">Logout</a></li>
+                </ul>
+            </div>
+            {{else}}
+            <div class="d-flex gap-2">
+                <a href="#" class="btn btn-outline-primary btn-sm" onclick="router.navigate('login')">Login</a>
+                <a href="#" class="btn btn-primary btn-sm" onclick="router.navigate('signup')">Sign Up</a>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+</nav>
+
+{{#if showMenuButton}}
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sideMenu">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Smart Wardrobe</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <ul class="navbar-nav">
+            {{#if isAuthenticated}}
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="router.navigate('dashboard')">
+                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="router.navigate('wardrobe')">
+                    <i class="bi bi-grid-3x3-gap me-2"></i>My Wardrobe
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="router.navigate('outfit')">
+                    <i class="bi bi-layers me-2"></i>Outfits
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="router.navigate('recommendations')">
+                    <i class="bi bi-lightbulb me-2"></i>Recommendations
+                </a>
+            </li>
+            <li class="nav-item mt-4">
+                <a href="#" class="nav-link text-danger" onclick="auth.logout()">
+                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                </a>
+            </li>
+            {{else}}
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="router.navigate('landing')">Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="#features" class="nav-link">Features</a>
+            </li>
+            <li class="nav-item mt-4">
+                <a href="#" class="btn btn-outline-primary w-100 mb-2" onclick="router.navigate('login')">Login</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="btn btn-primary w-100" onclick="router.navigate('signup')">Sign Up</a>
+            </li>
+            {{/if}}
+        </ul>
+    </div>
+</div>
+{{/if}}
