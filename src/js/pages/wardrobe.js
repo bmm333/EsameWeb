@@ -2,7 +2,11 @@ import RfidSetupManager from './rfid-setup.js';
 
 class WardrobeManager {
   constructor() {
-    this.rfidSetup = new RfidSetupManager();
+    this.selectedImageFile = null;
+    this.selectedRfidTag = null;
+    this.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
+      ? 'http://localhost:3001' 
+      : '';
     this.init();
   }
 
@@ -13,11 +17,193 @@ class WardrobeManager {
       return;
     }
 
-    await this.loadItems();
     this.bindEvents();
-    this.checkDeviceStatus();
+    this.bindImageInputs();
+    this.bindSaveItem();
+    this.bindRfidEvents();
+    await this.loadItems();
+    await this.checkDeviceStatus();
+  }
+  bindImageInputs() {
+    const uploadArea = document.getElementById('imageUploadArea');
+    const fileInput = document.getElementById('itemImageInput');
+    const preview = document.getElementById('imagePreview');
+    const removeBtn = document.getElementById('removeImageBtn');
+
+    // Click to upload
+    uploadArea?.addEventListener('click', () => {
+      fileInput?.click();
+    });
+
+    // File selection
+    fileInput?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        this.selectedImageFile = file;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          preview.innerHTML = '';
+          preview.style.backgroundImage = `url(${ev.target.result})`;
+          preview.style.backgroundSize = 'cover';
+          preview.style.backgroundPosition = 'center';
+          removeBtn.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Remove image
+    removeBtn?.addEventListener('click', () => {
+      this.selectedImageFile = null;
+      fileInput.value = '';
+      preview.style.backgroundImage = '';
+      preview.innerHTML = `
+        <i class="bi bi-camera-fill upload-icon"></i>
+        <span class="upload-text">Click to add photo</span>
+      `;
+      removeBtn.classList.add('d-none');
+    });
   }
 
+  async uploadImageFile() {
+    if (!this.selectedImageFile) return null;
+
+    const token = window.authManager?.token;
+    const formData = new FormData();
+    formData.append('image', this.selectedImageFile);
+
+    try {
+      const response = await fetch(`${this.API_BASE}/item/upload-image`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${error}`);
+      }
+
+      const result = await response.json();
+      return result.url || result.location || result.path || result.imageUrl || result;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      throw error;
+    }
+  }
+
+  bindSaveItem() {
+    const saveBtn = document.getElementById('saveItemBtn');
+    if (!saveBtn) return;
+
+    saveBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      saveBtn.disabled = true;
+      const originalText = saveBtn.textContent;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        // Upload image first if selected
+        let imageUrl = null;
+        if (this.selectedImageFile) {
+          imageUrl = await this.uploadImageFile();
+        }
+
+        // Prepare item data
+        const itemData = {
+          name: document.getElementById('itemName').value.trim(),
+          category: document.getElementById('itemCategory').value,
+          notes: document.getElementById('itemNotes').value.trim(),
+          imageUrl: imageUrl,
+          rfidTag: this.selectedRfidTag
+        };
+
+        // Validate required fields
+        if (!itemData.name || !itemData.category) {
+          throw new Error('Name and category are required');
+        }
+
+        // Save item
+        const token = window.authManager?.token;
+        const response = await fetch(`${this.API_BASE}/item`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(itemData)
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Save failed: ${response.status} ${error}`);
+        }
+
+        const result = await response.json();
+        console.log('Item saved:', result);
+
+        // Close modal and refresh
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addItemModal'));
+        modal.hide();
+        await this.loadItems();
+
+        // Reset form
+        this.resetItemForm();
+
+      } catch (error) {
+        console.error('Save error:', error);
+        alert('Failed to save item: ' + error.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+    });
+  }
+  resetItemForm() {
+    document.getElementById('addItemForm').reset();
+    this.selectedImageFile = null;
+    this.selectedRfidTag = null;
+    
+    const preview = document.getElementById('imagePreview');
+    const removeBtn = document.getElementById('removeImageBtn');
+    
+    preview.style.backgroundImage = '';
+    preview.innerHTML = `
+      <i class="bi bi-camera-fill upload-icon"></i>
+      <span class="upload-text">Click to add photo</span>
+    `;
+    removeBtn.classList.add('d-none');
+    
+    document.getElementById('rfidStatus').innerHTML = `
+      <span class="text-muted">No RFID tag associated</span>
+      <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="scanRfidBtn">
+        <i class="bi bi-broadcast"></i> Scan Tag
+      </button>
+    `;
+  }
+  bindRfidEvents() {
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'scanRfidBtn' || e.target.closest('#scanRfidBtn')) {
+        this.handleRfidScan();
+      }
+    });
+  }
+
+  async handleRfidScan() {
+    try {
+      await window.rfidSetup?.openScanModalAndAssociate(null, (tagId) => {
+        this.selectedRfidTag = tagId;
+        document.getElementById('rfidStatus').innerHTML = `
+          <span class="text-success">
+            <i class="bi bi-check-circle-fill"></i> RFID Tag: ${tagId}
+          </span>
+        `;
+      });
+    } catch (error) {
+      console.error('RFID scan error:', error);
+      alert('RFID scan failed: ' + error.message);
+    }
+  }
   async checkDeviceStatus() {
     try {
       const status = await this.rfidSetup.getDeviceStatus();
@@ -50,8 +236,6 @@ class WardrobeManager {
     this.bindFilterEvents();
     this.bindViewToggle();
     this.bindItemActions();
-    
-    // RFID-specific events
     this.bindRfidEvents();
   }
 
@@ -85,7 +269,21 @@ class WardrobeManager {
       this.addRfidButtonToCard(card);
     });
   }
-
+  async updateItemLocation(itemId, location) {
+    const token = window.authManager?.token;
+    const response = await fetch(`${this.API_BASE}/item/${itemId}/location`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ location })
+    });
+    
+    if (response.ok) {
+      await this.loadItems();
+    }
+  }
   addRfidButtonToCard(card) {
     const actions = card.querySelector('.item-card-actions');
     if (actions && !actions.querySelector('.rfid-btn')) {
@@ -126,50 +324,42 @@ class WardrobeManager {
   }
 
   async handleItemRfidScan(card) {
-    const itemTitle = card.querySelector('.item-title').textContent;
-    const itemId = card.dataset.itemId || itemTitle; // You'll need to add item IDs to cards
-    
+    const itemId = card.dataset.itemId;
     try {
-      await this.rfidSetup.openScanModalAndAssociate(itemId, (tag, result) => {
-        console.log('RFID tag associated with item:', itemTitle, tag, result);
-        
-        // Update card to show RFID is associated
-        const rfidBtn = card.querySelector('.rfid-btn');
-        rfidBtn.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
-        rfidBtn.title = 'RFID Tag Associated';
+      await window.rfidSetup?.openScanModalAndAssociate(itemId, (tagId) => {
+        card.querySelector('.rfid-btn').classList.add('text-success');
+        card.querySelector('.rfid-btn i').className = 'bi bi-check-circle-fill';
+        this.loadItems(); // Refresh to show updated RFID status
       });
     } catch (error) {
-      alert('RFID scan failed: ' + error.message);
+      console.error('RFID scan error:', error);
     }
   }
 
   async loadItems() {
     try {
       const token = window.authManager?.token;
-      const response = await fetch(`${window.API_BASE || 'http://localhost:3001'}/items`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await fetch(`${this.API_BASE}/item`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
-      
+
       if (response.ok) {
         const items = await response.json();
         this.renderItems(items);
+      } else {
+        console.error('Failed to load items:', response.status);
       }
     } catch (error) {
-      console.error('Failed to load items:', error);
+      console.error('Load items error:', error);
     }
   }
 
   renderItems(items) {
-    // Implementation for rendering items from backend
-    const gridView = document.getElementById('gridView');
-    const listView = document.getElementById('listView');
-    
-    // Clear existing items
-    gridView.innerHTML = '<div class="row g-4" id="itemsContainer"></div>';
-    listView.innerHTML = '';
-    
-    const container = gridView.querySelector('#itemsContainer');
-    
+    const container = document.getElementById('itemsContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
     items.forEach(item => {
       const itemHtml = this.createItemCard(item);
       container.insertAdjacentHTML('beforeend', itemHtml);
@@ -179,7 +369,7 @@ class WardrobeManager {
   createItemCard(item) {
     const hasRfid = item.rfidTag ? 'text-success' : '';
     const rfidIcon = item.rfidTag ? 'bi-check-circle-fill' : 'bi-broadcast';
-    
+
     return `
       <div class="col-md-6 col-lg-4 col-xl-3" data-category="${item.category}" data-item-id="${item.id}">
         <div class="item-card">
@@ -189,22 +379,18 @@ class WardrobeManager {
               <button class="action-btn favorite-btn ${item.isFavorite ? 'active' : ''}" title="Favorite">
                 <i class="bi ${item.isFavorite ? 'bi-star-fill' : 'bi-star'}"></i>
               </button>
-              <button class="action-btn rfid-btn ${hasRfid}" title="${item.rfidTag ? 'RFID Tag Associated' : 'Associate RFID Tag'}">
+              <button class="action-btn rfid-btn ${hasRfid}" title="RFID">
                 <i class="bi ${rfidIcon}"></i>
               </button>
-              <button class="action-btn more-btn" title="More Options">
+              <button class="action-btn more-btn" title="More options">
                 <i class="bi bi-three-dots"></i>
               </button>
             </div>
           </div>
           <div class="item-card-content">
-            <h3 class="item-title">${item.name}</h3>
-            <div class="item-meta">
-              <span class="item-category">${item.category}</span>
-              <span class="item-stat">
-                <i class="bi bi-repeat"></i>${item.wearCount || 0} Wears
-              </span>
-            </div>
+            <h6 class="item-title">${item.name}</h6>
+            <p class="item-category text-muted">${item.category}</p>
+            ${item.notes ? `<p class="item-notes">${item.notes}</p>` : ''}
           </div>
         </div>
       </div>
@@ -212,7 +398,6 @@ class WardrobeManager {
   }
 
   bindFilterEvents() {
-    // Filter and search functionality
     const searchInput = document.getElementById('searchItems');
     const categoryPills = document.querySelectorAll('.category-pill');
     const filterBtn = document.getElementById('filterBtn');
@@ -242,18 +427,17 @@ class WardrobeManager {
   }
 
   bindItemActions() {
-    // Handle item card actions (favorite, more options, etc.)
     document.addEventListener('click', (e) => {
       if (e.target.closest('.favorite-btn')) {
         this.toggleFavorite(e.target.closest('.item-card'));
       }
       
-      if (e.target.closest('.more-btn')) {
-        this.showContextMenu(e.target.closest('.item-card'), e);
-      }
-      
       if (e.target.closest('.rfid-btn') && !e.target.closest('.rfid-btn').classList.contains('text-success')) {
         this.handleItemRfidScan(e.target.closest('.item-card'));
+      }
+      
+      if (e.target.closest('.more-btn')) {
+        this.showContextMenu(e.target.closest('.item-card'), e);
       }
     });
   }
@@ -293,15 +477,31 @@ class WardrobeManager {
     }
   }
 
-  toggleFavorite(card) {
+  async toggleFavorite(card) {
     const btn = card.querySelector('.favorite-btn');
     const icon = btn.querySelector('i');
     const isActive = btn.classList.contains('active');
     
-    btn.classList.toggle('active', !isActive);
-    icon.className = isActive ? 'bi bi-star' : 'bi bi-star-fill';
-    
-    // TODO: Send update to backend
+    try {
+      const itemId = card.dataset.itemId;
+      const token = window.authManager?.token;
+      
+      const response = await fetch(`${this.API_BASE}/item/${itemId}/favorite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ favorite: !isActive })
+      });
+
+      if (response.ok) {
+        btn.classList.toggle('active', !isActive);
+        icon.className = isActive ? 'bi bi-star' : 'bi bi-star-fill';
+      }
+    } catch (error) {
+      console.error('Toggle favorite error:', error);
+    }
   }
 
   showContextMenu(card, event) {
