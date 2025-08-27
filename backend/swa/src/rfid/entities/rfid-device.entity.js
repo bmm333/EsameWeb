@@ -10,7 +10,7 @@ export class RfidDevice {
     @Column({ type: 'varchar', length: 100, unique: true })
     serialNumber; // Raspberry Pi serial number
 
-    @Column({ type: 'varchar', length: 100, unique: true })
+    @Column({ type: 'varchar', length: 100, unique: true,nullable:true })
     apiKey; // Device API key for authentication
 
     @Column({ type: 'varchar', length: 100 })
@@ -63,7 +63,7 @@ export class RfidDevice {
     @JoinColumn({ name: 'userId' })
     user;
 
-    @Column({ type: 'int' })
+    @Column({ type: 'int' ,nullable:true})
     userId;
 
     @OneToMany(() => RfidTag, tag => tag.device)
