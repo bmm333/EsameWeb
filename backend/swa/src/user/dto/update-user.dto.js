@@ -24,6 +24,10 @@ export class UpdateUserDTO{
   @IsOptional()
   @IsDateString({}, { message: 'Trial expiration must be a valid date' })
   trialExpires;
+  
+  @IsOptional()
+  @IsString({ message: 'Base location must be a string' })
+  baseLocation;
 
   constructor(data = {}) {
     this.firstName = data.firstName;

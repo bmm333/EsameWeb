@@ -89,48 +89,18 @@ export class UserProfileSetupDto {
   occasions;
 
   @IsOptional()
-  @IsEnum(['conservative', 'moderate', 'bold'], {
-    message: 'Risk tolerance must be one of: conservative, moderate, bold'
-  })
-  riskTolerance;
-
-  @IsOptional()
-  @IsBoolean({ message: 'Sustainability focus must be a boolean' })
-  sustainabilityFocus;
-
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   avoidMaterials;
 
   @IsOptional()
   @IsString()
-  location;
-
-  @IsOptional()
-  @IsEnum(['tropical', 'temperate', 'cold', 'arid'], {
-    message: 'Climate must be one of: tropical, temperate, cold, arid'
-  })
-  climate;
+  baseLocation;
 
   @IsOptional()
   @IsBoolean()
   enableRecommendations;
-
-  @IsOptional()
-  @IsBoolean()
-  enableWeatherNotifications;
-
-  @IsOptional()
-  @IsBoolean()
-  enableOutfitReminders;
-
-  @IsOptional()
-  @IsString()
-  @Matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
-    message: 'morningNotificationTime must be in HH:MM format'
-  })
-  morningNotificationTime;
+  
   @IsOptional()
   @IsString()
   profilePicture;
