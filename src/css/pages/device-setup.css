@@ -1,0 +1,137 @@
+.setup-main {
+  padding-top: 80px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bs-primary-bg-subtle) 0%, var(--bs-body-bg) 100%);
+}
+
+.setup-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.setup-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+}
+
+.setup-progress::before {
+  content: '';
+  position: absolute;
+  top: 25px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--bs-border-color);
+  z-index: 1;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.step-number {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--bs-body-bg);
+  border: 3px solid var(--bs-border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.step.active .step-number {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: white;
+}
+
+.step.completed .step-number {
+  background: var(--bs-success);
+  border-color: var(--bs-success);
+  color: white;
+}
+
+.step-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--bs-secondary);
+}
+
+.step.active .step-label {
+  color: var(--bs-primary);
+}
+
+.setup-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.setup-step {
+  display: none;
+}
+
+.setup-step.active {
+  display: block;
+}
+
+.step-card {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.step-card h3 {
+  margin-bottom: 1rem;
+  color: var(--bs-heading-color);
+}
+
+.bluetooth-status,
+.activation-status {
+  padding: 2rem;
+  text-align: center;
+  background: var(--bs-light);
+  border-radius: 12px;
+  margin: 1rem 0;
+}
+
+.bluetooth-status i {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .setup-progress {
+    gap: 1rem;
+  }
+  
+  .step-number {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .step-label {
+    font-size: 0.75rem;
+  }
+  
+  .step-card {
+    padding: 1.5rem;
+  }
+}
