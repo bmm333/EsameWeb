@@ -9,6 +9,28 @@ class RfidSetupManager {
     this.serviceUUID = '12345678-1234-5678-9abc-123456789abc';
     this.deviceInfoCharUUID = '12345678-1234-5678-9abc-123456789abe';
     this.wifiCharUUID = '12345678-1234-5678-9abc-123456789abd';
+    const pairBtn = document.getElementById('pair-btn');
+    if (pairBtn) {
+      pairBtn.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        try {
+          // Immediately call requestDevice inside the click handler (user gesture)
+          const device = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'SmartWardrobe' }],
+            optionalServices: [this.serviceUUID]
+          });
+          // store device so bluetoothPairAndSend won't call requestDevice again
+          this.bleDevice = device;
+
+          // Continue the pairing/handshake flow (async, not part of the user gesture)
+          // any errors will be handled inside bluetoothPairAndSend
+          await this.bluetoothPairAndSend(null /* no apiKey yet */);
+        } catch (err) {
+          console.error('[RFID-BLE] Pair button handler error:', err);
+          // avoid throwing which could be noisy; let UI show message via device-setup.js
+        }
+      });
+    }
   }
 
   async loadRfidModalHtml() {

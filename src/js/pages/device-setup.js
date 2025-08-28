@@ -41,8 +41,11 @@ class DeviceSetupManager {
     }
   }
 
-  bindEvents() {
-    document.getElementById('pair-btn')?.addEventListener('click', () => this.startBluetooth());
+    bindEvents() {
+    document.getElementById('pair-btn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.showLoading('Starting Bluetooth pairing...');
+    });
     document.getElementById('send-wifi-btn')?.addEventListener('click', () => this.sendWifiConfig());
     document.getElementById('test-connection-btn')?.addEventListener('click', () => this.testConnection());
   }
