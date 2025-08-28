@@ -262,7 +262,7 @@ class OnboardingPageManager extends OnboardingManager {
         formData.append('profilePicture', imageInput.files[0]);
       }
 
-        const apiBase = window.location.hostname === 'localhost' ? 'http://localhost:3002' : 'http://localhost:3002';
+        const apiBase = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://localhost:3001';
         const response = await fetch(`${apiBase}/user/profile/setup`, {
         method: 'POST',
         headers: {

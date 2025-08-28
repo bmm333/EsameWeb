@@ -5,7 +5,7 @@ class WardrobeManager {
     this.selectedImageFile = null;
     this.selectedRfidTag = null;
     this.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-      ? 'http://localhost:3002' 
+      ? 'http://localhost:3001' 
       : '';
     this.init();
   }
@@ -210,26 +210,76 @@ class WardrobeManager {
     `;
   }
   bindRfidEvents() {
-    document.addEventListener('click', (e) => {
-      if (e.target.id === 'scanRfidBtn' || e.target.closest('#scanRfidBtn')) {
-        this.handleRfidScan();
+    // Add RFID scan button to add item modal
+    const addItemModal = document.getElementById('addItemModal');
+    if (addItemModal) {
+      const modalBody = addItemModal.querySelector('.modal-body');
+      // avoid inserting duplicates
+      if (!modalBody.querySelector('#scanRfidBtn')) {
+        const rfidSection = `
+          <div class="mb-3">
+            <label class="form-label">RFID Tag Association</label>
+            <div class="d-grid">
+              <button type="button" class="btn btn-outline-primary" id="scanRfidBtn">
+                <i class="bi bi-broadcast me-2"></i>Scan RFID Tag
+              </button>
+            </div>
+            <div class="form-text">Optional: Associate an RFID tag with this item for automatic tracking</div>
+          </div>
+        `;
+        
+        // Insert before the notes field if present
+        const notesField = modalBody.querySelector('#itemNotes')?.closest('.mb-3');
+        if (notesField) {
+          notesField.insertAdjacentHTML('beforebegin', rfidSection);
+        } else {
+          modalBody.insertAdjacentHTML('beforeend', rfidSection);
+        }
       }
-    });
+      
+      // Bind scan button
+      document.getElementById('scanRfidBtn')?.addEventListener('click', () => this.handleRfidScanForAdd());
+    }
+  }
+  async handleRfidScanForAdd() {
+    const itemName = document.getElementById('itemName').value;
+    if (!itemName) {
+      alert('Please enter item name first');
+      return;
+    }
+
+    try {
+      // Create temporary item ID for scanning
+      const tempItemId = `temp_${Date.now()}`;
+      
+      await window.rfidSetup.openScanModalAndAssociate(tempItemId, (tag, result) => {
+        console.log('RFID tag associated (add):', tag, result);
+        // Store the tag ID on the form so when user saves we attach it
+        document.getElementById('addItemForm').dataset.rfidTag = tag.tagId;
+        
+        // Update UI to show tag is associated
+        const scanBtn = document.getElementById('scanRfidBtn');
+        if (scanBtn) {
+          scanBtn.innerHTML = '<i class="bi bi-check-circle-fill text-success me-2"></i>RFID Tag Associated';
+          scanBtn.disabled = true;
+        }
+      });
+    } catch (error) {
+      alert('RFID scan failed: ' + (error.message || error));
+    }
   }
 
-  async handleRfidScan() {
+  async handleItemRfidScan(card) {
+    const itemId = card.dataset.itemId;
     try {
-      await window.rfidSetup?.openScanModalAndAssociate(null, (tagId) => {
-        this.selectedRfidTag = tagId;
-        document.getElementById('rfidStatus').innerHTML = `
-          <span class="text-success">
-            <i class="bi bi-check-circle-fill"></i> RFID Tag: ${tagId}
-          </span>
-        `;
+      await window.rfidSetup?.openScanModalAndAssociate(itemId, (tag, result) => {
+        card.querySelector('.rfid-btn').classList.add('text-success');
+        const icon = card.querySelector('.rfid-btn i');
+        if (icon) icon.className = 'bi bi-check-circle-fill';
+        this.loadItems(); // Refresh to show updated RFID status
       });
     } catch (error) {
       console.error('RFID scan error:', error);
-      alert('RFID scan failed: ' + error.message);
     }
   }
   async checkDeviceStatus() {
@@ -664,24 +714,24 @@ class WardrobeManager {
   }
   async editItem(itemId)
   {
-    const item=this.item.find(i=>i.id==itemId);
-    if(!item) return;
-    document.getElementById('itemName').value=item.name;
-    document.getElementById('itemCategory').value=item.category;
-    document.getElementById('itemNotes').value=item.notes||'';
+    const item=this.items?.find(i=>i.id==itemId);
+     if(!item) return;
+     document.getElementById('itemName').value=item.name;
+     document.getElementById('itemCategory').value=item.category;
+     document.getElementById('itemNotes').value=item.notes||'';
 
-    if(item.imageUrl){
-      const preview = document.getElementById('imagePreview');
-      preview.style.backgroundImage = `url(${item.imageUrl})`;
-      preview.style.display = 'cover';
-      preview.style.backgroundPosition = 'center';
-      preview.innerHTML='';
-      document.getElementById('removeImageBtn').classList.remove('d-none');
-    }
-    document.querySelector('#addItemModal .modal-title').textContent='Edit Item';
+     if(item.imageUrl){
+       const preview = document.getElementById('imagePreview');
+       preview.style.backgroundImage = `url(${item.imageUrl})`;
+      preview.style.backgroundSize = 'cover';
+       preview.style.backgroundPosition = 'center';
+       preview.innerHTML='';
+       document.getElementById('removeImageBtn').classList.remove('d-none');
+     }
+     document.querySelector('#addItemModal .modal-title').textContent='Edit Item';  // using the update flow when editing
     document.getElementById('saveItemBtn').onclick=()=>this.updateItemFromForm(itemId);
-    const modal=new bootstrap.Modal(document.getElementById('addItemModal'));
-    modal.show();
+     const modal=new bootstrap.Modal(document.getElementById('addItemModal'));
+     modal.show();
   }
   async updateItemFromForm(itemId) {
     try {

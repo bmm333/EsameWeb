@@ -42,9 +42,14 @@ class DeviceSetupManager {
   }
 
     bindEvents() {
-    document.getElementById('pair-btn')?.addEventListener('click', (e) => {
+      document.getElementById('pair-btn')?.addEventListener('click', async (e) => {
       e.preventDefault();
       this.showLoading('Starting Bluetooth pairing...');
+      try {
+        await this.startBluetooth();
+      } catch (err) {
+        this.showError(err.message || 'Bluetooth pairing failed');
+      }
     });
     document.getElementById('send-wifi-btn')?.addEventListener('click', () => this.sendWifiConfig());
     document.getElementById('test-connection-btn')?.addEventListener('click', () => this.testConnection());
