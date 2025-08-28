@@ -4,8 +4,8 @@ export class AuthManager {
     this.user = JSON.parse(localStorage.getItem('user') || 'null');
     
     this.baseURL = window.location.hostname === 'localhost' ? 
-      'http://localhost:3001' : 
-      'http://localhost:3001';
+      'http://localhost:3002' : 
+      'http://localhost:3002';
     
     this.isValidating = false;
     this.isNavigating = false; 

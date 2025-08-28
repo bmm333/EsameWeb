@@ -1,7 +1,7 @@
 class DashboardManager {
   constructor() {
     this.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-      ? 'http://localhost:3001' 
+      ? 'http://localhost:3002' 
       : '';
     this.dashboardData = null;
     this.init();
@@ -112,16 +112,26 @@ class DashboardManager {
       userAvatar.src = `https://placehold.co/32x32/f9fafb/6366f1?text=${encodeURIComponent(initials)}`;
     }
   }
+  setupGreeting() {
+    const hour = new Date().getHours();
+    let greeting = 'Good morning';
+    if (hour >= 12) greeting = 'Good afternoon';
+    if (hour >= 18) greeting = 'Good evening';
 
+    const user = window.authManager?.user;
+    const userName = user?.firstName || user?.name || 'User';
+    
+    document.getElementById('welcomeMessage').innerHTML = 
+      `${greeting}, <span id="userGreeting">${userName}</span>`;
+  }
   populateStats() {
-    const stats = this.dashboardData.stats;
-    if (!stats) return;
+    if (!this.dashboardData?.stats) return;
 
-    // Update stat cards
-    this.updateStatCard('totalItems', stats.totalItems || 0);
-    this.updateStatCard('totalOutfits', stats.totalOutfits || 0);
-    this.updateStatCard('itemsWornThisWeek', stats.itemsWornThisWeek || 0);
-    this.updateStatCard('favoriteItems', stats.favoriteItems || 0);
+    const stats = this.dashboardData.stats;
+    document.getElementById('totalItems').textContent = stats.totalItems || '--';
+    document.getElementById('totalOutfits').textContent = stats.totalOutfits || '--';
+    document.getElementById('favoriteItems').textContent = stats.favoriteItems || '--';
+    document.getElementById('itemsWithRfid').textContent = stats.itemsWithRfid || '--';
   }
 
   updateStatCard(statId, value) {
@@ -190,22 +200,29 @@ class DashboardManager {
   }
 
   populateRecentActivity() {
-    const activities = this.dashboardData.recentActivity;
-    if (!activities || activities.length === 0) return;
+    const activities = this.dashboardData?.recentActivity || [];
+    const container = document.getElementById('recentActivity');
+    if (!container) return;
 
-    const activityContainer = document.getElementById('recentActivity');
-    if (!activityContainer) return;
+    if (activities.length === 0) {
+      container.innerHTML = `
+        <li class="activity-item text-center py-4">
+          <p class="text-muted mb-0">No recent activity</p>
+        </li>
+      `;
+      return;
+    }
 
-    activityContainer.innerHTML = activities.map(activity => `
-      <div class="activity-item d-flex align-items-center py-2">
-        <div class="activity-icon me-3">
+    container.innerHTML = activities.map(activity => `
+      <li class="activity-item">
+        <div class="activity-icon">
           <i class="bi ${this.getActivityIcon(activity.type)}"></i>
         </div>
-        <div class="flex-grow-1">
-          <p class="mb-0">${activity.description}</p>
-          <small class="text-muted">${this.formatDate(activity.timestamp)}</small>
+        <div class="activity-content">
+          <p>${activity.description}</p>
+          <span class="activity-time">${this.formatTime(activity.timestamp)}</span>
         </div>
-      </div>
+      </li>
     `).join('');
   }
 

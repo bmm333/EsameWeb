@@ -1,11 +1,13 @@
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-  ? 'http://localhost:3001' 
+  ? 'http://localhost:3002' 
   : '';
+
 class RfidSetupManager {
   constructor() {
     this.deviceInfo = null;
     this.bleDevice = null;
     this.serviceUUID = '12345678-1234-5678-9abc-123456789abc';
+    this.deviceInfoCharUUID = '12345678-1234-5678-9abc-123456789abe';
     this.wifiCharUUID = '12345678-1234-5678-9abc-123456789abd';
   }
 
@@ -17,7 +19,6 @@ class RfidSetupManager {
       document.body.insertAdjacentHTML('beforeend', html);
     } catch (err) {
       console.warn('Could not load rfid-scan-modal.html:', err);
-      // Fallback - create modal programmatically
       this.createRfidModalFallback();
     }
   }
@@ -112,47 +113,180 @@ class RfidSetupManager {
     return response.json();
   }
 
-  async bluetoothPairAndSend(apiKey, wifiPayload = null) {
-    if (!navigator.bluetooth) throw new Error('Web Bluetooth not available');
+async bluetoothPairAndSend(apiKey, wifiPayload = null) {
+  if (!navigator.bluetooth) throw new Error('Web Bluetooth not available');
 
-    try {
-      // First, try to discover devices with our service UUID
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: 'SmartWardrobe' }],
-        optionalServices: [this.serviceUUID]
-      });
-      const server = await device.gatt.connect();
-      const service = await server.getPrimaryService(this.serviceUUID);
-      const deviceInfoChar = await service.getCharacteristic('12345678123456789abc123456789abe'); // Device info UUID
-      const deviceInfoData = await deviceInfoChar.readValue();
-      const decoder = new TextDecoder();
-      const deviceData = JSON.parse(decoder.decode(deviceInfoData));
-      console.log('Device info received:', deviceData);
-      if (!this.deviceInfo) {
+  const wait = ms => new Promise(res => setTimeout(res, ms));
+  const log = (...args) => console.debug('[RFID-BLE]', ...args);
+
+  try {
+    let device = this.bleDevice || null;
+    let createdHere = false;
+
+    // Always request a fresh device to avoid stale connections
+    if (!device || !device.gatt) {
+      try {
+        log('Requesting new device...');
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: 'SmartWardrobe' }],
+          optionalServices: [this.serviceUUID]
+        });
+        this.bleDevice = device;
+        createdHere = true;
+      } catch (err) {
+        console.warn('[RFID-BLE] Specific filter failed, trying acceptAllDevices', err);
+        device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [this.serviceUUID]
+        });
+        this.bleDevice = device;
+        createdHere = true;
+      }
+    }
+
+    // Enhanced connection management
+    let connectionAttempts = 0;
+    const maxConnectionAttempts = 3;
+    
+    const connectWithRetry = async () => {
+      for (let attempt = 0; attempt < maxConnectionAttempts; attempt++) {
+        connectionAttempts++;
+        log(`Connection attempt ${attempt + 1}/${maxConnectionAttempts}`);
+        
         try {
-          const registerResult = await this.registerDevice(deviceData.serialNumber, deviceData.macAddress);
-          this.deviceInfo = registerResult.device;
-        } catch (regError) {
-          console.warn('Auto-registration failed:', regError);
+          // Ensure clean state
+          if (device.gatt && device.gatt.connected) {
+            log('Device already connected, disconnecting first');
+            device.gatt.disconnect();
+            await wait(1000); // Wait for clean disconnect
+          }
+
+          log('Attempting to connect...');
+          const server = await device.gatt.connect();
+          
+          // Verify connection is stable
+          await wait(2000); // Longer stabilization time
+          
+          if (!server.connected) {
+            throw new Error('Connection lost immediately after connect');
+          }
+          
+          log('Connection stable, proceeding...');
+          return server;
+          
+        } catch (err) {
+          log(`Attempt ${attempt + 1} failed:`, err.message);
+          
+          if (attempt === maxConnectionAttempts - 1) {
+            throw new Error(`Failed to establish stable connection after ${maxConnectionAttempts} attempts: ${err.message}`);
+          }
+          
+          // Progressive backoff delay
+          const delay = 1000 * Math.pow(2, attempt); // 1s, 2s, 4s
+          log(`Waiting ${delay}ms before retry...`);
+          await wait(delay);
         }
       }
-      const wifiChar = await service.getCharacteristic(this.wifiCharUUID);
-      const payload = JSON.stringify({ 
-        apiKey: apiKey || this.deviceInfo?.apiKey, 
-        wifi: wifiPayload,
-        backendUrl: API_BASE
-      });
-      
-      const encoder = new TextEncoder();
-      await wifiChar.writeValue(encoder.encode(payload));
-      
-      await server.disconnect();
-      return { success: true, deviceData };
-    } catch (err) {
-      console.error('Bluetooth pairing failed:', err);
-      throw new Error(`Bluetooth pairing failed: ${err.message}`);
+    };
+
+    const server = await connectWithRetry();
+    
+    // Service discovery with retry
+    log('Discovering services...');
+    let service;
+    let serviceAttempts = 0;
+    const maxServiceAttempts = 3;
+    
+    while (serviceAttempts < maxServiceAttempts) {
+      try {
+        service = await server.getPrimaryService(this.serviceUUID);
+        log('Service discovered successfully');
+        break;
+      } catch (err) {
+        serviceAttempts++;
+        log(`Service discovery attempt ${serviceAttempts} failed:`, err.message);
+        
+        if (serviceAttempts === maxServiceAttempts) {
+          throw new Error(`Service discovery failed after ${maxServiceAttempts} attempts. Check if BLE service is properly registered on Pi.`);
+        }
+        
+        await wait(1000 * serviceAttempts); // Progressive delay
+      }
     }
+
+    // Read device info with better error handling
+    const readDeviceInfo = async () => {
+      try {
+        log('Reading device info...');
+        const deviceInfoChar = await service.getCharacteristic(this.deviceInfoCharUUID);
+        const data = await deviceInfoChar.readValue();
+        const decoder = new TextDecoder();
+        const deviceData = JSON.parse(decoder.decode(data));
+        log('Device info read successfully:', deviceData);
+        return deviceData;
+      } catch (err) {
+        log('Failed to read device info:', err.message);
+        throw new Error(`Cannot read device information: ${err.message}`);
+      }
+    };
+
+    const deviceData = await readDeviceInfo();
+    this.deviceInfo = deviceData;
+
+    // Send WiFi config if provided
+    if (wifiPayload) {
+      try {
+        log('Sending WiFi configuration...');
+        const wifiChar = await service.getCharacteristic(this.wifiCharUUID);
+        const payload = JSON.stringify({ 
+          apiKey: apiKey || deviceData?.apiKey, 
+          wifi: wifiPayload, 
+          backendUrl: API_BASE 
+        });
+        
+        const encoder = new TextEncoder();
+        await wifiChar.writeValue(encoder.encode(payload));
+        log('WiFi configuration sent successfully');
+        
+        // Give device time to process
+        await wait(2000);
+        
+      } catch (err) {
+        log('Failed to send WiFi config:', err.message);
+        throw new Error(`Failed to send WiFi configuration: ${err.message}`);
+      }
+    }
+
+    // Clean disconnect
+    try {
+      log('Disconnecting...');
+      await wait(500); // Give time for any pending operations
+      if (server.connected) {
+        device.gatt.disconnect();
+        log('Disconnected cleanly');
+      }
+    } catch (err) {
+      console.warn('Non-fatal disconnect error:', err);
+    }
+
+    return { success: true, deviceData };
+    
+  } catch (err) {
+    console.error('Bluetooth operation failed:', err);
+    
+    // Enhanced error messages for common issues
+    let errorMessage = err.message;
+    if (err.message.includes('GATT Server is disconnected')) {
+      errorMessage = 'Device disconnected unexpectedly. Please check if the Raspberry Pi Bluetooth service is running properly.';
+    } else if (err.message.includes('Service discovery failed')) {
+      errorMessage = 'Cannot find BLE service on device. Please restart the Raspberry Pi BLE server and try again.';
+    } else if (err.message.includes('User cancelled')) {
+      errorMessage = 'Bluetooth pairing was cancelled.';
+    }
+    
+    throw new Error(`Bluetooth error: ${errorMessage}`);
   }
+}
 
   async openScanModalAndAssociate(itemId, onSuccess = null) {
     await this.loadRfidModalHtml();
@@ -162,7 +296,6 @@ class RfidSetupManager {
     const modalEl = document.getElementById('rfidScanModal');
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     
-    // Reset modal state
     modalEl.querySelector('.rfid-scan-status').style.display = '';
     modalEl.querySelector('.rfid-scan-success').style.display = 'none';
     
@@ -173,7 +306,6 @@ class RfidSetupManager {
     
     modalEl.addEventListener('hidden.bs.modal', stopPolling, { once: true });
 
-    // Poll for unassociated tags
     const pollForTags = async () => {
       if (stopped) return;
 
@@ -187,7 +319,6 @@ class RfidSetupManager {
           if (Array.isArray(tags) && tags.length > 0) {
             const tag = tags[0];
             
-            // Associate tag with item
             const assocResponse = await fetch(`${API_BASE}/rfid/tags/${encodeURIComponent(tag.tagId)}/associate`, {
               method: 'POST',
               headers: {
@@ -200,13 +331,11 @@ class RfidSetupManager {
             if (assocResponse.ok) {
               const result = await assocResponse.json();
               
-              // Show success state
               modalEl.querySelector('.rfid-scan-status').style.display = 'none';
               modalEl.querySelector('.rfid-scan-success').style.display = '';
               
               if (onSuccess) onSuccess(tag, result);
               
-              // Auto-close after delay
               setTimeout(() => modal.hide(), 1500);
               return;
             }
@@ -216,7 +345,6 @@ class RfidSetupManager {
         console.warn('Polling for tags failed:', err);
       }
 
-      // Continue polling
       setTimeout(pollForTags, 2000);
     };
 

@@ -5,7 +5,7 @@ class WardrobeManager {
     this.selectedImageFile = null;
     this.selectedRfidTag = null;
     this.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-      ? 'http://localhost:3001' 
+      ? 'http://localhost:3002' 
       : '';
     this.init();
   }
@@ -21,8 +21,35 @@ class WardrobeManager {
     this.bindImageInputs();
     this.bindSaveItem();
     this.bindRfidEvents();
+    this.bindFilterEvents();
+    this.bindViewToggle();
+    this.bindItemActions();
     await this.loadItems();
     await this.checkDeviceStatus();
+  }
+  async deleteItem(itemId) {
+    if (!confirm('Are you sure you want to delete this item?')) {
+      return;
+    }
+
+    try {
+      const token = window.authManager?.token;
+      const response = await fetch(`${this.API_BASE}/item/${itemId}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+
+      if (response.ok) {
+        this.items = this.items.filter(item => item.id !== itemId);
+        this.filterItems(this.currentFilter);
+        this.showSuccess('Item deleted successfully!');
+      } else {
+        throw new Error('Delete failed');
+      }
+    } catch (error) {
+      console.error('Delete item error:', error);
+      this.showError('Failed to delete item');
+    }
   }
   bindImageInputs() {
     const uploadArea = document.getElementById('imageUploadArea');
@@ -159,6 +186,7 @@ class WardrobeManager {
       }
     });
   }
+  
   resetItemForm() {
     document.getElementById('addItemForm').reset();
     this.selectedImageFile = null;
@@ -212,6 +240,25 @@ class WardrobeManager {
       }
     } catch (error) {
       console.warn('Could not check device status:', error);
+    }
+  }
+  async logItemWear(itemId) {
+    try {
+      const token = window.authManager?.token;
+      const response = await fetch(`${this.API_BASE}/item/${itemId}/wear`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+
+      if (response.ok) {
+        this.showSuccess('Wear logged successfully!');
+        await this.loadItems(); // Refresh to update wear count
+      } else {
+        throw new Error('Wear logging failed');
+      }
+    } catch (error) {
+      console.error('Log wear error:', error);
+      this.showError('Failed to log wear');
     }
   }
 
@@ -270,18 +317,29 @@ class WardrobeManager {
     });
   }
   async updateItemLocation(itemId, location) {
-    const token = window.authManager?.token;
-    const response = await fetch(`${this.API_BASE}/item/${itemId}/location`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ location })
-    });
-    
-    if (response.ok) {
-      await this.loadItems();
+    try {
+      const token = window.authManager?.token;
+      const response = await fetch(`${this.API_BASE}/item/${itemId}/location`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ location })
+      });
+
+      if (response.ok) {
+        const item = this.items.find(i => i.id === itemId);
+        if (item) {
+          item.location = location;
+        }
+        this.showSuccess('Location updated successfully!');
+      } else {
+        throw new Error('Location update failed');
+      }
+    } catch (error) {
+      console.error('Update location error:', error);
+      this.showError('Failed to update location');
     }
   }
   addRfidButtonToCard(card) {
@@ -505,8 +563,209 @@ class WardrobeManager {
   }
 
   showContextMenu(card, event) {
-    // Implementation for context menu
-    console.log('Show context menu for item:', card.querySelector('.item-title').textContent);
+    event.preventDefault();
+    
+    const itemId = card.dataset.itemId;
+    const item = this.items.find(i => i.id == itemId);
+    if (!item) return;
+
+    // Remove existing context menu
+    const existingMenu = document.querySelector('.context-menu');
+    if (existingMenu) {
+      existingMenu.remove();
+    }
+
+    // Create context menu
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.style.position = 'fixed';
+    menu.style.left = event.clientX + 'px';
+    menu.style.top = event.clientY + 'px';
+    menu.style.zIndex = '9999';
+    
+    menu.innerHTML = `
+      <div class="dropdown-menu show">
+        <button class="dropdown-item" onclick="window.wardrobeManager.editItem('${itemId}')">
+          <i class="bi bi-pencil me-2"></i>Edit
+        </button>
+        <button class="dropdown-item" onclick="window.wardrobeManager.logItemWear('${itemId}')">
+          <i class="bi bi-clock me-2"></i>Log Wear
+        </button>
+        <button class="dropdown-item" onclick="window.wardrobeManager.showLocationModal('${itemId}')">
+          <i class="bi bi-geo-alt me-2"></i>Update Location
+        </button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item text-danger" onclick="window.wardrobeManager.deleteItem('${itemId}')">
+          <i class="bi bi-trash me-2"></i>Delete
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(menu);
+
+    // Remove menu when clicking elsewhere
+    setTimeout(() => {
+      document.addEventListener('click', function removeMenu() {
+        menu.remove();
+        document.removeEventListener('click', removeMenu);
+      });
+    }, 100);
+  }
+
+  showLocationModal(itemId) {
+    const item = this.items.find(i => i.id == itemId);
+    if (!item) return;
+
+    const modalHTML = `
+      <div class="modal fade" id="locationModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Update Location - ${item.name}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="itemLocation" class="form-label">Current Location</label>
+                <select class="form-control" id="itemLocation">
+                  <option value="wardrobe" ${item.location === 'wardrobe' ? 'selected' : ''}>Wardrobe</option>
+                  <option value="laundry" ${item.location === 'laundry' ? 'selected' : ''}>Laundry</option>
+                  <option value="worn" ${item.location === 'worn' ? 'selected' : ''}>Currently Worn</option>
+                  <option value="storage" ${item.location === 'storage' ? 'selected' : ''}>Storage</option>
+                  <option value="missing" ${item.location === 'missing' ? 'selected' : ''}>Missing</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="window.wardrobeManager.saveLocation('${itemId}')">Update</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remove existing modal
+    const existingModal = document.getElementById('locationModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modal = new bootstrap.Modal(document.getElementById('locationModal'));
+    modal.show();
+  }
+
+  async saveLocation(itemId) {
+    const location=document.getElementById('itemLocation').value;
+    await this.updateItemLocation(itemId, location);
+    const modal=bootstrap.Modal.getInstance(document.getElementById('locationModal'));
+    modal.hide();
+  }
+  async editItem(itemId)
+  {
+    const item=this.item.find(i=>i.id==itemId);
+    if(!item) return;
+    document.getElementById('itemName').value=item.name;
+    document.getElementById('itemCategory').value=item.category;
+    document.getElementById('itemNotes').value=item.notes||'';
+
+    if(item.imageUrl){
+      const preview = document.getElementById('imagePreview');
+      preview.style.backgroundImage = `url(${item.imageUrl})`;
+      preview.style.display = 'cover';
+      preview.style.backgroundPosition = 'center';
+      preview.innerHTML='';
+      document.getElementById('removeImageBtn').classList.remove('d-none');
+    }
+    document.querySelector('#addItemModal .modal-title').textContent='Edit Item';
+    document.getElementById('saveItemBtn').onclick=()=>this.updateItemFromForm(itemId);
+    const modal=new bootstrap.Modal(document.getElementById('addItemModal'));
+    modal.show();
+  }
+  async updateItemFromForm(itemId) {
+    try {
+      // Upload new image if selected
+      let imageUrl = null;
+      if (this.selectedImageFile) {
+        imageUrl = await this.uploadImageFile();
+      }
+
+      // Prepare update data
+      const updateData = {
+        name: document.getElementById('itemName').value.trim(),
+        category: document.getElementById('itemCategory').value,
+        notes: document.getElementById('itemNotes').value.trim()
+      };
+
+      if (imageUrl) {
+        updateData.imageUrl = imageUrl;
+      }
+
+      // Update item
+      const token = window.authManager?.token;
+      const response = await fetch(`${this.API_BASE}/item/${itemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      if (response.ok) {
+        await this.loadItems();
+        this.showSuccess('Item updated successfully!');
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addItemModal'));
+        modal.hide();
+        this.resetItemForm();
+      } else {
+        throw new Error('Update failed');
+      }
+    } catch (error) {
+      console.error('Update item error:', error);
+      this.showError('Failed to update item');
+    }
+  }
+  filterItems(searchTerm) {
+    this.currentFilter = searchTerm.toLowerCase();
+    this.applyFilters();
+  }
+
+  filterByCategory(category) {
+    this.currentCategory = category;
+    this.applyFilters();
+  }
+
+  applyFilters() {
+    this.filteredItems = this.items.filter(item => {
+      const matchesSearch = !this.currentFilter || 
+        item.name.toLowerCase().includes(this.currentFilter) ||
+        item.category.toLowerCase().includes(this.currentFilter) ||
+        (item.notes && item.notes.toLowerCase().includes(this.currentFilter));
+      
+      const matchesCategory = !this.currentCategory || item.category === this.currentCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+
+    this.renderItems(this.filteredItems);
+  }
+
+  // Enhanced stats display
+  updateStats() {
+    const stats = {
+      total: this.items.length,
+      categories: [...new Set(this.items.map(item => item.category))].length,
+      withRfid: this.items.filter(item => item.rfidTag).length,
+      favorites: this.items.filter(item => item.isFavorite).length
+    };
+
+    document.getElementById('totalItems').textContent = stats.total;
+    document.getElementById('totalCategories').textContent = stats.categories;
+    document.getElementById('itemsWithRfid').textContent = stats.withRfid;
+    document.getElementById('favoriteItems').textContent = stats.favorites;
   }
 }
 

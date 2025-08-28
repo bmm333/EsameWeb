@@ -56,63 +56,135 @@
 
                 <!-- Setup Content -->
                 <div class="setup-content">
-                    <!-- Step 1: Bluetooth Pairing -->
+                    <!-- Step 1: Direct Bluetooth Pairing -->
                     <div class="setup-step" id="step-1">
                         <div class="step-card">
-                            <h3>Bluetooth Pairing</h3>
-                            <p>Connect to your device via Bluetooth to configure Wi-Fi settings.</p>
+                            <h3>Connect to Smart Wardrobe Pi</h3>
+                            <p>Make sure your Raspberry Pi device is powered on and in pairing mode.</p>
         
-                            <div class="bluetooth-status mb-3">
-                                <i class="bi bi-bluetooth fs-1 text-primary"></i>
-                                <div class="mt-2">
-                                    <strong>Ready to pair</strong>
-                                    <div class="text-muted">Make sure your device is in pairing mode</div>
+                            <div class="bluetooth-status mb-4" id="bluetooth-status">
+                                <div class="text-center">
+                                    <i class="bi bi-bluetooth fs-1 text-primary mb-3"></i>
+                                    <h5>Ready to Connect</h5>
+                                    <p class="text-muted">Your device should appear as "SmartWardrobe-Pi"</p>
                                 </div>
                             </div>
                             
-                            <button id="pair-btn" class="btn btn-primary">Start Bluetooth Pairing</button>
+                            <div class="d-grid">
+                                <button id="pair-btn" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-bluetooth me-2"></i>Start Bluetooth Connection
+                                </button>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Make sure Bluetooth is enabled on your device
+                                </small>
+                            </div>
                         </div>
                     </div>
-                    <div class="setup-step" id="step-2">
+
+                    <!-- Step 2: Wi-Fi Configuration -->
+                    <div class="setup-step" id="step-2" style="display: none;">
                         <div class="step-card">
                             <h3>Wi-Fi Configuration</h3>
-                            <p>Send Wi-Fi credentials to your device.</p>
+                            <p>Send your Wi-Fi credentials to the Smart Wardrobe Pi.</p>
+                            
+                            <div class="device-info mb-3" id="device-info" style="display: none;">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Connected to device: <strong class="device-serial">SW-XXXX-XXXX</strong>
+                                </div>
+                            </div>
+                            
                             <form id="wifi-form">
                                 <div class="mb-3">
                                     <label for="wifi-ssid" class="form-label">Network Name (SSID)</label>
-                                    <input type="text" class="form-control" id="wifi-ssid" required>
+                                    <input type="text" class="form-control form-control-lg" id="wifi-ssid" 
+                                           placeholder="Your Wi-Fi network name" required>
+                                    <div class="form-text">Enter the exact name of your Wi-Fi network</div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="wifi-password" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="wifi-password" required>
+                                    <label for="wifi-password" class="form-label">Wi-Fi Password</label>
+                                    <input type="password" class="form-control form-control-lg" id="wifi-password" 
+                                           placeholder="Your Wi-Fi password" required>
+                                    <div class="form-text">This will be sent securely to your device</div>
                                 </div>
-                                <button type="button" id="send-wifi-btn" class="btn btn-primary">Send Wi-Fi Config</button>
+                                <div class="d-grid">
+                                    <button type="button" id="send-wifi-btn" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-wifi me-2"></i>Send Wi-Fi Configuration
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>
-                    <div class="setup-step" id="step-3">
+
+                    <!-- Step 3: Device Activation -->
+                    <div class="setup-step" id="step-3" style="display: none;">
                         <div class="step-card">
-                            <h3>Device Activation</h3>
-                            <p>Testing connection and activating your device.</p>
+                            <h3>Activating Device</h3>
+                            <p>Waiting for your Smart Wardrobe Pi to connect to Wi-Fi and come online.</p>
                             
-                            <div class="activation-status mb-3">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                            <div class="activation-status mb-4" id="activation-status">
+                                <div class="text-center">
+                                    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <h5>Connecting to Wi-Fi...</h5>
+                                    <p class="text-muted">This may take up to 30 seconds</p>
                                 </div>
-                                <div class="mt-2">Waiting for device to come online...</div>
                             </div>
                             
-                            <button id="test-connection-btn" class="btn btn-outline-primary">Test Connection</button>
+                            <div class="d-grid">
+                                <button id="test-connection-btn" class="btn btn-outline-primary">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Check Connection Status
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div class="setup-step" id="step-4">
+
+                    <!-- Step 4: Setup Complete -->
+                    <div class="setup-step" id="step-4" style="display: none;">
                         <div class="step-card text-center">
-                            <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
-                            <h3 class="mt-3">Setup Complete!</h3>
-                            <p>Your Smart Wardrobe Pi is now connected and ready to use.</p>
-                            <div class="mt-4">
-                                <a href="dashboard.html" class="btn btn-primary">Go to Dashboard</a>
-                                <a href="wardrobe.html" class="btn btn-outline-primary ms-2">Add Items</a>
+                            <div class="success-animation mb-4">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                            </div>
+                            <h3 class="text-success mb-3">Setup Complete!</h3>
+                            <p class="lead mb-4">Your Smart Wardrobe Pi is now connected and ready to use.</p>
+                            
+                            <div class="feature-list mb-4">
+                                <div class="row text-start">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-check2 text-success me-2"></i>
+                                            <span>RFID scanning enabled</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-check2 text-success me-2"></i>
+                                            <span>Wi-Fi connected</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-check2 text-success me-2"></i>
+                                            <span>Cloud sync active</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-check2 text-success me-2"></i>
+                                            <span>Real-time tracking</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                <a href="dashboard.html" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-house-door me-2"></i>Go to Dashboard
+                                </a>
+                                <a href="wardrobe.html" class="btn btn-outline-primary btn-lg">
+                                    <i class="bi bi-plus-circle me-2"></i>Add Items
+                                </a>
                             </div>
                         </div>
                     </div>

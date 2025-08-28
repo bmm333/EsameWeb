@@ -51,7 +51,6 @@ class DeviceSetupManager {
     if (!navigator.bluetooth) {
       return this.showError('Web Bluetooth not supported in this browser');
     }
-
     try {
       this.showLoading('Scanning for your device...');
       

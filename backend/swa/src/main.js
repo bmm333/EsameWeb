@@ -18,7 +18,7 @@ async function bootstrap() {
   }));
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  await app.listen(3001,'0.0.0.0');
+  await app.listen(3002);
   console.log('Server running on http://localhost:3001');
 }
 bootstrap();
