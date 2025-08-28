@@ -1,5 +1,5 @@
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-  ? 'http://localhost:3001' 
+  ? 'http://localhost:3002' 
   : '';
 
 class RfidSetupManager {
@@ -9,30 +9,195 @@ class RfidSetupManager {
     this.serviceUUID = '12345678-1234-5678-9abc-123456789abc';
     this.deviceInfoCharUUID = '12345678-1234-5678-9abc-123456789abe';
     this.wifiCharUUID = '12345678-1234-5678-9abc-123456789abd';
+    this.httpDiscoveryMode = false;
+    this.setupPairButton();
+  }
+
+  setupPairButton() {
     const pairBtn = document.getElementById('pair-btn');
     if (pairBtn) {
       pairBtn.addEventListener('click', async (ev) => {
         ev.preventDefault();
         try {
-          // Immediately call requestDevice inside the click handler (user gesture)
-          const device = await navigator.bluetooth.requestDevice({
-            filters: [{ namePrefix: 'SmartWardrobe' }],
-            optionalServices: [this.serviceUUID]
-          });
-          // store device so bluetoothPairAndSend won't call requestDevice again
-          this.bleDevice = device;
-
-          // Continue the pairing/handshake flow (async, not part of the user gesture)
-          // any errors will be handled inside bluetoothPairAndSend
-          await this.bluetoothPairAndSend(null /* no apiKey yet */);
+          // Try BLE first, then fallback to HTTP discovery
+          await this.discoverAndPair();
         } catch (err) {
-          console.error('[RFID-BLE] Pair button handler error:', err);
-          // avoid throwing which could be noisy; let UI show message via device-setup.js
+          console.error('[Device] Pairing error:', err);
+          throw err; // Let device-setup.js handle the error display
         }
       });
     }
   }
 
+  async discoverAndPair() {
+    // Try Web Bluetooth first
+    try {
+      console.log('[Device] Attempting Web Bluetooth discovery...');
+      await this.bluetoothPairAndSend(null);
+      return;
+    } catch (bleError) {
+      console.warn('[Device] Web Bluetooth failed:', bleError.message);
+      
+      // Fallback to HTTP discovery
+      console.log('[Device] Trying HTTP discovery fallback...');
+      await this.httpDiscoveryFallback();
+    }
+  }
+
+  async httpDiscoveryFallback() {
+    const piIPInput = document.getElementById('pi-ip-input');
+    
+    if (!piIPInput) {
+      // Create IP input modal
+      this.showIPInputModal();
+      return new Promise((resolve, reject) => {
+        this.ipInputResolve = resolve;
+        this.ipInputReject = reject;
+      });
+    }
+    
+    const piIP = piIPInput.value.trim();
+    if (!piIP) {
+      throw new Error('Please enter your Raspberry Pi IP address');
+    }
+
+    await this.connectViaHTTP(piIP);
+  }
+
+  showIPInputModal() {
+    const modalHtml = `
+      <div class="modal fade" id="piIpModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Connect via IP Address</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <p class="text-muted mb-3">Web Bluetooth couldn't find your device. Let's connect directly via IP address.</p>
+              <div class="mb-3">
+                <label for="piIpInput" class="form-label">Raspberry Pi IP Address</label>
+                <input type="text" class="form-control" id="piIpInput" placeholder="192.168.1.100">
+                <div class="form-text">
+                  Find your Pi's IP by running: <code>hostname -I</code>
+                </div>
+              </div>
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Make sure your Pi is on the same network and the device server is running.
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="window.rfidSetup.connectFromModal()">Connect</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remove existing modal
+    const existingModal = document.getElementById('piIpModal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('piIpModal'));
+    modal.show();
+
+    // Handle modal close
+    document.getElementById('piIpModal').addEventListener('hidden.bs.modal', () => {
+      if (this.ipInputReject) {
+        this.ipInputReject(new Error('IP input cancelled'));
+      }
+    });
+  }
+  async connectFromModal() {
+    const piIP = document.getElementById('piIpInput').value.trim();
+    if (!piIP) {
+      alert('Please enter an IP address');
+      return;
+    }
+
+    try {
+      await this.connectViaHTTP(piIP);
+      const modal = bootstrap.Modal.getInstance(document.getElementById('piIpModal'));
+      modal.hide();
+      
+      if (this.ipInputResolve) {
+        this.ipInputResolve();
+      }
+    } catch (error) {
+      alert('Connection failed: ' + error.message);
+      if (this.ipInputReject) {
+        this.ipInputReject(error);
+      }
+    }
+  }
+  async connectViaHTTP(piIP) {
+    console.log('[Device] Connecting via HTTP to:', piIP);
+    
+    try {
+      // Test connection and get device info
+      const response = await fetch(`http://${piIP}:8080/api/device-info`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const deviceData = await response.json();
+      this.deviceInfo = deviceData;
+      this.httpDiscoveryMode = true;
+      this.piIP = piIP;
+
+      console.log('[Device] HTTP connection successful:', deviceData);
+      return { success: true, deviceData };
+
+    } catch (error) {
+      console.error('[Device] HTTP connection failed:', error);
+      throw new Error(`Cannot connect to Pi at ${piIP}:8080 - ${error.message}`);
+    }
+  }
+
+  async sendWifiViaHTTP(wifiConfig) {
+    if (!this.httpDiscoveryMode || !this.piIP) {
+      throw new Error('Not connected via HTTP');
+    }
+
+    try {
+      const response = await fetch(`http://${this.piIP}:8080/api/wifi-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...wifiConfig,
+          backendUrl: API_BASE
+        }),
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('[Device] WiFi sent via HTTP:', result);
+      return result;
+
+    } catch (error) {
+      console.error('[Device] HTTP WiFi send failed:', error);
+      throw new Error(`Failed to send WiFi config: ${error.message}`);
+    }
+  }
+  async sendWifiConfiguration(apiKey, wifiPayload) {
+    if (this.httpDiscoveryMode) {
+      return await this.sendWifiViaHTTP(wifiPayload);
+    } else {
+      return await this.bluetoothPairAndSend(apiKey, wifiPayload);
+    }
+  }
   async loadRfidModalHtml() {
     if (document.getElementById('rfidScanModal')) return;
     try {
@@ -136,128 +301,68 @@ class RfidSetupManager {
   }
 
 async bluetoothPairAndSend(apiKey, wifiPayload = null) {
-  if (!navigator.bluetooth) throw new Error('Web Bluetooth not available');
+    if (!navigator.bluetooth) throw new Error('Web Bluetooth not available');
 
-  const wait = ms => new Promise(res => setTimeout(res, ms));
-  const log = (...args) => console.debug('[RFID-BLE]', ...args);
+    const wait = ms => new Promise(res => setTimeout(res, ms));
+    const log = (...args) => console.debug('[RFID-BLE]', ...args);
 
-  try {
-    let device = this.bleDevice || null;
-    let createdHere = false;
+    try {
+      let device = this.bleDevice;
 
-    // Always request a fresh device to avoid stale connections
-    if (!device || !device.gatt) {
-      try {
-        log('Requesting new device...');
-        device = await navigator.bluetooth.requestDevice({
-          filters: [{ namePrefix: 'SmartWardrobe' }],
-          optionalServices: [this.serviceUUID]
-        });
-        this.bleDevice = device;
-        createdHere = true;
-      } catch (err) {
-        console.warn('[RFID-BLE] Specific filter failed, trying acceptAllDevices', err);
-        device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: [this.serviceUUID]
-        });
-        this.bleDevice = device;
-        createdHere = true;
-      }
-    }
-
-    // Enhanced connection management
-    let connectionAttempts = 0;
-    const maxConnectionAttempts = 3;
-    
-    const connectWithRetry = async () => {
-      for (let attempt = 0; attempt < maxConnectionAttempts; attempt++) {
-        connectionAttempts++;
-        log(`Connection attempt ${attempt + 1}/${maxConnectionAttempts}`);
-        
+      // Request device with improved filters
+      if (!device) {
         try {
-          // Ensure clean state
-          if (device.gatt && device.gatt.connected) {
-            log('Device already connected, disconnecting first');
-            device.gatt.disconnect();
-            await wait(1000); // Wait for clean disconnect
-          }
-
-          log('Attempting to connect...');
-          const server = await device.gatt.connect();
-          
-          // Verify connection is stable
-          await wait(2000); // Longer stabilization time
-          
-          if (!server.connected) {
-            throw new Error('Connection lost immediately after connect');
-          }
-          
-          log('Connection stable, proceeding...');
-          return server;
-          
+          log('Requesting device with namePrefix filter...');
+          device = await navigator.bluetooth.requestDevice({
+            filters: [
+              { namePrefix: 'SmartWardrobe' },
+              { namePrefix: 'SmartWardrobe-Pi' },
+              { services: [this.serviceUUID] }
+            ],
+            optionalServices: [this.serviceUUID]
+          });
+          this.bleDevice = device;
         } catch (err) {
-          log(`Attempt ${attempt + 1} failed:`, err.message);
-          
-          if (attempt === maxConnectionAttempts - 1) {
-            throw new Error(`Failed to establish stable connection after ${maxConnectionAttempts} attempts: ${err.message}`);
-          }
-          
-          // Progressive backoff delay
-          const delay = 1000 * Math.pow(2, attempt); // 1s, 2s, 4s
-          log(`Waiting ${delay}ms before retry...`);
-          await wait(delay);
+          console.warn('[RFID-BLE] Specific filters failed, trying acceptAllDevices:', err);
+          device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [this.serviceUUID]
+          });
+          this.bleDevice = device;
         }
       }
-    };
 
-    const server = await connectWithRetry();
-    
-    // Service discovery with retry
-    log('Discovering services...');
-    let service;
-    let serviceAttempts = 0;
-    const maxServiceAttempts = 3;
-    
-    while (serviceAttempts < maxServiceAttempts) {
-      try {
-        service = await server.getPrimaryService(this.serviceUUID);
-        log('Service discovered successfully');
-        break;
-      } catch (err) {
-        serviceAttempts++;
-        log(`Service discovery attempt ${serviceAttempts} failed:`, err.message);
-        
-        if (serviceAttempts === maxServiceAttempts) {
-          throw new Error(`Service discovery failed after ${maxServiceAttempts} attempts. Check if BLE service is properly registered on Pi.`);
-        }
-        
-        await wait(1000 * serviceAttempts); // Progressive delay
+      // Connection with retry logic
+      log('Connecting to device:', device.name);
+      
+      if (device.gatt.connected) {
+        device.gatt.disconnect();
+        await wait(1000);
       }
-    }
 
-    // Read device info with better error handling
-    const readDeviceInfo = async () => {
-      try {
-        log('Reading device info...');
-        const deviceInfoChar = await service.getCharacteristic(this.deviceInfoCharUUID);
-        const data = await deviceInfoChar.readValue();
-        const decoder = new TextDecoder();
-        const deviceData = JSON.parse(decoder.decode(data));
-        log('Device info read successfully:', deviceData);
-        return deviceData;
-      } catch (err) {
-        log('Failed to read device info:', err.message);
-        throw new Error(`Cannot read device information: ${err.message}`);
+      const server = await device.gatt.connect();
+      await wait(2000); // Stabilization time
+
+      if (!server.connected) {
+        throw new Error('Connection lost immediately after connect');
       }
-    };
 
-    const deviceData = await readDeviceInfo();
-    this.deviceInfo = deviceData;
+      // Service discovery
+      log('Discovering service:', this.serviceUUID);
+      const service = await server.getPrimaryService(this.serviceUUID);
+      
+      // Read device info
+      log('Reading device information...');
+      const deviceInfoChar = await service.getCharacteristic(this.deviceInfoCharUUID);
+      const data = await deviceInfoChar.readValue();
+      const decoder = new TextDecoder();
+      const deviceData = JSON.parse(decoder.decode(data));
+      
+      this.deviceInfo = deviceData;
+      log('Device info received:', deviceData);
 
-    // Send WiFi config if provided
-    if (wifiPayload) {
-      try {
+      // Send WiFi config if provided
+      if (wifiPayload) {
         log('Sending WiFi configuration...');
         const wifiChar = await service.getCharacteristic(this.wifiCharUUID);
         const payload = JSON.stringify({ 
@@ -269,46 +374,32 @@ async bluetoothPairAndSend(apiKey, wifiPayload = null) {
         const encoder = new TextEncoder();
         await wifiChar.writeValue(encoder.encode(payload));
         log('WiFi configuration sent successfully');
-        
-        // Give device time to process
         await wait(2000);
-        
-      } catch (err) {
-        log('Failed to send WiFi config:', err.message);
-        throw new Error(`Failed to send WiFi configuration: ${err.message}`);
       }
-    }
 
-    // Clean disconnect
-    try {
-      log('Disconnecting...');
-      await wait(500); // Give time for any pending operations
+      // Clean disconnect
       if (server.connected) {
         device.gatt.disconnect();
-        log('Disconnected cleanly');
       }
-    } catch (err) {
-      console.warn('Non-fatal disconnect error:', err);
-    }
 
-    return { success: true, deviceData };
-    
-  } catch (err) {
-    console.error('Bluetooth operation failed:', err);
-    
-    // Enhanced error messages for common issues
-    let errorMessage = err.message;
-    if (err.message.includes('GATT Server is disconnected')) {
-      errorMessage = 'Device disconnected unexpectedly. Please check if the Raspberry Pi Bluetooth service is running properly.';
-    } else if (err.message.includes('Service discovery failed')) {
-      errorMessage = 'Cannot find BLE service on device. Please restart the Raspberry Pi BLE server and try again.';
-    } else if (err.message.includes('User cancelled')) {
-      errorMessage = 'Bluetooth pairing was cancelled.';
+      return { success: true, deviceData };
+      
+    } catch (err) {
+      console.error('Bluetooth operation failed:', err);
+      
+      // Enhanced error messages
+      let errorMessage = err.message;
+      if (err.message.includes('User cancelled')) {
+        errorMessage = 'Device selection was cancelled. Please try again and select your SmartWardrobe device.';
+      } else if (err.message.includes('GATT Server is disconnected')) {
+        errorMessage = 'Device disconnected. Please check if your Pi is powered on and Bluetooth is working.';
+      } else if (err.message.includes('Service discovery failed')) {
+        errorMessage = 'Cannot find the required service on the device. Please restart your Pi device server.';
+      }
+      
+      throw new Error(errorMessage);
     }
-    
-    throw new Error(`Bluetooth error: ${errorMessage}`);
   }
-}
 
   async openScanModalAndAssociate(itemId, onSuccess = null) {
     await this.loadRfidModalHtml();

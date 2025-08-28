@@ -87,19 +87,22 @@ class DeviceSetupManager {
     try {
       this.showLoading('Sending Wi-Fi configuration...');
 
-      // Send via Bluetooth first (if still connected)
-      try {
-        await this.rfidSetup.bluetoothPairAndSend(this.deviceInfo.apiKey, { ssid, password });
-      } catch (bleError) {
-        console.warn('Bluetooth send failed, using backend confirmation only');
+      const wifiPayload = { ssid, password, security: 'WPA2' };
+
+      // Use the appropriate method based on connection type
+      if (this.rfidSetup.httpDiscoveryMode) {
+        await this.rfidSetup.sendWifiViaHTTP(wifiPayload);
+      } else {
+        // Try Bluetooth first
+        try {
+          await this.rfidSetup.bluetoothPairAndSend(this.deviceInfo.apiKey, wifiPayload);
+        } catch (bleError) {
+          console.warn('Bluetooth send failed, using backend confirmation only');
+        }
       }
 
-      // Confirm with backend
-      await this.rfidSetup.confirmWiFi(this.deviceInfo.serialNumber, { 
-        ssid, 
-        password,
-        security: 'WPA2' 
-      });
+      // Always confirm with backend
+      await this.rfidSetup.confirmWiFi(this.deviceInfo.serialNumber, wifiPayload);
 
       this.showSuccess('Wi-Fi configuration sent!');
       setTimeout(() => this.nextStep(), 1500);
