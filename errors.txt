@@ -1,0 +1,22 @@
+rfid-setup.js:275 Bluetooth operation failed: SecurityError: Failed to execute 'requestDevice' on 'Bluetooth': Must be handling a user gesture to show a permission request.
+    at RfidSetupManager.bluetoothPairAndSend (rfid-setup.js:138:44)
+    at async DeviceSetupManager.startBluetooth (device-setup.js:58:22)
+bluetoothPairAndSend @ rfid-setup.js:275Understand this error
+rfid-setup.js:137 [RFID-BLE] Specific filter failed, trying acceptAllDevices NotFoundError: User cancelled the requestDevice() chooser.
+bluetoothPairAndSend @ rfid-setup.js:137Understand this warning
+rfid-setup.js:275 Bluetooth operation failed: SecurityError: Failed to execute 'requestDevice' on 'Bluetooth': Must be handling a user gesture to show a permission request.
+    at RfidSetupManager.bluetoothPairAndSend (rfid-setup.js:138:44)
+    at async DeviceSetupManager.startBluetooth (device-setup.js:58:22)
+bluetoothPairAndSend @ rfid-setup.js:275Understand this error
+rfid-setup.js:137 [RFID-BLE] Specific filter failed, trying acceptAllDevices NotFoundError: User cancelled the requestDevice() chooser.
+bluetoothPairAndSend @ rfid-setup.js:137Understand this warning
+rfid-setup.js:275 Bluetooth operation failed: SecurityError: Failed to execute 'requestDevice' on 'Bluetooth': Must be handling a user gesture to show a permission request.
+    at RfidSetupManager.bluetoothPairAndSend (rfid-setup.js:138:44)
+    at async DeviceSetupManager.startBluetooth (device-setup.js:58:22)
+bluetoothPairAndSend @ rfid-setup.js:275Understand this error
+rfid-setup.js:137 [RFID-BLE] Specific filter failed, trying acceptAllDevices NotFoundError: User cancelled the requestDevice() chooser.
+bluetoothPairAndSend @ rfid-setup.js:137Understand this warning
+rfid-setup.js:275 Bluetooth operation failed: Error: Failed to establish stable connection after 3 attempts: Connection lost immediately after connect
+    at connectWithRetry (rfid-setup.js:181:19)
+    at async RfidSetupManager.bluetoothPairAndSend (rfid-setup.js:192:20)
+    at async DeviceSetupManager.startBluetooth (device-setup.js:58:22)
