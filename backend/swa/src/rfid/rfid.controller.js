@@ -11,7 +11,7 @@ export class RfidController {
     constructor(rfidService) {
         this.rfidService = rfidService;
     }
-
+    
     @UseGuards(JwtAuthGuard)
     @Post('device/generate-key')
     @Bind(Request(), Body())
@@ -45,7 +45,7 @@ export class RfidController {
     async processRealtimeScan(headers, scanData) {
         const apiKey = headers['x-api-key'];
         if (!apiKey) {
-            throw new Error('API key required in x-api-key header');
+        throw new BadRequestException('API key required in x-api-key header');
         }
         return this.rfidService.processRealtimeRfidScan(apiKey, scanData);
     }
@@ -55,7 +55,7 @@ export class RfidController {
     async deviceHeartbeat(headers) {
         const apiKey = headers['x-api-key'];
         if (!apiKey) {
-            throw new Error('API key required in x-api-key header');
+        throw new BadRequestException('API key required in x-api-key header');
         }
         return this.rfidService.updateDeviceHeartbeat(apiKey);
     }

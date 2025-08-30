@@ -16,7 +16,7 @@ export class RfidService {
         userService,
         notificationService
     ) {
-        this.rfidDeviceRepository = rfidDeviceRepository;
+        this.rfidDeviceRepository = rfidDeviceRepository;3
         this.rfidTagRepository = rfidTagRepository;
         this.userService = userService;
         this.notificationService = notificationService;
@@ -27,14 +27,21 @@ export class RfidService {
   async generateDeviceApiKey(userId, deviceData) {
     const user = await this.userService.findOneById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+        throw new NotFoundException('User not found');
     }
     const apiKey = this.generateApiKey();
+    await this.rfidDeviceRepository.save({
+        apiKey,
+        deviceName: deviceData?.deviceName || 'Generated RFID Device',
+        status: 'temporary',
+        userId: user.id
+    });
+
     return {
-      apiKey,
-      deviceName:'Smart Wardrobe Pi'
+        apiKey,
+        deviceName: deviceData?.deviceName || 'Generated RFID Device'
     };
-  }
+    }
 
 
     
@@ -115,28 +122,26 @@ export class RfidService {
 
 
     async validateDeviceApiKey(apiKey) {
-    try {
-      let device = await this.rfidDeviceRepository.findOne({
-        where: { apiKey },
-        relations: ['user']
-      });
+        try {
+        const device = await this.rfidDeviceRepository.findOne({
+            where: { apiKey },
+            relations: ['user']
+        });
 
-      if (!device) {
-        // API key not found - this might be a new device from Pi
-        // For now, throw error - Pi should register first
+        if (!device) {
+            throw new UnauthorizedException('Invalid API key - not found in database');
+        }
+
+        if (device.status !== 'active' && device.status !== 'temporary') {
+            throw new UnauthorizedException('Device not authorized');
+        }
+
+        return device;
+        } catch (error) {
+        console.error('Error validating API key:', error);
         throw new UnauthorizedException('Invalid API key');
-      }
-
-      if (device.status !== 'active') {
-        throw new UnauthorizedException('Device not active');
-      }
-
-      return device;
-    } catch (error) {
-      console.error('Error validating API key:', error);
-      throw new UnauthorizedException('Invalid API key');
+        }
     }
-  }
 
     async processRealtimeRfidScan(apiKey, scanData) {
         try {
@@ -170,45 +175,29 @@ export class RfidService {
         }
     }
     async updateDeviceHeartbeat(apiKey) {
-    try {
-      let device = await this.rfidDeviceRepository.findOne({
-        where: { apiKey },
-        relations: ['user']
-      });
-
-      if (!device) {
-        // First heartbeat - create device if API key is valid
-        // Note: In a real implementation, you'd verify the API key was generated for this user
-        // For simplicity, we'll create a device assuming the key is valid
-        const user = await this.userService.findOneById(1); // Placeholder - you'd need to associate user properly
-        device = await this.rfidDeviceRepository.save({
-          userId: user.id,
-          apiKey,
-          deviceName: 'Smart Wardrobe Pi',
-          status: 'active',
-          isOnline: true,
-          lastHeartbeat: new Date()
+        try {
+        const device = await this.rfidDeviceRepository.findOne({
+            where: { apiKey },
+            relations: ['user']
         });
-        console.log('Device created on first heartbeat:', device.serialNumber);
-      } else {
+
+        if (!device) {
+            throw new UnauthorizedException('Invalid API key - device not registered');
+        }
+
+        // Update heartbeat
         await this.rfidDeviceRepository.update(device.id, {
-          lastHeartbeat: new Date(),
-          isOnline: true
+            isOnline: true,
+            lastHeartbeat: new Date()
         });
-      }
 
-      return {
-        status: 'ok',
-        timestamp: new Date(),
-        nextScanInterval: device.scanInterval,
-        powerSavingMode: device.powerSavingMode
-      };
-
-    } catch (error) {
-      console.error('Error updating device heartbeat:', error);
-      throw error;
+        console.log('Heartbeat updated for device:', device.id);
+        return { success: true };
+        } catch (error) {
+        console.error('Error updating heartbeat:', error);
+        throw error;
+        }
     }
-  }
 
     async processTagDetection(device, tagData) {
         try {
