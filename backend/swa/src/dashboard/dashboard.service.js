@@ -1,18 +1,17 @@
-import { Injectable, Dependencies } from '@nestjs/common';
+import { Injectable, Dependencies,Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Item } from '../item/entities/item.entity.js';
 import { Outfit } from '../outfit/entities/outfit.entity.js';
 import { User } from '../user/entities/user.entity.js';
+import {AnalyticsService} from '../analytics/analytics.service.js';
 
 @Injectable()
-@Dependencies('ItemRepository', 'OutfitRepository', 'UserRepository',AnalyticsService)
 export class DashboardService {
     constructor(
         @InjectRepository(Item) itemRepository,
         @InjectRepository(Outfit) outfitRepository,
         @InjectRepository(User) userRepository,
-        analyticsService
+        @Inject(AnalyticsService) analyticsService
     ) {
         this.itemRepository = itemRepository;
         this.outfitRepository = outfitRepository;
@@ -36,6 +35,28 @@ export class DashboardService {
             user:await this.getUserGreeting(userId)
         };
     }
+    async getRecentActivity(userId) {
+        try {
+            // Fetch the 5 most recent outfits created by the user
+            const recentOutfits = await this.outfitRepository.find({
+                where: { userId },
+                order: { createdAt: 'DESC' },
+                take: 5,
+                select: ['id', 'name', 'createdAt', 'occasion'] 
+            });
+
+            return recentOutfits.map(outfit => ({
+                id: outfit.id,
+                name: outfit.name,
+                type: 'outfit_created',
+                date: outfit.createdAt,
+                occasion: outfit.occasion
+            }));
+        } catch (error) {
+            console.error('Error fetching recent activity:', error);
+            return [];
+        }
+    }
 
     async getWardrobeStats(userId)
     {
@@ -48,11 +69,11 @@ export class DashboardService {
         //for now just the recently worn but it should be an combination of scheldue service + reccomandation service + item's availability
         const todaysOutfit = await this.outfitRepository.findOne({
             where: { userId },
-            order: [
-                { isFavorite: 'DESC' },
-                { lastWorn: 'DESC' },
-                { createdAt: 'DESC' }
-            ]
+            order: {
+                isFavorite: 'DESC',
+                lastWorn: 'DESC',
+                createdAt: 'DESC'
+            }
         });
 
         if (!todaysOutfit) {

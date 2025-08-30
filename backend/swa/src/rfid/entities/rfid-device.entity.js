@@ -7,7 +7,7 @@ export class RfidDevice {
     @PrimaryGeneratedColumn()
     id;
 
-    @Column({ type: 'varchar', length: 100, unique: true })
+    @Column({ type: 'varchar', length: 100, unique: true ,nullable:true})
     serialNumber; // Raspberry Pi serial number
 
     @Column({ type: 'varchar', length: 100, unique: true,nullable:true })

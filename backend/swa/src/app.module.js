@@ -14,6 +14,8 @@ import { MailingModule } from './mailing/mailing.module';
 import { SettingsModule } from './settings/settings.module';
 import { MediaModule } from './media/media.module';
 import { NotificationModule } from './notification/notification.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 
 
@@ -29,6 +31,8 @@ import { NotificationModule } from './notification/notification.module';
     MailingModule,
     SettingsModule,
     MediaModule,
+    DashboardModule,
+    AnalyticsModule
   ],
   controllers: [AppController],
   providers: [AppService],

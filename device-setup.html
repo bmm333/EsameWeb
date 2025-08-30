@@ -1,205 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Device Setup - Smart Wardrobe</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="src/css/variables.css">
-    <link rel="stylesheet" href="src/css/base.css">
-    <link rel="stylesheet" href="src/css/components.css">
-    <link rel="stylesheet" href="src/css/layout.css">
-    <link rel="stylesheet" href="src/css/pages/device-setup.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Wardrobe Device Setup</title>
+  <link rel="stylesheet" href="src/css/base.css">
+  <link rel="stylesheet" href="src/css/components.css">
+  <link rel="stylesheet" href="src/css/layout.css">
+  <link rel="stylesheet" href="src/css/pages/setup.css">
 </head>
-<body data-bs-theme="light" data-page="device-setup">
-    <nav class="navbar fixed-top">
-        <div class="container">
-            <a href="dashboard.html" class="navbar-brand">Smart Wardrobe</a>
-            <div class="d-flex align-items-center">
-                <button id="themeSwitcher" class="btn btn-link text-decoration-none">
-                    <i class="bi bi-sun-fill theme-icon-light"></i>
-                    <i class="bi bi-moon-fill theme-icon-dark d-none"></i>
-                </button>
-            </div>
+<body class="page-container">
+  <main class="main-content">
+    <div class="container">
+      <h1 class="page-title">Smart Wardrobe Device Setup</h1>
+      
+      <div class="step-indicator">
+        <div class="step-circle active" id="step-circle-1">1</div>
+        <div class="step-line"></div>
+        <div class="step-circle" id="step-circle-2">2</div>
+        <div class="step-line"></div>
+        <div class="step-circle" id="step-circle-3">3</div>
+        <div class="step-line"></div>
+        <div class="step-circle" id="step-circle-4">4</div>
+      </div>
+      
+      <!-- Step 1: Power on device -->
+      <div class="setup-step active" id="step-1">
+        <h3 class="step-title">Step 1: Power On Your Smart Wardrobe</h3>
+        <p class="step-description">Let's set up your Smart Wardrobe device:</p>
+        <ol class="step-list">
+          <li>Plug in your Smart Wardrobe device to a power source.</li>
+          <li>Wait until the indicator light starts flashing blue (approximately 30 seconds).</li>
+          <li>The device is now ready for setup.</li>
+        </ol>
+        <div class="alert alert-info">
+          <i class="icon-info"></i>
+          The flashing blue light indicates that your device is in setup mode.
         </div>
-    </nav>
-
-    <main class="setup-main">
-        <div class="container py-5">
-            <div class="setup-container">
-                <div class="setup-header text-center mb-5">
-                    <h1>RFID Device Setup</h1>
-                    <p class="text-muted">Let's connect your Smart Wardrobe Pi device</p>
-                </div>
-
-                <!-- Progress Steps -->
-                <div class="setup-progress mb-5">
-                    <div class="step" data-step="1">
-                        <div class="step-number">1</div>
-                        <div class="step-label">Bluetooth</div>
-                    </div>
-                    <div class="step" data-step="2">
-                        <div class="step-number">2</div>
-                        <div class="step-label">Wi-Fi</div>
-                    </div>
-                    <div class="step" data-step="3">
-                        <div class="step-number">3</div>
-                        <div class="step-label">Activate</div>
-                    </div>
-                    <div class="step" data-step="4">
-                        <div class="step-number">4</div>
-                        <div class="step-label">Complete</div>
-                    </div>
-                </div>
-
-                <!-- Setup Content -->
-                <div class="setup-content">
-                    <!-- Step 1: Direct Bluetooth Pairing -->
-                    <div class="setup-step" id="step-1">
-                        <div class="step-card">
-                            <h3>Connect to Smart Wardrobe Pi</h3>
-                            <p>Make sure your Raspberry Pi device is powered on and in pairing mode.</p>
-        
-                            <div class="bluetooth-status mb-4" id="bluetooth-status">
-                                <div class="text-center">
-                                    <i class="bi bi-bluetooth fs-1 text-primary mb-3"></i>
-                                    <h5>Ready to Connect</h5>
-                                    <p class="text-muted">Your device should appear as "SmartWardrobe-Pi"</p>
-                                </div>
-                            </div>
-                            
-                            <div class="d-grid">
-                                <button id="pair-btn" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-bluetooth me-2"></i>Start Bluetooth Connection
-                                </button>
-                            </div>
-                            
-                            <div class="mt-3">
-                                <small class="text-muted">
-                                    <i class="bi bi-info-circle me-1"></i>
-                                    Make sure Bluetooth is enabled on your device
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 2: Wi-Fi Configuration -->
-                    <div class="setup-step" id="step-2" style="display: none;">
-                        <div class="step-card">
-                            <h3>Wi-Fi Configuration</h3>
-                            <p>Send your Wi-Fi credentials to the Smart Wardrobe Pi.</p>
-                            
-                            <div class="device-info mb-3" id="device-info" style="display: none;">
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle me-2"></i>
-                                    Connected to device: <strong class="device-serial">SW-XXXX-XXXX</strong>
-                                </div>
-                            </div>
-                            
-                            <form id="wifi-form">
-                                <div class="mb-3">
-                                    <label for="wifi-ssid" class="form-label">Network Name (SSID)</label>
-                                    <input type="text" class="form-control form-control-lg" id="wifi-ssid" 
-                                           placeholder="Your Wi-Fi network name" required>
-                                    <div class="form-text">Enter the exact name of your Wi-Fi network</div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="wifi-password" class="form-label">Wi-Fi Password</label>
-                                    <input type="password" class="form-control form-control-lg" id="wifi-password" 
-                                           placeholder="Your Wi-Fi password" required>
-                                    <div class="form-text">This will be sent securely to your device</div>
-                                </div>
-                                <div class="d-grid">
-                                    <button type="button" id="send-wifi-btn" class="btn btn-primary btn-lg">
-                                        <i class="bi bi-wifi me-2"></i>Send Wi-Fi Configuration
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Step 3: Device Activation -->
-                    <div class="setup-step" id="step-3" style="display: none;">
-                        <div class="step-card">
-                            <h3>Activating Device</h3>
-                            <p>Waiting for your Smart Wardrobe Pi to connect to Wi-Fi and come online.</p>
-                            
-                            <div class="activation-status mb-4" id="activation-status">
-                                <div class="text-center">
-                                    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <h5>Connecting to Wi-Fi...</h5>
-                                    <p class="text-muted">This may take up to 30 seconds</p>
-                                </div>
-                            </div>
-                            
-                            <div class="d-grid">
-                                <button id="test-connection-btn" class="btn btn-outline-primary">
-                                    <i class="bi bi-arrow-clockwise me-2"></i>Check Connection Status
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 4: Setup Complete -->
-                    <div class="setup-step" id="step-4" style="display: none;">
-                        <div class="step-card text-center">
-                            <div class="success-animation mb-4">
-                                <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
-                            </div>
-                            <h3 class="text-success mb-3">Setup Complete!</h3>
-                            <p class="lead mb-4">Your Smart Wardrobe Pi is now connected and ready to use.</p>
-                            
-                            <div class="feature-list mb-4">
-                                <div class="row text-start">
-                                    <div class="col-md-6">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <i class="bi bi-check2 text-success me-2"></i>
-                                            <span>RFID scanning enabled</span>
-                                        </div>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <i class="bi bi-check2 text-success me-2"></i>
-                                            <span>Wi-Fi connected</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <i class="bi bi-check2 text-success me-2"></i>
-                                            <span>Cloud sync active</span>
-                                        </div>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <i class="bi bi-check2 text-success me-2"></i>
-                                            <span>Real-time tracking</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                                <a href="dashboard.html" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-house-door me-2"></i>Go to Dashboard
-                                </a>
-                                <a href="wardrobe.html" class="btn btn-outline-primary btn-lg">
-                                    <i class="bi bi-plus-circle me-2"></i>Add Items
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="setup-status" class="mt-4"></div>
-            </div>
+        <button class="btn btn-primary" id="step1-continue">I've Powered On My Device</button>
+      </div>
+      
+      <!-- Step 2: Generate API Key -->
+      <div class="setup-step" id="step-2">
+        <h3 class="step-title">Step 2: Generate Device Key</h3>
+        <p class="step-description">Now we'll generate a unique key for your device:</p>
+        <div class="mb-3">
+          <button class="btn btn-primary" id="generate-api-key">Generate Device Key</button>
         </div>
-    </main>
+        <div id="api-key-container" class="d-none mb-3">
+          <p><strong>Your Device Key:</strong></p>
+          <div class="api-key mb-2" id="api-key-display"></div>
+          <button class="btn btn-secondary btn-sm" id="copy-api-key">
+            <i class="icon-copy"></i> Copy to Clipboard
+          </button>
+        </div>
+        <div class="alert alert-warning">
+          <i class="icon-warning"></i>
+          Keep this key safe! You'll need it in the next step.
+        </div>
+        <button class="btn btn-primary d-none" id="step2-continue">Continue</button>
+      </div>
+      
+      <!-- Step 3: Connect to device WiFi -->
+      <div class="setup-step" id="step-3">
+        <h3 class="step-title">Step 3: Connect to Device WiFi</h3>
+        <p class="step-description">Connect your computer or phone to the device's WiFi network:</p>
+        <div class="card mb-4">
+          <div class="card-body">
+            <p><strong>WiFi Name:</strong> <code>Smartwardrobe-setup</code></p>
+            <p><strong>Password:</strong> <code>smartwardrobe123</code></p>
+          </div>
+        </div>
+        <p>Once connected to the device's WiFi:</p>
+        <ol class="step-list">
+          <li>Your device should automatically show a setup page (or navigate to <code>http://192.168.4.1</code>)</li>
+          <li>Enter your home WiFi name and password</li>
+          <li>Enter the device key you generated in the previous step</li>
+          <li>Click "Connect" on the device setup page</li>
+        </ol>
+        <div class="alert alert-info">
+          <i class="icon-info"></i>
+          The device will use these credentials to connect to your home WiFi network.
+        </div>
+        <button class="btn btn-primary" id="step3-continue">I've Completed These Steps</button>
+      </div>
+      
+      <!-- Step 4: Wait for device to connect -->
+      <div class="setup-step" id="step-4">
+        <h3 class="step-title">Step 4: Finalizing Setup</h3>
+        <p class="step-description">Your device is connecting to your home WiFi and registering with our servers...</p>
+        <div class="progress mb-4">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div id="connection-status"></div>
+        <div id="setup-complete-actions" class="d-none mt-4">
+          <a href="wardrobe.html" class="btn btn-success">Go to My Wardrobe</a>
+          <button class="btn btn-secondary" id="restart-setup">Start Over</button>
+        </div>
+      </div>
+    </div>
+  </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="src/js/utils.js"></script>
-    <script type="module" src="src/js/main.js"></script>
-    <script type="module" src="src/js/auth-manager.js"></script>
-    <script type="module" src="src/js/pages/rfid-setup.js"></script>
-    <script type="module" src="src/js/pages/device-setup.js"></script>
-    
+  <!-- Auth Manager script -->
+  <script src="src/js/auth-manager.js"></script>
+  <script src="src/js/pages/device-setup.js"></script>
 </body>
 </html>

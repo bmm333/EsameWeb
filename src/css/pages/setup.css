@@ -1,0 +1,217 @@
+@import url('../variables.css');
+@import url('../components.css');
+
+/* Page-specific styles */
+.page-container {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-family);
+}
+
+.main-content {
+  padding: var(--spacing-lg);
+}
+
+.page-title {
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-xl);
+}
+
+.step-indicator {
+  display: flex;
+  margin-bottom: var(--spacing-xl);
+  justify-content: center;
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--secondary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-md);
+  color: var(--text-color);
+  font-weight: bold;
+}
+
+.step-circle.active {
+  background-color: var(--primary-color);
+  color: var(--bg-color);
+}
+
+.step-circle.completed {
+  background-color: var(--success-color);
+  color: var(--bg-color);
+}
+
+.step-line {
+  flex-grow: 1;
+  height: 2px;
+  background-color: var(--border-color);
+  margin-top: 20px;
+}
+
+.setup-step {
+  display: none;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+  background-color: var(--card-bg);
+}
+
+.setup-step.active {
+  display: block;
+}
+
+.step-title {
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.step-description {
+  margin-bottom: var(--spacing-md);
+}
+
+.step-list {
+  margin-bottom: var(--spacing-md);
+}
+
+.alert {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+}
+
+.alert-info {
+  background-color: var(--info-bg);
+  border: 1px solid var(--info-border);
+  color: var(--info-text);
+}
+
+.alert-warning {
+  background-color: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  color: var(--warning-text);
+}
+
+.alert-success {
+  background-color: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
+}
+
+.alert-danger {
+  background-color: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-text);
+}
+
+.btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--bg-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--secondary-hover);
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: var(--bg-color);
+}
+
+.btn-success:hover {
+  background-color: var(--success-hover);
+}
+
+.btn-sm {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.9rem;
+}
+
+.card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--card-bg);
+}
+
+.card-body {
+  padding: var(--spacing-md);
+}
+
+.progress {
+  height: 20px;
+  background-color: var(--secondary-color);
+  border-radius: var(--border-radius);
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--primary-color);
+  border-radius: var(--border-radius);
+  width: 100%;
+  animation: progress 2s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% { width: 0%; }
+  50% { width: 100%; }
+  100% { width: 0%; }
+}
+
+.api-key {
+  background-color: var(--code-bg);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  border: 1px dashed var(--border-color);
+  font-family: monospace;
+  word-break: break-all;
+}
+
+code {
+  background-color: var(--code-bg);
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 90%;
+}
+
+.icon-info, .icon-warning, .icon-copy {
+  margin-right: var(--spacing-sm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .step-indicator {
+    flex-direction: column;
+    align-items: center;
+  }
+  .step-circle {
+    margin-bottom: var(--spacing-sm);
+  }
+  .step-line {
+    width: 2px;
+    height: 40px;
+    margin: 0 auto;
+  }
+}

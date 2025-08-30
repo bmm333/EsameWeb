@@ -1,11 +1,11 @@
-import RfidSetupManager from './rfid-setup.js';
+import RfidSetupManager from "./rfid";
 
 class WardrobeManager {
   constructor() {
     this.selectedImageFile = null;
     this.selectedRfidTag = null;
     this.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-      ? 'http://localhost:3002' 
+      ? 'http://localhost:3001' 
       : '';
     this.init();
   }

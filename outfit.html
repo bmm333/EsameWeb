@@ -31,7 +31,7 @@
                         <img src="https://placehold.co/32x32/f9fafb/6366f1?text=AM" alt="User" class="rounded-circle">
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="settings.html">Settinxgs</a></li>
+                        <li><a class="dropdown-item" href="settings.html">Settings</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="login.html">Logout</a></li>
                     </ul>
@@ -57,7 +57,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="outfit.html" class="nav-link">
+                    <a href="outfit.html" class="nav-link active">
                         <i class="bi bi-layers me-2"></i>Outfits
                     </a>
                 </li>
@@ -67,7 +67,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="settings.html" class="nav-link active">
+                    <a href="settings.html" class="nav-link">
                         <i class="bi bi-gear me-2"></i>Settings
                     </a>
                 </li>
@@ -92,7 +92,7 @@
                     </div>
                     <div class="rfid-status-content">
                         <h3 class="rfid-status-title">RFID Tracking Active</h3>
-                        <p class="rfid-status-text">Your wardrobe is currently tracking 28 items. 22 items are in the Wardrobe, 6 are beign worn</p>
+                        <p class="rfid-status-text">Your wardrobe is currently tracking 28 items. 22 items are in the Wardrobe, 6 are being worn</p>
                     </div>
                     <div class="rfid-status-actions">
                         <button class="app-btn app-btn-secondary app-btn-sm" id="refreshRFIDbtn">
@@ -126,139 +126,13 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="row g-4">
-                            <div class="col-md-6 col-lg-">
-                                <div class="outfit-card">
-                                    <div class="outfit-card-header">
-                                        <h3 class="outfit-title">Casual Friday</h3>
-                                        <div class="outfit-actions">
-                                            <button class="action-btn favorite-btn active" title="Favorite">
-                                                <i class="bi bi-star-fill"></i>
-                                            </button>
-                                            <button class="action-btn more-btn" title="More Options">
-                                                <i class="bi bi-three-dots"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="outfit-items">
-                                        <div class="outfit-item available">
-                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shirt" alt="Blue Oxford Shirt">
-                                            <div class="outfit-item-status">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
-                                        <div class="outfit-item available">
-                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Pants" alt="Navy Chinos">
-                                            <div class="outfit-item-status">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
-                                        <div class="outfit-item available">
-                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shoes" alt="Brown Loafers">
-                                            <div class="outfit-item-status">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="outfit-card-footer">
-                                        <div class="outfit-meta">
-                                            <span class="otufit-occasion">Work</span>
-                                            <span class="otufit-season">All Season</span>
-                                        </div>
-                                        <button class="app-btn app-btn-primary app-btn-sm wear-outfit-btn">
-                                            <i class="bi bi-check2"></i>Wear Now
-                                        </button>
-                                    </div>
-                                </div>
+                        <div id="loadingSpinner" class="text-center py-5">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading outfits...</span>
                             </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="outfit-card">
-                                    <div class="outfit-card-header">
-                                        <h3 class="outfit-title">Weekend Casual</h3>
-                                        <div class="outfit-actions">
-                                            <button class="action-btn favorite-btn" title="Favorite">
-                                                <i class="bi bi-star"></i>
-                                            </button>
-                                            <button class="action-btn more-btn" title="More Options">
-                                                <i class="bi bi-three-dots"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="outfit-items">
-                                        <div class="outfit-item available">
-                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=T-Shirt" alt="White T-Shirt">
-                                            <div class="outfit-item-status">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
-                                        <div class="outfit-item unavailable">
-                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Jeans" alt="Blue Jeans">
-                                            <div class="outfit-item-status">
-                                                <i class="bi bi-x-circle-fill"></i>
-                                            </div>
-                                        </div>
-                                        <div class="outfit-item available">
-                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Sneakers" alt="White Sneakers">
-                                            <div class="outfit-item-status">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="outfit-card-footer">
-                                        <div class="outfit-meta">
-                                            <span class="outfit-occasion">Casual</span>
-                                            <span class="outfit-season">Spring, Summer</span>
-                                        </div>
-                                        <button class="app-btn app-btn-secondary app-btn-sm wear-outfit-btn" disabled>
-                                            <i class="bi bi-exclamation-triangle"></i> Missing Items
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="outfit-card">
-                                    <div class="outfit-card-header">
-                                        <h3 class="outfit-title">Business Meeting</h3>
-                                        <div class="outfit-actions">
-                                            <button class="action-btn favorite-btn" title="Favorite">
-                                                <i class="bi bi-star"></i>
-                                            </button>
-                                            <button class="action-btn more-btn" title="More Options">
-                                                <i class="bi bi-three-dots"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="outfit-items">
-                                        <div class="outfit-item available">
-                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shirt" alt="White Dress Shirt">
-                                            <div class="outfit-item-status">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
-                                        <div class="outfit-item available">
-                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Suit" alt="Navy Suit">
-                                            <div class="outfit-item-status">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
-                                        <div class="outfit-item available">
-                                            <img src="https://placehold.co/300x300/f9fafb/6366f1?text=Shoes" alt="Black Oxfords">
-                                            <div class="outfit-item-status">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="outfit-card-footer">
-                                        <div class="outfit-meta">
-                                            <span class="outfit-occasion">Formal</span>
-                                            <span class="outfit-season">All Seasons</span>
-                                        </div>
-                                        <button class="app-btn app-btn-primary app-btn-sm wear-outfit-btn">
-                                            <i class="bi bi-check2"></i> Wear Now
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                        </div>
+                        <div class="row g-4" id="outfitsContainer">
+                            <!-- Dynamic outfits will be inserted here by JS -->
                         </div>
                     </div>
                     <div class="tab-pane fade" id="create-outfit" role="tabpanel" aria-labelledby="create-tab">

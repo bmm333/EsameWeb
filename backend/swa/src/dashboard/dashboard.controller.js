@@ -1,11 +1,11 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards,Dependencies,Inject  } from '@nestjs/common';
 import { DashboardService } from './dashboard.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard)
 export class DashboardController {
-    constructor(dashboardService) {
+    constructor(@Inject(DashboardService) dashboardService) {
         this.dashboardService = dashboardService;
     }
     @Get()

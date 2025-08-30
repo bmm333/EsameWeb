@@ -1,7 +1,10 @@
 /**
  * utility func for smart wardrobe app
  */
+export const API_BASE = "http://localhost:3001";
+
 export const Utils={
+    API_BASE,
     /**
      * setting css var for vp h 
      * fxing 100vh vp for ios 

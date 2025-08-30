@@ -1,248 +1,218 @@
-import RfidSetupManager from './rfid-setup.js';
-
-class DeviceSetupManager {
-  constructor() {
-    this.currentStep = 1;
-    this.deviceInfo = null;
-    this.rfidSetup = new RfidSetupManager();
-    this.init();
-  }
-
-  init() {
-    // Check authentication
-    if (!window.authManager?.isAuthenticated()) {
-      window.location.href = '/login.html';
-      return;
-    }
-
-    this.bindEvents();
-    this.checkExistingDevice();
-    this.updateStepDisplay();
-  }
-
-  async checkExistingDevice() {
-    try {
-      const status = await this.rfidSetup.getDeviceStatus();
-      if (status.devices && status.devices.length > 0) {
-        const device = status.devices[0];
-        if (device.status === 'active') {
-          this.jumpToStep(4); // Already setup 
-        } else {
-          this.deviceInfo = device;
-          this.updateDeviceInfo();
-          // If device exists but not active, start from Wi-Fi step
-          if (device.status === 'registered') {
-            this.jumpToStep(2);
-          }
-        }
-      }
-    } catch (error) {
-      console.log('No existing device found or backend not available:', error.message);
-    }
-  }
-
-    bindEvents() {
-      document.getElementById('pair-btn')?.addEventListener('click', async (e) => {
-      e.preventDefault();
-      this.showLoading('Starting Bluetooth pairing...');
-      try {
-        await this.startBluetooth();
-      } catch (err) {
-        this.showError(err.message || 'Bluetooth pairing failed');
-      }
-    });
-    document.getElementById('send-wifi-btn')?.addEventListener('click', () => this.sendWifiConfig());
-    document.getElementById('test-connection-btn')?.addEventListener('click', () => this.testConnection());
-  }
-
-  async startBluetooth() {
-    if (!navigator.bluetooth) {
-      return this.showError('Web Bluetooth not supported in this browser');
-    }
-    try {
-      this.showLoading('Scanning for your device...');
-      
-      // Discover and register device automatically
-      const result = await this.rfidSetup.bluetoothPairAndSend(null); // No API key yet
-      
-      if (result.success && result.deviceData) {
-        this.deviceInfo = result.deviceData;
-        this.showSuccess(`Device ${result.deviceData.serialNumber} discovered and registered!`);
-        this.updateDeviceInfo();
-        setTimeout(() => this.nextStep(), 1500);
-      }
-    } catch (error) {
-      this.showError(error.message);
-    }
-  }
-
-  async sendWifiConfig() {
-    const ssid = document.getElementById('wifi-ssid').value.trim();
-    const password = document.getElementById('wifi-password').value;
-    
-    if (!ssid || !password) {
-      return this.showError('Please enter both network name and password');
-    }
-
-    try {
-      this.showLoading('Sending Wi-Fi configuration...');
-
-      const wifiPayload = { ssid, password, security: 'WPA2' };
-
-      // Use the appropriate method based on connection type
-      if (this.rfidSetup.httpDiscoveryMode) {
-        await this.rfidSetup.sendWifiViaHTTP(wifiPayload);
-      } else {
-        // Try Bluetooth first
-        try {
-          await this.rfidSetup.bluetoothPairAndSend(this.deviceInfo.apiKey, wifiPayload);
-        } catch (bleError) {
-          console.warn('Bluetooth send failed, using backend confirmation only');
-        }
-      }
-
-      // Always confirm with backend
-      await this.rfidSetup.confirmWiFi(this.deviceInfo.serialNumber, wifiPayload);
-
-      this.showSuccess('Wi-Fi configuration sent!');
-      setTimeout(() => this.nextStep(), 1500);
-    } catch (error) {
-      this.showError(error.message);
-    }
-  }
-
-  async testConnection() {
-    try {
-      this.showLoading('Testing device connection...');
-      
-      // Poll for device status
-      let attempts = 0;
-      const maxAttempts = 15; // 30 seconds total
-      
-      const checkStatus = async () => {
-        try {
-          const status = await this.rfidSetup.getDeviceStatus();
-          const device = status.devices?.[0];
-          
-          if (device && device.isOnline && device.status === 'configuring') {
-            // Device is online, activate it
-            await this.rfidSetup.activateDevice(device.serialNumber, device.ipAddress);
-            this.showSuccess('Device is online and activated!');
-            setTimeout(() => this.nextStep(), 1500);
-            return true;
-          } else if (device && device.status === 'active') {
-            this.showSuccess('Device is already active!');
-            setTimeout(() => this.nextStep(), 1500);
-            return true;
-          }
-          
-          attempts++;
-          if (attempts < maxAttempts) {
-            setTimeout(checkStatus, 2000);
-          } else {
-            this.showError('Device connection timeout. Please check Wi-Fi settings.');
-          }
-        } catch (error) {
-          attempts++;
-          if (attempts < maxAttempts) {
-            setTimeout(checkStatus, 2000);
-          } else {
-            this.showError('Failed to connect to device. Please try again.');
-          }
-        }
-      };
-      
-      checkStatus();
-    } catch (error) {
-      this.showError(error.message);
-    }
-  }
-
-  nextStep() {
-    if (this.currentStep < 4) { 
-      this.currentStep++;
-      this.updateStepDisplay();
-    }
-  }
-
-  jumpToStep(step) {
-    this.currentStep = step;
-    this.updateStepDisplay();
-  }
-
-  updateStepDisplay() {
-    // Update progress indicators
-    document.querySelectorAll('.step').forEach((el, index) => {
-      const stepNum = index + 1;
-      el.classList.toggle('active', stepNum === this.currentStep);
-      el.classList.toggle('completed', stepNum < this.currentStep);
-    });
-
-    // Update step content
-    document.querySelectorAll('.setup-step').forEach((el, index) => {
-      el.classList.toggle('active', index + 1 === this.currentStep);
-    });
-
-    // Clear status messages when changing steps
-    this.clearStatus();
-  }
-
-  updateDeviceInfo() {
-    if (this.deviceInfo) {
-      // Update any displayed device information
-      document.querySelectorAll('.device-serial').forEach(el => {
-        el.textContent = this.deviceInfo.serialNumber;
-      });
-    }
-  }
-
-  showLoading(message) {
-    const statusEl = document.getElementById('setup-status');
-    if (statusEl) {
-      statusEl.innerHTML = `
-        <div class="alert alert-info d-flex align-items-center">
-          <div class="spinner-border spinner-border-sm me-2" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          ${message}
-        </div>
-      `;
-    }
-  }
-
-  showSuccess(message) {
-    const statusEl = document.getElementById('setup-status');
-    if (statusEl) {
-      statusEl.innerHTML = `
-        <div class="alert alert-success d-flex align-items-center">
-          <i class="bi bi-check-circle-fill me-2"></i>
-          ${message}
-        </div>
-      `;
-    }
-  }
-
-  showError(message) {
-    const statusEl = document.getElementById('setup-status');
-    if (statusEl) {
-      statusEl.innerHTML = `
-        <div class="alert alert-danger d-flex align-items-center">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          ${message}
-        </div>
-      `;
-    }
-  }
-
-  clearStatus() {
-    const statusEl = document.getElementById('setup-status');
-    if (statusEl) {
-      statusEl.innerHTML = '';
-    }
-  }
-}
-
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  window.deviceSetupManager = new DeviceSetupManager();
+  // Constants
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
+    ? 'http://localhost:3001' 
+    : '';
+  const POLL_INTERVAL = 5000;
+  const MAX_POLLS = 30;
+
+  // State management
+  const state = {
+    currentStep: 1,
+    deviceApiKey: null,
+    deviceDetails: null,
+    pollingTimer: null
+  };
+
+  // DOM elements cache
+  const elements = {
+    stepCircles: {
+      1: document.getElementById('step-circle-1'),
+      2: document.getElementById('step-circle-2'),
+      3: document.getElementById('step-circle-3'),
+      4: document.getElementById('step-circle-4')
+    },
+    steps: {
+      1: document.getElementById('step-1'),
+      2: document.getElementById('step-2'),
+      3: document.getElementById('step-3'),
+      4: document.getElementById('step-4')
+    },
+    buttons: {
+      step1Continue: document.getElementById('step1-continue'),
+      generateApiKey: document.getElementById('generate-api-key'),
+      copyApiKey: document.getElementById('copy-api-key'),
+      step2Continue: document.getElementById('step2-continue'),
+      step3Continue: document.getElementById('step3-continue'),
+      restartSetup: document.getElementById('restart-setup')
+    },
+    apiKeyContainer: document.getElementById('api-key-container'),
+    apiKeyDisplay: document.getElementById('api-key-display'),
+    connectionStatus: document.getElementById('connection-status'),
+    progressBar: document.getElementById('progress-bar'),
+    setupCompleteActions: document.getElementById('setup-complete-actions')
+  };
+
+  // Utility functions
+  function showStep(stepNumber) {
+    state.currentStep = stepNumber;
+    Object.keys(elements.stepCircles).forEach(step => {
+      const circle = elements.stepCircles[step];
+      circle.classList.remove('active', 'completed');
+      if (Number(step) === stepNumber) {
+        circle.classList.add('active');
+      } else if (Number(step) < stepNumber) {
+        circle.classList.add('completed');
+        circle.innerHTML = '<i class="bi bi-check"></i>';
+      } else {
+        circle.innerHTML = step;
+      }
+    });
+    Object.values(elements.steps).forEach(step => step.classList.remove('active'));
+    elements.steps[stepNumber].classList.add('active');
+  }
+
+  function getAuthToken() {
+    return window.authManager?.token || localStorage.getItem('authToken');
+  }
+
+  async function generateApiKey() {
+    const button = elements.buttons.generateApiKey;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('No authentication token found. Please log in.');
+
+      const response = await fetch(`${API_BASE}/rfid/device/generate-key`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ deviceName: 'Smart Wardrobe Pi' })
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+      const data = await response.json();
+      state.deviceApiKey = data.apiKey;
+      elements.apiKeyDisplay.textContent = data.apiKey;
+      elements.apiKeyContainer.classList.remove('d-none');
+      elements.buttons.step2Continue.classList.remove('d-none');
+      button.innerHTML = 'Regenerate Key';
+    } catch (error) {
+      console.error('API Key Generation Error:', error);
+      elements.apiKeyContainer.classList.remove('d-none');
+      elements.apiKeyDisplay.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+      button.innerHTML = 'Try Again';
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function pollDeviceStatus() {
+    if (state.pollingTimer) clearTimeout(state.pollingTimer);
+
+    let pollCount = 0;
+    elements.connectionStatus.innerHTML = `
+      <div class="alert alert-info">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Waiting for your device to connect... (0/${MAX_POLLS})
+      </div>
+    `;
+
+    const checkStatus = async () => {
+      pollCount++;
+      try {
+        const token = getAuthToken();
+        if (!token) throw new Error('Not authenticated');
+
+        const response = await fetch(`${API_BASE}/rfid/devices`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+        const data = await response.json();
+        if (data.devices?.length > 0 && data.devices[0].isOnline) {
+          state.deviceDetails = data.devices[0];
+          elements.connectionStatus.innerHTML = `
+            <div class="alert alert-success">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <strong>Success!</strong> Your Smart Wardrobe device is connected.
+              <div class="mt-2">
+                <strong>Device:</strong> ${state.deviceDetails.deviceName || 'Smart Wardrobe Pi'}<br>
+                <strong>Status:</strong> Online<br>
+                <strong>Last seen:</strong> ${new Date(state.deviceDetails.lastHeartbeat).toLocaleString()}
+              </div>
+            </div>
+          `;
+          elements.setupCompleteActions.classList.remove('d-none');
+          return;
+        }
+
+        elements.connectionStatus.innerHTML = `
+          <div class="alert alert-info">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Waiting for your device to connect... (${pollCount}/${MAX_POLLS})
+          </div>
+        `;
+
+        if (pollCount < MAX_POLLS) {
+          state.pollingTimer = setTimeout(checkStatus, POLL_INTERVAL);
+        } else {
+          elements.connectionStatus.innerHTML = `
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <strong>Setup taking longer than expected.</strong>
+              <ul><li>Check device power and WiFi credentials.</li></ul>
+              <button class="btn btn-sm btn-warning mt-2" id="retry-poll">Check Again</button>
+            </div>
+          `;
+          document.getElementById('retry-poll').addEventListener('click', pollDeviceStatus);
+        }
+      } catch (error) {
+        console.error('Polling Error:', error);
+        elements.connectionStatus.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Error:</strong> ${error.message}
+            <button class="btn btn-sm btn-danger mt-2" id="retry-poll">Try Again</button>
+          </div>
+        `;
+        document.getElementById('retry-poll').addEventListener('click', pollDeviceStatus);
+      }
+    };
+
+    checkStatus();
+  }
+
+  // Event bindings
+  function bindEvents() {
+    elements.buttons.step1Continue.addEventListener('click', () => showStep(2));
+    elements.buttons.generateApiKey.addEventListener('click', generateApiKey);
+    elements.buttons.copyApiKey.addEventListener('click', () => {
+      navigator.clipboard.writeText(state.deviceApiKey).then(() => {
+        elements.buttons.copyApiKey.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        setTimeout(() => elements.buttons.copyApiKey.innerHTML = '<i class="bi bi-clipboard"></i> Copy', 2000);
+      });
+    });
+    elements.buttons.step2Continue.addEventListener('click', () => showStep(3));
+    elements.buttons.step3Continue.addEventListener('click', () => {
+      showStep(4);
+      pollDeviceStatus();
+    });
+    elements.buttons.restartSetup.addEventListener('click', () => {
+      if (state.pollingTimer) clearTimeout(state.pollingTimer);
+      state.currentStep = 1;
+      state.deviceApiKey = null;
+      state.deviceDetails = null;
+      elements.apiKeyDisplay.textContent = '';
+      elements.apiKeyContainer.classList.add('d-none');
+      elements.buttons.step2Continue.classList.add('d-none');
+      elements.buttons.generateApiKey.innerHTML = 'Generate Device Key';
+      elements.setupCompleteActions.classList.add('d-none');
+      showStep(1);
+    });
+  }
+
+  // Authentication check
+  if (!getAuthToken()) {
+    window.location.href = '/login.html?redirect=device-setup.html';
+    return;
+  }
+
+  bindEvents();
 });

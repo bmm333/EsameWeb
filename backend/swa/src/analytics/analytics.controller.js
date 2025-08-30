@@ -1,8 +1,9 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards,Dependencies } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 @Controller('analytics')
+@Dependencies(AnalyticsService)
 @UseGuards(JwtAuthGuard)
 export class AnalyticsController {
     constructor(analyticsService) {
