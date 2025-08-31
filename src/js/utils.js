@@ -1,7 +1,7 @@
 /**
  * utility func for smart wardrobe app
  */
-export const API_BASE = "http://localhost:3001";
+export const API_BASE = "http://192.168.1.4:3001";
 
 export const Utils={
     API_BASE,

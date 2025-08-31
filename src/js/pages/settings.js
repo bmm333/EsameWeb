@@ -3,23 +3,26 @@ class SettingsManager {
     this.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
       ? 'http://localhost:3001' 
       : '';
-    this.settings = {};
-    this.init();
+      this.settings = {};
+      this.pushService = window.PushService ? new window.PushService() : null;
+      this.init();
+      this.init();
   }
 
-  async init() {
-    // Check authentication
-    if (!window.authManager?.isAuthenticated()) {
-      window.location.href = '/login.html';
-      return;
+    async init() {
+        if (!window.authManager?.isAuthenticated()) {
+            window.location.href = '/login.html';
+            return;
+        }
+        if (this.pushService && this.pushService.isSupported()) {
+            await this.pushService.initialize();
+        }
+        await this.loadSettings();
+        this.bindEvents();
+        this.populateSettings();
     }
 
-    await this.loadSettings();
-    this.bindEvents();
-    this.populateSettings();
-  }
-
-  async loadSettings() {
+    async loadSettings() {
     try {
       const token = window.authManager?.token;
       const response = await fetch(`${this.API_BASE}/settings`, {
@@ -108,17 +111,17 @@ class SettingsManager {
     }
   }
 
-  bindEvents() {
-    // Profile form
-    const profileForm = document.getElementById('profileForm');
-    if (profileForm) {
-      profileForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        this.saveProfile();
-      });
-    }
+    bindEvents() {
+        // Profile form
+        const profileForm = document.getElementById('profileForm');
+        if (profileForm) {
+            profileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveProfile();
+            });
+        }
 
-    // Profile picture upload
+        // Profile picture upload
     const profilePictureInput = document.getElementById('profilePicture');
     if (profilePictureInput) {
       profilePictureInput.addEventListener('change', (e) => {
@@ -126,13 +129,37 @@ class SettingsManager {
       });
     }
 
-    // Notification settings
     const notificationCheckboxes = document.querySelectorAll('[data-setting="notifications"]');
-    notificationCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', () => this.saveNotificationSettings());
-    });
+        notificationCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', async (ev) => {
+                // Sync with backend
+                await this.saveNotificationSettings();
+                // If push permission toggled, sync browsersubscription too
+                if (ev.target.id === 'pushNotifications' && this.pushService) {
+                    try {
+                        if (ev.target.checked) {
+                            const res = await this.pushService.subscribeUser();
+                            if (!res.success) {
+                                this.showError(res.error || 'Failed to enable push notifications');
+                                ev.target.checked = false;
+                            }
+                        } else {
+                            const res = await this.pushService.unsubscribeUser();
+                            if (!res.success) {
+                                this.showError(res.error || 'Failed to disable push notifications');
+                                ev.target.checked = true;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Push toggle error:', err);
+                        this.showError('Push permission error');
+                    }
+                }
+            });
+        });
 
-    // Privacy settings
+
+        // Privacy settings
     const privacyInputs = document.querySelectorAll('[data-setting="privacy"]');
     privacyInputs.forEach(input => {
       input.addEventListener('change', () => this.savePrivacySettings());
@@ -388,7 +415,6 @@ class SettingsManager {
   }
 }
 
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   window.settingsManager = new SettingsManager();
 });

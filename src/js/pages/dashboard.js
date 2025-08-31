@@ -1,20 +1,16 @@
 class DashboardManager {
-  constructor() {
-    this.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-      ? 'http://localhost:3001' 
-      : '';
-    this.dashboardData = null;
-    this.init();
-  }
+    constructor() {
+        this.API_BASE = `http://${window.location.hostname}:3001`;
+        this.dashboardData = null;
+        this.init();
+    }
 
-  async init() {
-    // Wait for auth manager to be available
+
+    async init() {
     if (!window.authManager) {
       setTimeout(() => this.init(), 100);
       return;
     }
-
-    // Check authentication
     if (!window.authManager.isAuthenticated()) {
       window.location.href = '/login.html';
       return;
@@ -32,47 +28,39 @@ class DashboardManager {
       window.location.href = '/login.html';
       return;
     }
-
-    // Load user profile for avatar
     await this.loadUserProfile();
-
-    // Load dashboard data
     await this.loadDashboardData();
-    
-    // Setup event listeners
     this.bindEvents();
-    
-    // Show dashboard
     this.showDashboard();
   }
-
-  async loadUserProfile() {
-    try {
-      const token = window.authManager?.token;
-      const response = await fetch(`${this.API_BASE}/user/profile`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-
-      if (response.ok) {
-        const user = await response.json();
-        // Fix: Set profile picture from backend
-        const userAvatar = document.getElementById('userAvatar');
-        if (user.profilePicture) {
-          userAvatar.src = user.profilePicture; // Assuming it's a URL; if base64, prepend 'data:image/jpeg;base64,'
-        } else {
-          userAvatar.src = 'https://placehold.co/32x32/f9fafb/6366f1?text=No+Photo';
+    async loadUserProfile() {
+        try {
+            const token = window.authManager?.token;
+            const response = await fetch(`${this.API_BASE}/auth/profile`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
+            if (response.ok) {
+                const payload = await response.json();
+                // backend returns { statusCode, user: { ... } }
+                const user = payload?.user || payload;
+                const userAvatar = document.getElementById('userAvatar');
+                if (userAvatar) {
+                    userAvatar.src = user.profilePicture || 'https://placehold.co/32x32/f9fafb/6366f1?text=No+Photo';
+                }
+                const greetingEl = document.getElementById('userGreeting');
+                if (greetingEl) {
+                    greetingEl.textContent = user.firstName || 'User';
+                }
+            } else {
+                console.error('Failed to load profile:', response.status);
+            }
+        } catch (error) {
+            console.error('Profile load error:', error);
         }
-        // Set greeting
-        document.getElementById('userGreeting').textContent = user.firstName || 'User';
-      } else {
-        console.error('Failed to load profile:', response.status);
-      }
-    } catch (error) {
-      console.error('Profile load error:', error);
     }
-  }
 
-  async loadDashboardData() {
+
+    async loadDashboardData() {
     try {
       const token = window.authManager?.token;
       const response = await fetch(`${this.API_BASE}/dashboard`, {
@@ -105,7 +93,7 @@ class DashboardManager {
       contentWrapper.style.display = 'block';
     }
 
-    // Populate dashboard with data
+    // Populating dashboard with data
     if (this.dashboardData) {
       this.populateUserGreeting();
       this.populateStats();
@@ -235,20 +223,59 @@ class DashboardManager {
     `;
   }
 
-  populateWeather() {
-    const weather = this.dashboardData.todaysOutfit?.weather;
-    if (!weather) return;
+    populateWeather() {
+        const weather = this.dashboardData.todaysOutfit?.weather;
+        const weatherContainer = document.getElementById('weatherInfo');
+        if (!weatherContainer) return;
 
-    const weatherContainer = document.getElementById('weatherInfo');
-    if (!weatherContainer) return;
+        if (weather && typeof weather.temp !== 'undefined') {
+            weatherContainer.innerHTML = `
+        <i class="bi ${weather.icon || 'bi-cloud-sun'} me-1"></i>
+        <span id="weatherTemp">${weather.temp}°C</span>
+      `;
+            return;
+        }
+        this.fetchAndRenderWeather();
+    }
 
-    weatherContainer.innerHTML = `
-      <i class="bi ${weather.icon || 'bi-cloud-sun'} me-1"></i>
-      <span id="weatherTemp">${weather.temp || '--'}°C</span>
-    `;
-  }
+    async fetchAndRenderWeather() {
+        const weatherContainer = document.getElementById('weatherInfo');
+        if (!weatherContainer) return;
 
-  async markOutfitWorn(outfitId) {
+        try {
+            const token = window.authManager?.token;
+            const preferred =
+                this.dashboardData?.user?.defaultWeatherLocation ||
+                localStorage.getItem('defaultWeatherLocation') ||
+                'London';
+            const res = await fetch(
+                `${this.API_BASE}/weather/current?location=${encodeURIComponent(preferred)}`,
+                { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const icon = data.icon || 'bi-cloud-sun';
+            const temp = typeof data.temperature !== 'undefined'
+                ? data.temperature
+                : (typeof data.temp !== 'undefined' ? data.temp : '--');
+
+            weatherContainer.innerHTML = `
+        <i class="bi ${icon} me-1"></i>
+        <span id="weatherTemp">${temp}°C</span>
+      `;
+        } catch (err) {
+            console.warn('Weather fetch failed:', err);
+            weatherContainer.innerHTML = `
+        <i class="bi bi-cloud-slash me-1"></i>
+        <span id="weatherTemp">--</span>
+      `;
+        }
+    }
+
+
+
+
+    async markOutfitWorn(outfitId) {
     try {
       const token = window.authManager?.token;
       const response = await fetch(`${this.API_BASE}/outfit/${outfitId}/wear`, {

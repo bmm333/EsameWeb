@@ -5,19 +5,32 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="074921e9-2906-4b40-a430-adb7dffe02ab" name="Changes" comment="FEAT: Configured BABEL properly , now Decorators work fine. Added User Endpoints.Validation Pipe.Postgres Integration.">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/swa/src/weather/weather.controller.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/js/pages/notifications.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/auth.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/auth/auth.module.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/auth.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/auth/auth.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/entities/user.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/entities/user.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/user.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/user.service.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/swa/src/app.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/app.module.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/swa/src/weather/weather.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/weather/weather.module.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notifications.html" beforeDir="false" afterPath="$PROJECT_DIR$/notifications.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheldue.html" beforeDir="false" afterPath="$PROJECT_DIR$/scheldue.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/auth-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/auth-manager.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/pages/dashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/dashboard.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/pages/rfid.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/rfid.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/pages/schelduing.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/schelduing.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/pages/settings.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/settings.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/public/sw.js" beforeDir="false" afterPath="$PROJECT_DIR$/sw.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/utils.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/utils.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -45,29 +58,46 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/m3bdy/Documents/EsameWeb&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;C:\\Users\\m3bdy\\WebstormProjects\\EsameWeb\\backend\\swa\\node_modules\\prettier&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.AIAssistantPromptsLibrary&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\WebStorm 2025.1.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "JavaScript Debug.localhost:3001.executor": "Debug",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/Users/m3bdy/EsameWeb",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "prettierjs.PrettierConfiguration.Package": "C:\\Users\\m3bdy\\EsameWeb\\backend\\swa\\node_modules\\prettier",
+    "settings.editor.selected.configurable": "ml.llm.LLMConfigurable",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\WebStorm 2025.1.1\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\m3bdy\EsameWeb" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="localhost:3001" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:3001">
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JavaScript Debug.localhost:3001" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-WS-251.25410.117" />
+        <option value="bundled-js-predefined-d6986cc7102b-b598e85cdad2-JavaScript-WS-252.25557.126" />
       </set>
     </attachedChunks>
   </component>
@@ -80,6 +110,7 @@
       <updated>1747498239932</updated>
       <workItem from="1747498241325" duration="108000" />
       <workItem from="1747680979676" duration="3771000" />
+      <workItem from="1756593538007" duration="6612000" />
     </task>
     <task id="LOCAL-00001" summary="FEAT: Configured BABEL properly , now Decorators work fine. Added User Endpoints.Validation Pipe.Postgres Integration.">
       <option name="closed" value="true" />

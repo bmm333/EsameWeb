@@ -401,71 +401,89 @@ async bluetoothPairAndSend(apiKey, wifiPayload = null) {
     }
   }
 
-  async openScanModalAndAssociate(itemId, onSuccess = null) {
-    await this.loadRfidModalHtml();
-    const token = window.authManager?.token;
-    if (!token) throw new Error('Authentication required');
+    async openScanModalAndAssociate(itemId, onSuccess = null) {
+        await this.loadRfidModalHtml();
+        const token = window.authManager?.token;
+        if (!token) throw new Error('Authentication required');
 
-    const modalEl = document.getElementById('rfidScanModal');
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-    
-    modalEl.querySelector('.rfid-scan-status').style.display = '';
-    modalEl.querySelector('.rfid-scan-success').style.display = 'none';
-    
-    modal.show();
+        const modalEl = document.getElementById('rfidScanModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
-    let stopped = false;
-    const stopPolling = () => { stopped = true; };
-    
-    modalEl.addEventListener('hidden.bs.modal', stopPolling, { once: true });
+        modalEl.querySelector('.rfid-scan-status').style.display = '';
+        modalEl.querySelector('.rfid-scan-success').style.display = 'none';
 
-    const pollForTags = async () => {
-      if (stopped) return;
+        modal.show();
 
-      try {
-        const response = await fetch(`${API_BASE}/rfid/tags/unassociated`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        let stopped = false;
+        const stopPolling = () => { stopped = true; };
 
-        if (response.ok) {
-          const tags = await response.json();
-          if (Array.isArray(tags) && tags.length > 0) {
-            const tag = tags[0];
-            
+        modalEl.addEventListener('hidden.bs.modal', stopPolling, { once: true });
+
+        const associateWithPossibleOverride = async (tag, forceOverride = false) => {
             const assocResponse = await fetch(`${API_BASE}/rfid/tags/${encodeURIComponent(tag.tagId)}/associate`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({ itemId })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ itemId, forceOverride })
             });
 
-            if (assocResponse.ok) {
-              const result = await assocResponse.json();
-              
-              modalEl.querySelector('.rfid-scan-status').style.display = 'none';
-              modalEl.querySelector('.rfid-scan-success').style.display = '';
-              
-              if (onSuccess) onSuccess(tag, result);
-              
-              setTimeout(() => modal.hide(), 1500);
-              return;
+            const payload = await assocResponse.json().catch(() => ({}));
+            if (assocResponse.ok && payload?.success) {
+                modalEl.querySelector('.rfid-scan-status').style.display = 'none';
+                modalEl.querySelector('.rfid-scan-success').style.display = '';
+                if (onSuccess) onSuccess(tag, payload);
+                setTimeout(() => modal.hide(), 1500);
+                return true;
             }
-          }
-        }
-      } catch (err) {
-        console.warn('Polling for tags failed:', err);
-      }
 
-      setTimeout(pollForTags, 2000);
-    };
+            // Handle conflict flow from backend contract
+            if (payload?.requiresConfirmation) {
+                const msg = payload?.message || 'This tag is already assigned. Do you want to override it?';
+                const confirmed = window.confirm(msg);
+                if (confirmed) {
+                    // Retry with forceOverride = true
+                    return await associateWithPossibleOverride(tag, true);
+                }
+                // user cancelled: just keep scanning
+                return false;
+            }
 
-    pollForTags();
-    return modal;
-  }
+            // Non-OK without requiresConfirmation ==> keep scanning
+            console.warn('RFID associate failed:', payload);
+            return false;
+        };
 
-  async getDeviceStatus() {
+        const pollForTags = async () => {
+            if (stopped) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/rfid/tags/unassociated`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const tags = await response.json();
+                    if (Array.isArray(tags) && tags.length > 0) {
+                        const tag = tags[0];
+                        const done = await associateWithPossibleOverride(tag, false);
+                        if (done) return; // stop polling if successfully associated (or after modal hides)
+                    }
+                }
+            } catch (err) {
+                console.warn('Polling for tags failed:', err);
+            }
+
+            setTimeout(pollForTags, 2000);
+        };
+
+        pollForTags();
+        return modal;
+    }
+
+
+    async getDeviceStatus() {
     const token = window.authManager?.token;
     if (!token) throw new Error('Authentication required');
 
