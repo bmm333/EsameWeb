@@ -1,9 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Constants
-  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-    ? 'http://localhost:3001' 
-    : '';
-  const POLL_INTERVAL = 5000;
+    const API_BASE = `http://${window.location.hostname}:3001`;
+    const POLL_INTERVAL = 5000;
   const MAX_POLLS = 30;
 
   // State management

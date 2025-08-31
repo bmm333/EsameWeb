@@ -1,12 +1,9 @@
-import {API_BASE} from './utils.js';
 export class AuthManager {
   constructor() {
     this.token = localStorage.getItem('authToken');
     this.user = JSON.parse(localStorage.getItem('user') || 'null');
-
-      const fallbackBase = `http://${window.location.hostname}:3001`;
-      this.baseURL = API_BASE || fallbackBase;
-      this.isValidating = false;
+    this.baseURL = `http://${window.location.hostname}:3001`;
+    this.isValidating = false;
     this.isNavigating = false; 
     this.guardSetup = false;
 

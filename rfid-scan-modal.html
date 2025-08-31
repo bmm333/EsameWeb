@@ -1,27 +1,29 @@
-<div class="modal fade" id="rfidScanModal" tabindex="-1" aria-labellby="rfidScanModalLabel" aria-hidden="true">
+<div class="modal fade" id="rfidScanModal" tabindex="-1" aria-labelledby="rfidScanModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-header">
-            <h5 class="modal-title" id="rfidScanModalLabel">Scan Rfid Tag</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body text-center">
-            <div class="rfid-scan-animation">
-                <div class="rfid-scan-icon">
-                    <i class="bi bi-broadcast"></i>
-                </div>
-                <div class="rfid-scan-waves"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rfidScanModalLabel">Scan RFID Tag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <h4 class="mt-4">Waiting for RFID Tag</h4>
-            <p class="text-muted">Please Place an unused RFID tag on the reader to associate it with your item</p>
-            <div class="rfid-scan-status mt-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+            <div class="modal-body text-center">
+                <div class="rfid-scan-animation">
+                    <div class="rfid-scan-icon">
+                        <i class="bi bi-broadcast"></i>
+                    </div>
+                    <div class="rfid-scan-waves"></div>
                 </div>
-                <p class="mt-2">Scanning...</p>
-            </div>
-            <div class="rfid-scan-success mt-4" style="display: none;">
-                <i class="bi bi-check-circle-fill text-success fs-1"></i>
-                <p class="mt-2">RFID tag sucessfully accosiated</p>
+                <h4 class="mt-4">Waiting for RFID Tag</h4>
+                <p class="text-muted">Please place an RFID tag on the reader to associate it with your item</p>
+                <div class="rfid-scan-status mt-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Scanning...</p>
+                </div>
+                <div class="rfid-scan-success mt-4" style="display: none;">
+                    <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                    <p class="mt-2">RFID tag successfully associated</p>
+                </div>
             </div>
         </div>
     </div>
