@@ -11,7 +11,7 @@ async function bootstrap() {
   
   app.enableCors({
     origin: [
-      process.env.FRONTEND_URL || 'https://swa-flex.vercel.app',
+      process.env.FRONTEND_URL || 'https://swa-flax.vercel.app',
     ],
     credentials: false,
   });
