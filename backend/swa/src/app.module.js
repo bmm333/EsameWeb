@@ -9,21 +9,24 @@ import { RfidModule } from './rfid/rfid.module';
 import { UserModule } from './user/user.module';
 import { ValidationMiddleware } from './common/middleware/validation.middleware';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
-// REMOVE: import { dataSourceOptions } from '../database.config.js';
 import { MailingModule } from './mailing/mailing.module';
 import { SettingsModule } from './settings/settings.module';
 import { MediaModule } from './media/media.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { WeatherModule } from './weather/weather.module';
-
-// Explicitly import all entities
 import { User } from './user/entities/user.entity.js';
 import { UserStylePreference } from './user/entities/user-style-preferences.entity.js';
 import { UserColorPreference } from './user/entities/user-color-preferences.entity.js';
 import { UserLifestyle } from './user/entities/user-lifestyle.entity.js';
 import { UserOccasion } from './user/entities/user-occasion.entity.js';
-// Import other entities as needed...
+import { Item } from './item/entities/item.entity.js';
+import { Outfit } from './outfit/entities/outfit.entity.js';
+import { RfidDevice } from './rfid/entities/rfid-device.entity.js';
+import { RfidTag } from './rfid/entities/rfid-tag.entity.js';
+import { Media } from './media/entities/media.entity.js';
+import { Recommendation } from './analytics/entities/recommendation.entity.js';
+
 
 @Module({
   imports: [
@@ -40,7 +43,13 @@ import { UserOccasion } from './user/entities/user-occasion.entity.js';
         UserColorPreference,
         UserLifestyle,
         UserOccasion,
-        // Add other entities...
+        Item,
+        Outfit,
+        RfidDevice,
+        RfidTag,
+        Media,
+        Recommendation
+
       ],
       synchronize: process.env.NODE_ENV !== 'production',
       logging: process.env.NODE_ENV === 'development',
