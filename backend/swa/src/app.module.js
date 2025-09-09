@@ -21,17 +21,18 @@ import { UserColorPreference } from './user/entities/user-color-preferences.enti
 import { UserLifestyle } from './user/entities/user-lifestyle.entity.js';
 import { UserOccasion } from './user/entities/user-occasion.entity.js';
 import { Item } from './item/entities/item.entity.js';
-import { Outfit } from './outfit/entities/outfit.entity';
-import { RfidDevice } from './rfid/entities/rfid-device.entity';
+import { Outfit } from './outfit/entities/outfit.entity.js';
+import { RfidDevice } from './rfid/entities/rfid-device.entity.js';
 import { RfidTag } from './rfid/entities/rfid-tag.entity.js';
 import { Media } from './media/entities/media.entity.js';
-import { Recommendation } from './recommendation/entities/recommendation.entity';
+import { Recommendation } from './recommendation/entities/recommendation.entity.js';
 
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: "postgres",
+      url: process.env.DATABASE_URL,
       host: process.env.PGHOST || 'localhost',
       port: parseInt(process.env.PGPORT) || 5432,
       username: process.env.PGUSER || 'postgres',
