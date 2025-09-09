@@ -16,7 +16,7 @@ async function bootstrap() {
   });
   app.enableCors({
     origin: [process.env.FRONTEND_URL || 'https://swa-flex.vercel.app'],
-    credentials: true
+    credentials: false
   });
   app.use(_express.default.json({
     limit: '10mb'
