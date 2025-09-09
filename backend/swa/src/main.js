@@ -13,7 +13,7 @@ async function bootstrap() {
     origin: [
       process.env.FRONTEND_URL || 'https://swa-flex.vercel.app',
     ],
-    credentials: true,
+    credentials: false,
   });
 
   app.use(express.json({ limit: '10mb' }));

@@ -25,21 +25,22 @@ var _userColorPreferencesEntity = require("./user/entities/user-color-preference
 var _userLifestyleEntity = require("./user/entities/user-lifestyle.entity.js");
 var _userOccasionEntity = require("./user/entities/user-occasion.entity.js");
 var _itemEntity = require("./item/entities/item.entity.js");
-var _outfit2 = require("./outfit/entities/outfit.entity");
-var _rfidDevice = require("./rfid/entities/rfid-device.entity");
+var _outfitEntity = require("./outfit/entities/outfit.entity.js");
+var _rfidDeviceEntity = require("./rfid/entities/rfid-device.entity.js");
 var _rfidTagEntity = require("./rfid/entities/rfid-tag.entity.js");
 var _mediaEntity = require("./media/entities/media.entity.js");
-var _recommendation = require("./recommendation/entities/recommendation.entity");
+var _recommendationEntity = require("./recommendation/entities/recommendation.entity.js");
 var _dec, _class;
 let AppModule = exports.AppModule = (_dec = (0, _common.Module)({
   imports: [_typeorm.TypeOrmModule.forRoot({
     type: "postgres",
+    url: process.env.DATABASE_URL,
     host: process.env.PGHOST || 'localhost',
     port: parseInt(process.env.PGPORT) || 5432,
     username: process.env.PGUSER || 'postgres',
     password: process.env.PGPASSWORD,
     database: process.env.PGDATABASE || 'swadb',
-    entities: [_userEntity.User, _userStylePreferencesEntity.UserStylePreference, _userColorPreferencesEntity.UserColorPreference, _userLifestyleEntity.UserLifestyle, _userOccasionEntity.UserOccasion, _itemEntity.Item, _outfit2.Outfit, _rfidDevice.RfidDevice, _rfidTagEntity.RfidTag, _mediaEntity.Media, _recommendation.Recommendation],
+    entities: [_userEntity.User, _userStylePreferencesEntity.UserStylePreference, _userColorPreferencesEntity.UserColorPreference, _userLifestyleEntity.UserLifestyle, _userOccasionEntity.UserOccasion, _itemEntity.Item, _outfitEntity.Outfit, _rfidDeviceEntity.RfidDevice, _rfidTagEntity.RfidTag, _mediaEntity.Media, _recommendationEntity.Recommendation],
     synchronize: process.env.NODE_ENV !== 'production',
     logging: process.env.NODE_ENV === 'development',
     ssl: process.env.NODE_ENV === 'production' ? {

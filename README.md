@@ -1,3 +1,47 @@
 # EsameWeb
 Web programming methodologies exam repository.
 Im creating this Repository to be more transparent and also professors can have a better insight on my work flow and how i got things done.
+ 
+
+
+ 
+
+{
+  "name": "esameweb",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Web programming methodologies exam repository. Im creating this Repository to be more transparent and also professors can have a better insight on my work flow and how i got things done.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.27.1",
+    "@babel/plugin-syntax-decorators": "^7.27.1",
+    "@babel/plugin-transform-classes": "^7.27.1",
+    "@babel/plugin-transform-parameters": "^7.27.1",
+    "@babel/plugin-transform-runtime": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "@eslint/js": "^9.26.0",
+    "babel-jest": "^29.7.0",
+    "eslint": "^9.26.0",
+    "eslint-plugin-jest": "^28.11.0",
+    "eslint-plugin-node": "^11.1.0",
+    "globals": "^16.0.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "stylelint": "^16.24.0",
+    "stylelint-config-standard": "^39.0.0"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.27.1",
+    "babel-plugin-transform-typescript-metadata": "^0.3.2",
+    "bcrypt": "^6.0.0",
+    "handlebars": "^4.7.8"
+  }
+}
