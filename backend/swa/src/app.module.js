@@ -21,11 +21,11 @@ import { UserColorPreference } from './user/entities/user-color-preferences.enti
 import { UserLifestyle } from './user/entities/user-lifestyle.entity.js';
 import { UserOccasion } from './user/entities/user-occasion.entity.js';
 import { Item } from './item/entities/item.entity.js';
-import { Outfit } from './outfit/entities/outfit.entity.js';
-import { RfidDevice } from './rfid/entities/rfid-device.entity.js';
+import { Outfit } from './outfit/entities/outfit.entity';
+import { RfidDevice } from './rfid/entities/rfid-device.entity';
 import { RfidTag } from './rfid/entities/rfid-tag.entity.js';
 import { Media } from './media/entities/media.entity.js';
-import { Recommendation } from './analytics/entities/recommendation.entity.js';
+import { Recommendation } from './recommendation/entities/recommendation.entity';
 
 
 @Module({
