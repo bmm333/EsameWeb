@@ -11,10 +11,7 @@ async function bootstrap() {
   
   app.enableCors({
     origin: [
-      'http://192.168.1.7:8080',
-      'http://localhost:8080',
-      'http://localhost:3000',
-      process.env.FRONTEND_URL || 'https://your-app.vercel.app',
+      process.env.FRONTEND_URL || 'https://swa-flex.vercel.app',
     ],
     credentials: true,
   });
