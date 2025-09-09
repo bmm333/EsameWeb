@@ -14,7 +14,7 @@ export class UserOccasion {
     occasion;
 
     @Column({ type: 'int', default: 1 })
-    frequency; // How often: 1=daily, 2=weekly, 3=monthly, 4=rarely
+    frequency;
 
     @CreateDateColumn()
     createdAt;

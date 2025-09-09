@@ -5,14 +5,11 @@ import { RfidTag } from '../../rfid/entities/rfid-tag.entity.js';
 import { Item } from '../../item/entities/item.entity.js';
 import { UserStylePreference } from './user-style-preferences.entity.js'; 
 import { UserColorPreference } from './user-color-preferences.entity.js';
-import { UserFavoriteShop } from './user-shop.entity.js';
-import { UserSize } from './user-size.entity.js';
 import { UserLifestyle } from './user-lifestyle.entity.js';
 import { UserOccasion } from './user-occasion.entity.js';
-import { UserAvoidMaterial } from './user-avoid.entity.js';
 
 @Entity('user')
-@Index(['email']) // For login queries
+@Index(['email'])
 export class User {
     @PrimaryGeneratedColumn()
     id;
@@ -37,7 +34,7 @@ export class User {
 
     @Column({ 
         type: 'enum', 
-        enum: ['male', 'female'], 
+        enum: ['male', 'female','non-binary','other','prefer-not-to-say'], 
         nullable: true 
     })
     gender;
@@ -72,56 +69,13 @@ export class User {
     @Column({ type: 'timestamp', nullable: true })
     lockedUntil;
 
-    @Column({ 
-        type: 'enum', 
-        enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], 
-        nullable: true 
-    })
-    primarySize;
+    @Column({ type: 'varchar', nullable: true })
+    refreshToken;
 
-    @Column({ 
-        type: 'enum', 
-        enum: ['cool', 'warm', 'neutral'], 
-        nullable: true 
-    })
-    skinTone;
-
-    @Column({ 
-        type: 'enum', 
-        enum: ['conservative', 'moderate', 'bold'], 
-        default: 'moderate' 
-    })
-    riskTolerance;
-
-    @Column({ type: 'boolean', default: false })
-    sustainabilityFocus;
-
-    // Climate & Location
     @Column({ type: 'varchar', length: 100, nullable: true })
     location;
 
-    @Column({ 
-        type: 'enum', 
-        enum: ['tropical', 'temperate', 'cold', 'arid'], 
-        nullable: true 
-    })
-    climate;
-
-    // Smart Wardrobe Features
-    @Column({ type: 'boolean', default: true })
-    enableRecommendations;
-
-    @Column({ type: 'boolean', default: true })
-    enableWeatherNotifications;
-
-    @Column({ type: 'boolean', default: false })
-    enableOutfitReminders;
-
-    @Column({ type: 'time', nullable: true })
-    morningNotificationTime;
-
-    // Subscription & Trial
-    @Column({ type: 'boolean', default: true })
+    @Column({ type: 'boolean', default: false})
     trial;
 
     @Column({ type: 'timestamp', nullable: true })
@@ -129,7 +83,7 @@ export class User {
 
     @Column({ 
         type: 'enum', 
-        enum: ['free', 'premium', 'pro'], 
+        enum: ['free','trial'], 
         default: 'free' 
     })
     subscriptionTier;
@@ -140,13 +94,15 @@ export class User {
     @Column({ type: 'boolean', default: false })
     hasRfidDevice;
 
-    // OAuth & External 
-    @Column({ type: 'varchar', nullable: true })
-    googleId;
+    @Column({ type: 'integer', default: 0 })
+    trialItemsUsed;
+
+    @Column({ type: 'integer', default: 0 })
+    trialOutfitsUsed;
 
     @Column({ 
         type: 'enum', 
-        enum: ['local', 'google'], 
+        enum: ['local'], 
         default: 'local' 
     })
     provider;
@@ -154,14 +110,6 @@ export class User {
     @Column({ type: 'varchar', nullable: true })
     profilePicture;
 
-    // Privacy Settings
-    @Column({ type: 'json', nullable: true })
-    privacySettings;
-
-    @Column({ type: 'text', nullable:true})
-    pushSubscription; //json
-    
-    // Timestamps
     @CreateDateColumn()
     createdAt;
 
@@ -192,18 +140,9 @@ export class User {
     @OneToMany(() => UserColorPreference, pref => pref.user)
     colorPreferences;
 
-    @OneToMany(() => UserFavoriteShop, shop => shop.user)
-    favoriteShops;
-
-    @OneToMany(() => UserSize, size => size.user)
-    sizes;
-
     @OneToMany(() => UserLifestyle, lifestyle => lifestyle.user)
     lifestyles;
 
     @OneToMany(() => UserOccasion, occasion => occasion.user)
     occasions;
-
-    @OneToMany(() => UserAvoidMaterial, material => material.user)
-    avoidMaterials;
 }

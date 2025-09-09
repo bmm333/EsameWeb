@@ -6,158 +6,201 @@ import { MailingService } from '../mailing/mailing.service.js';
 @Injectable()
 @Dependencies(UserService, AuthService, MailingService)
 export class SettingService {
-    constructor(userService, authService, mailingService)
-    {
+    constructor(userService, authService, mailingService) {
         this.userService = userService;
         this.authService = authService;
         this.mailingService = mailingService;
+        this.emailChangeInProgress = new Map();
     }
-    async getUserSettings(userId){
-        const user=await this.userService.findOneById(userId);
-        if(!user) throw new NotFoundException('User not found');
-        return{
-            profile:{
-                firstName:user.firstName,
-                lastName:user.lastName,
-                email:user.email,
-                phone:user.phoneNumber,
-                profilePicture:user.profilePicture,
+
+    async getUserSettings(userId) {
+        const user = await this.userService.findOneById(userId);
+        if (!user) throw new NotFoundException('User not found');
+        
+        return {
+            profile: {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                profilePicture: user.profilePicture,
+                defaultWeatherLocation: user.location
             },
-            preferences:{
-                stylePreferences:user.stylePreferences,
-                colorPreferences:user.colorPreferences,
-                theme:user.theme,
-                displayOptions:user.displayOptions,
-                location:user.location,
-                temperatureUnit:user.temperatureUnit,
-                enableAnimations:user.enableAnimations
+            preferences: {
+                theme: 'system',
+                temperatureUnit: 'celsius',
+                stylePreferences: user.stylePreferences || [],
+                colorPreferences: user.colorPreferences || []
             },
-            notifications:{
-                emailOutfitSuggestions: user.emailOutfitSuggestions,
-                emailWeeklyReport: user.emailWeeklyReport,
-                emailPromotions: user.emailPromotions,
-                pushRFIDAlerts: user.pushRFIDAlerts,
-                pushOutfitReminders: user.pushOutfitReminders,
-                pushWeatherAlerts: user.pushWeatherAlerts,
-                pushSystemUpdates: user.pushSystemUpdates,
-                notificationTime: user.notificationTime,
-                weeklyReportDay: user.weeklyReportDay,
-                notificationDelay: user.notificationDelay,
-            },
-            rfid:{
-                deviceId:user.deviceId,
-                deviceStatus:user.deviceStatus,
-                firmwareVersion:user.firmwareVersion,
-                lastSync:user.deviceLastseen,
-                scanInterval:user.scanInterval,
-                powerSavingMode:user.powerSavingMode,
-                autoSync:user.autoSync,
-                tags:user.rfidTags,
-            },
-            account:{
-                connectedAccounts:user.connectedAccounts,
-                subscriptionTier:user.subscriptionTier,
-                trial:user.trial,
-                trialExpires:user.trialExpires,
+            account: {
+                subscriptionTier: user.subscriptionTier,
+                trial: user.trial,
+                trialExpires: user.trialExpires,
+                isVerified: user.isVerified
             }
         };
     }
-    async updateUserSettings(userId,settingsDto){
-        await this.userService.update(userId,settingsDto);
-        return {success:true};
-    }
-    async changePassword(userId,passwordData)
-    {
-        return this.authService.changePassword(userId,passwordData.currentPassword,passwordData.newPassword);
-    }
-    async uploadProfilePhoto(userId,photoData)
-    {
-        await this.userService.uploadProfilePhoto(userId,{profilePicture:photoData.image});
-        return {success:true,message:'Profile photo updated'};
-    }
-    async removeProfilePhoto(userId)
-    {
-        await this.userService.removeProfilePhoto(userId);
-        return {success:true,message:'Profile photo removed'};
-    }
-    
-    async resendVerificationEmail(userId)
-    {
-        const user=await this.userService.findOneById(userId);
-        if(!user) throw new NotFoundException('User not found');
-        if(user.isVerified)
-        {
-            throw new BadRequestException('Associated email is already verfied');
+
+    async updateUserSettings(userId, settings) {
+        const updateData = {};
+        if (settings.profile) {
+            if (settings.profile.firstName) updateData.firstName = settings.profile.firstName;
+            if (settings.profile.lastName) updateData.lastName = settings.profile.lastName;
+            if (settings.profile.phoneNumber !== undefined) updateData.phoneNumber = settings.profile.phoneNumber;
+            if (settings.profile.profilePicture !== undefined) updateData.profilePicture = settings.profile.profilePicture;
+            if (settings.profile.defaultWeatherLocation !== undefined) {
+                updateData.location = settings.profile.defaultWeatherLocation;
+            }
         }
-        return this.authService.resendVerificationEmail(user.email);
-    }
-    
-    async changeEmail(userId,emailData)
-    {
-        //asking for the password to confirm that the account owner is asking for an email change , as the email is used for password recovery  , and this could lead to an account takeover
-        //preventing those who gain access to unlocked session from making changes without consent.
-        const { newEmail, password } = emailData;
-        const user = await this.userService.findOneById(userId);
-        const bcrypt = await import('bcrypt');
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            throw new BadRequestException('Password is incorrect');
+        
+        if (settings.preferences) {
+            if (settings.preferences.stylePreferences !== undefined) {
+                updateData.stylePreferences = settings.preferences.stylePreferences;
+            }
+            if (settings.preferences.colorPreferences !== undefined) {
+                updateData.colorPreferences = settings.preferences.colorPreferences;
+            }
+            if (settings.preferences.weatherLocation !== undefined) {
+                updateData.location = settings.preferences.weatherLocation;
+            }
         }
-        const existingUser = await this.userService.findOneByEmail(newEmail);
-        if (existingUser) {
-            throw new BadRequestException('Email is already in use');
+        if (Object.keys(updateData).length > 0) {
+            await this.userService.updateUserRecord(userId, updateData);
         }
-        await this.userService.update(userId, {
-            email: newEmail,
-            isVerified: false
-        });
-        await this.mailingService.sendEmailChangeNotification(user.email, newEmail);
-        await this.mailingService.sendEmailVerification(newEmail, userId);
-        const updatedUser = await this.userService.findOneById(userId);        
-        return { success: true, message: 'Email updated. Please verify your new email address.' };
+        
+        return { success: true, message: 'Settings updated successfully' };
     }
+
+    async changePassword(userId, passwordData) {
+        const { currentPassword, newPassword } = passwordData;
+        
+        if (!currentPassword || !newPassword) {
+            throw new BadRequestException('Current password and new password are required');
+        }
+
+        if (newPassword.length < 8) {
+            throw new BadRequestException('New password must be at least 8 characters long');
+        }
+
+        try {
+            return await this.authService.changePassword(userId, currentPassword, newPassword);
+        } catch (error) {
+            console.error('Password change error in settings service:', error);
+            throw new BadRequestException('Password change failed: ' + error.message);
+        }
+    }
+
+    async changeEmail(userId, emailData) {
+        if (this.emailChangeInProgress.has(userId)) {
+            console.log(`Email change already in progress for user ${userId}`);
+            throw new BadRequestException('Email change already in progress. Please wait.');
+        }
+        this.emailChangeInProgress.set(userId, true);
+        try {
+            const { newEmail, password } = emailData;
+            
+            if (!newEmail || !password) {
+                throw new BadRequestException('New email and password are required');
+            }
+            console.log(`Starting email change for user ${userId} to ${newEmail}`);
+            const user = await this.userService.findOneByIdWithPassword(userId);
+            if (!user) throw new NotFoundException('User not found');
+            const bcrypt = await import('bcrypt');
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                throw new BadRequestException('Current password is incorrect');
+            }
+            const existingUser = await this.userService.findByEmail(newEmail);
+            if (existingUser && existingUser.id !== userId) {
+                throw new BadRequestException('Email is already in use');
+            }
+            const crypto = await import('crypto');
+            const verificationToken = crypto.randomBytes(32).toString('hex');
+            const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+            console.log(`Generated verification token for user ${userId}:`, verificationToken);
+            await this.userService.updateUserRecord(userId, {
+                email: newEmail,
+                isVerified: false,
+                verificationToken: verificationToken,
+                verificationTokenExpires: tokenExpires
+            });
+
+            console.log(`Database updated for user ${userId} with token:`, verificationToken);
+            try {
+                console.log(`Sending verification email to ${newEmail} with token:`, verificationToken);
+                
+                await this.mailingService.sendVerificationEmail({ 
+                    email: newEmail, 
+                    firstName: user.firstName 
+                }, verificationToken);
+                
+                console.log(`Verification email sent successfully to ${newEmail}`);
+            } catch (emailError) {
+                console.error('Failed to send verification email:', emailError);
+            }
+            
+            if (user.email !== newEmail) {
+                try {
+                    await this.mailingService.sendEmailChangeNotification(user.email, newEmail);
+                    console.log(`Change notification sent to old email: ${user.email}`);
+                } catch (emailError) {
+                    console.error('Failed to send change notification:', emailError);
+                }
+            }
+
+            console.log(`Email change completed successfully for user ${userId}`);
+
+            return { 
+                success: true, 
+                message: 'Email updated successfully. Please check your new email for verification.' 
+            };
+            
+        } finally {
+            this.emailChangeInProgress.delete(userId);
+            console.log(`Cleared email change lock for user ${userId}`);
+        }
+    }
+
     async resetToDefaults(userId, section) {
-            const defaults = this.getDefaultSettings(section);
-            await this.userService.update(userId, defaults);
-            return { success: true, message: `${section} settings reset to defaults` };
+        const defaults = this.getDefaultSettings(section);
+        if (!defaults) {
+            throw new BadRequestException(`Invalid section: ${section}`);
+        }
+        
+        return { 
+            success: true, 
+            message: `${section} settings reset to defaults successfully` 
+        };
     }
 
-
-    async deleteUserAccount(userId) {
-        await this.userService.delete(userId);
-        return {success:true,message:'Account deleted Succesfully'};
+        async deleteUserAccount(userId) {
+        const user = await this.userService.findOneById(userId);
+        if (!user) throw new NotFoundException('User not found');
+        await this.userService.remove(userId);
+        if (user.email) {
+            try {
+                await this.mailingService.sendAccountDeletionConfirmation(user.email, user.firstName);
+            } catch (emailError) {
+                console.error('Failed to send account deletion confirmation:', emailError);
+            }
+        }
+    
+        return { 
+            success: true, 
+            message: 'Account deleted successfully',
+            shouldLogout: true 
+        };
     }
 
     getDefaultSettings(section) {
         const defaults = {
             preferences: {
-                theme: 'system',
-                temperatureUnit: 'celsius',
-                enableAnimations: true,
                 stylePreferences: [],
                 colorPreferences: []
-            },
-            notifications: {
-                emailOutfitSuggestions: true,
-                emailWeeklyReport: false,
-                emailPromotions: false,
-                pushRFIDAlerts: true,
-                pushOutfitReminders: true,
-                pushWeatherAlerts: true,
-                pushSystemUpdates: false,
-                notificationTime: '07:00',
-                weeklyReportDay: 'sunday',
-                notificationDelay: 15
-            },
-            rfid: {
-                scanInterval: 30,
-                powerSavingMode: false,
-                autoSync: true,
-                notificationDelay: 15
             }
         };
-        return defaults[section] || {};
+        
+        return defaults[section] || null;
     }
 }
-/*started designing user profile wrong, a refactoring should be taking place right now but, time is not promising so i will go with this design for now 
-and will be more careful not to break clean architecture anymore*/

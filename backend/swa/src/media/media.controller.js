@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Delete, UseGuards, UseInterceptors,Dependencies, UploadedFile, Request, Param, Query, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get,Bind, Delete, UseGuards, UseInterceptors,Dependencies, UploadedFile, Request, Param, Query, Body, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { MediaService } from './media.service.js';
@@ -20,21 +20,22 @@ export class MediaController {
     },
     limits: { fileSize: 5 * 1024 * 1024 } 
   }))
+  @Bind(Request(), UploadedFile(), Body())
   async uploadMedia(req, file, body) {
-    const userId = req.user.id || req.user.userId;
+    console.log('Upload media request body:', body);
+    const userId = req.user.id
     const options = {
-      folder: body.folder || 'general',
-      removeBackground: body.removeBackground === 'true',
+      folder: 'item',
+      removeBackground: 'true',
       metadata: body.metadata ? JSON.parse(body.metadata) : {}
     };
-
     return this.mediaService.uploadImage(userId, file, options);
   }
 
   @Post('upload/profile')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadProfilePicture(req, file) {
-    const userId = req.user.id || req.user.userId;
+  async uploadProfilePicture(@Request() req, @UploadedFile() file) {
+    const userId = req.user.id;
     return this.mediaService.uploadImage(userId, file, {
       folder: 'profiles',
       removeBackground: false
@@ -43,24 +44,25 @@ export class MediaController {
 
   @Post('upload/item')
   @UseInterceptors(FileInterceptor('file'))
+  @Bind(Request(), UploadedFile(), Body())
   async uploadItemPhoto(req, file, body) {
-    const userId = req.user.id || req.user.userId;
+    const userId = req.user.id;
     return this.mediaService.uploadImage(userId, file, {
       folder: 'items',
-      removeBackground: body.removeBackground !== 'false', // Default to true only for items, profile photos dont need background removal
+      removeBackground: body.removeBackground !== 'false',
       metadata: { itemId: body.itemId }
     });
   }
 
   @Get()
   async getUserMedia(req, query) {
-    const userId = req.user.id || req.user.userId;
+    const userId = req.user.id;
     return this.mediaService.getUserMedia(userId, query.folder);
   }
 
   @Delete(':id')
   async deleteMedia(req, param) {
-    const userId = req.user.id || req.user.userId;
+    const userId = req.user.id ;
     return this.mediaService.deleteImage(param.id, userId);
   }
 

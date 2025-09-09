@@ -1,0 +1,88 @@
+.trial-option-card {
+    border: 2px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.trial-option-card:has(.form-check-input:checked) {
+    border-color: #0d6efd;
+    background-color: #f8f9ff;
+}
+
+.trial-option-content {
+    margin-left: 0.25rem;
+}
+
+.trial-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.trial-badge {
+    background: linear-gradient(45deg, #0d6efd, #6610f2);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.trial-features {
+    margin-left: 0;
+}
+
+.trial-status-banner {
+    background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 0;
+}
+
+.trial-status-banner.expired {
+    background: linear-gradient(135deg, #fff3cd, #f8d7da);
+}
+
+.trial-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.trial-active,
+.trial-expired {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.trial-usage {
+    font-size: 0.8rem;
+}
+
+@media (width <= 768px) {
+    .trial-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .trial-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .trial-status-banner .col-md-4 {
+        margin-top: 0.5rem;
+    }
+}
+
+#limitModal .modal-header {
+    background-color: #fff3cd;
+    border-bottom: 1px solid #ffeaa7;
+}
+
+#limitModal .modal-title {
+    color: #856404;
+}

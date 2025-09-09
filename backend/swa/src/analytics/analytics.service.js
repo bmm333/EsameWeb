@@ -2,252 +2,294 @@ import { Injectable, Dependencies } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Item } from '../item/entities/item.entity.js';
 import { Outfit } from '../outfit/entities/outfit.entity.js';
-import { User } from '../user/entities/user.entity.js';
 
 @Injectable()
-@Dependencies('ItemRepository','OutfitRepository','UserRepository')
+@Dependencies('ItemRepository', 'OutfitRepository')
 export class AnalyticsService {
     constructor(
         @InjectRepository(Item) itemRepository,
-        @InjectRepository(Outfit) outfitRepository,
-        @InjectRepository(User) userRepository
+        @InjectRepository(Outfit) outfitRepository
     ) {
         this.itemRepository = itemRepository;
         this.outfitRepository = outfitRepository;
-        this.userRepository = userRepository;
     }
-
 
     async getBasicWardrobeStats(userId) {
-        const totalItems = await this.itemRepository.count({ where: { userId } });
-        const totalOutfits = await this.outfitRepository.count({ where: { userId } });
-        const favoriteItems = await this.itemRepository.count({ 
-            where: { userId, isFavorite: true } 
-        });
+        try {
+            const [totalItems, totalOutfits, favoriteItems] = await Promise.all([
+                this.itemRepository.count({ where: { userId } }),
+                this.outfitRepository.count({ where: { userId } }),
+                this.itemRepository.count({ where: { userId, isFavorite: true } })
+            ]);
 
-        const mostWornItem = await this.itemRepository.findOne({
-            where: { userId },
-            order: { wearCount: 'DESC' },
-            select: ['id', 'name', 'wearCount', 'imageUrl', 'category']
-        });
-
-        return {
-            totalItems,
-            totalOutfits,
-            favoriteItems,
-            mostWornItem: mostWornItem ? {
-                id: mostWornItem.id,
-                name: mostWornItem.name,
-                wearCount: mostWornItem.wearCount || 0,
-                imageUrl: mostWornItem.imageUrl,
-                category: mostWornItem.category
-            } : null
-        };
+            return {
+                totalItems,
+                totalOutfits,
+                favoriteItems
+            };
+        } catch (error) {
+            console.error('Error getting basic stats:', error);
+            return {
+                totalItems: 0,
+                totalOutfits: 0,
+                favoriteItems: 0
+            };
+        }
     }
 
-
     async getWardrobeAnalytics(userId) {
-        const [
-            basicStats,
-            mostWornItems,
-            rarelyUsedItems,
-            colorAnalysis,
-            categoryStats,
-            sustainabilityStats
-        ] = await Promise.all([
-            this.getBasicWardrobeStats(userId),
-            this.getMostWornItems(userId),
-            this.getRarelyUsedItems(userId),
-            this.getColorAnalysis(userId),
-            this.getCategoryStats(userId),
-            this.getSustainabilityStats(userId)
-        ]);
+        try {
+            const [
+                mostWornItems,
+                categoryStats,
+                colorAnalysis,
+                sustainabilityStats,
+                rarelyUsedItems
+            ] = await Promise.all([
+                this.getMostWornItems(userId),
+                this.getCategoryBreakdown(userId),
+                this.getColorAnalysis(userId),
+                this.getSustainabilityStats(userId),
+                this.getRarelyUsedItems(userId)
+            ]);
 
-        return {
-            basicStats,
-            mostWornItems,
-            rarelyUsedItems,
-            colorAnalysis,
-            categoryStats,
-            sustainabilityStats
-        };
+            return {
+                mostWornItems,
+                categoryStats,
+                colorAnalysis,
+                sustainabilityStats,
+                rarelyUsedItems
+            };
+        } catch (error) {
+            console.error('Error getting wardrobe analytics:', error);
+            return {
+                mostWornItems: [],
+                categoryStats: [],
+                colorAnalysis: {},
+                sustainabilityStats: {},
+                rarelyUsedItems: []
+            };
+        }
     }
 
     async getMostWornItems(userId) {
-        const items = await this.itemRepository.find({
-            where: { userId },
-            order: { wearCount: 'DESC' },
-            take: 10,
-            select: ['id', 'name', 'wearCount', 'category', 'color', 'imageUrl']
-        });
-
-        return items.map(item => ({
-            id: item.id,
-            name: item.name,
-            wearCount: item.wearCount || 0,
-            category: item.category,
-            color: item.color,
-            imageUrl: item.imageUrl
-        }));
+        try {
+            return await this.itemRepository.find({
+                where: { userId },
+                order: { wearCount: 'DESC' },
+                take: 10,
+                select: ['id', 'name', 'category', 'imageUrl', 'wearCount', 'color']
+            });
+        } catch (error) {
+            console.error('Error getting most worn items:', error);
+            return [];
+        }
     }
 
+    async getCategoryBreakdown(userId) {
+        try {
+            const result = await this.itemRepository
+                .createQueryBuilder('item')
+                .select('item.category', 'category')
+                .addSelect('COUNT(*)', 'count')
+                .addSelect('SUM(item.wearCount)', 'totalWears')
+                .addSelect('AVG(item.wearCount)', 'avgWears')
+                .where('item.userId = :userId', { userId })
+                .groupBy('item.category')
+                .getRawMany();
+
+            return result.map(item => ({
+                category: item.category,
+                count: parseInt(item.count),
+                totalWears: parseInt(item.totalWears) || 0,
+                avgWears: parseFloat(item.avgWears) || 0
+            }));
+        } catch (error) {
+            console.error('Error getting category breakdown:', error);
+            return [];
+        }
+    }
 
     async getRarelyUsedItems(userId) {
-        const items = await this.itemRepository.find({
-            where: { userId },
-            select: ['id', 'name', 'wearCount', 'category', 'createdAt', 'imageUrl']
-        });
+        try {
+            // Get items with low wear count
+            const rarelyUsedItems = await this.itemRepository.find({
+                where: { 
+                    userId,
+                },
+                order: { wearCount: 'ASC' },
+                take: 20,
+                select: ['id', 'name', 'category', 'imageUrl', 'wearCount', 'dateAdded']
+            });
+            return rarelyUsedItems
+                .filter(item => (item.wearCount || 0) < 2)
+                .map(item => {
+                    let monthsOld = 1;
+                    if (item.dateAdded) {
+                        const now = new Date();
+                        const added = new Date(item.dateAdded);
+                        monthsOld = Math.max(1, Math.floor((now - added) / (1000 * 60 * 60 * 24 * 30)));
+                    }
 
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
-        const rarelyUsed = items.filter(item => {
-            const wearCount = item.wearCount || 0;
-            const isOld = new Date(item.createdAt) < threeMonthsAgo;
-            return wearCount <= 2 && isOld;
-        });
-
-        return rarelyUsed
-            .sort((a, b) => (a.wearCount || 0) - (b.wearCount || 0))
-            .slice(0, 15)
-            .map(item => ({
-                id: item.id,
-                name: item.name,
-                wearCount: item.wearCount || 0,
-                category: item.category,
-                monthsOld: Math.floor((new Date() - new Date(item.createdAt)) / (1000 * 60 * 60 * 24 * 30)),
-                imageUrl: item.imageUrl,
-                suggestion: item.wearCount === 0 ? 'Consider donating' : 'Create new outfits with this item'
-            }));
+                    return {
+                        ...item,
+                        monthsOld
+                    };
+                });
+        } catch (error) {
+            console.error('Error getting rarely used items:', error);
+            return [];
+        }
     }
 
     async getColorAnalysis(userId) {
-        const items = await this.itemRepository.find({
-            where: { userId },
-            select: ['color', 'wearCount', 'category']
-        });
+        try {
+            const items = await this.itemRepository.find({
+                where: { userId },
+                select: ['category', 'wearCount', 'color', 'id']
+            });
 
-        const colorStats = {};
-        
-        items.forEach(item => {
-            if (item.color) {
-                if (!colorStats[item.color]) {
-                    colorStats[item.color] = {
-                        totalWears: 0,
+            if (!items || items.length === 0) {
+                return {
+                    totalUniqueColors: 0,
+                    mostWornColors: []
+                };
+            }
+            const colorStats = {};
+            items.forEach(item => {
+                const color = item.color || 'unknown';
+                if (!colorStats[color]) {
+                    colorStats[color] = {
+                        color,
                         itemCount: 0,
-                        categories: {}
+                        totalWears: 0
                     };
                 }
-                colorStats[item.color].totalWears += item.wearCount || 0;
-                colorStats[item.color].itemCount++;
-                
-                if (!colorStats[item.color].categories[item.category]) {
-                    colorStats[item.color].categories[item.category] = 0;
-                }
-                colorStats[item.color].categories[item.category]++;
-            }
-        });
+                colorStats[color].itemCount++;
+                colorStats[color].totalWears += item.wearCount || 0;
+            });
 
-        const sortedColors = Object.entries(colorStats)
-            .map(([color, stats]) => ({
-                color,
-                totalWears: stats.totalWears,
-                itemCount: stats.itemCount,
-                avgWearsPerItem: stats.itemCount > 0 ? (stats.totalWears / stats.itemCount).toFixed(1) : 0,
-                categories: Object.keys(stats.categories)
-            }))
-            .sort((a, b) => b.totalWears - a.totalWears)
-            .slice(0, 8);
+            const mostWornColors = Object.values(colorStats)
+                .sort((a, b) => b.totalWears - a.totalWears)
+                .slice(0, 10);
 
-        return {
-            mostWornColors: sortedColors,
-            totalUniqueColors: Object.keys(colorStats).length
-        };
-    }
-
-    async getCategoryStats(userId) {
-        const categoryStats = await this.itemRepository
-            .createQueryBuilder('item')
-            .select('item.category', 'category')
-            .addSelect('COUNT(*)', 'count')
-            .addSelect('SUM(item.wearCount)', 'totalWears')
-            .addSelect('AVG(item.wearCount)', 'avgWears')
-            .where('item.userId = :userId', { userId })
-            .groupBy('item.category')
-            .getRawMany();
-
-        return categoryStats.map(stat => ({
-            category: stat.category,
-            count: parseInt(stat.count),
-            totalWears: parseInt(stat.totalwears || 0),
-            avgWears: parseFloat(stat.avgwears || 0).toFixed(1)
-        })).sort((a, b) => b.totalWears - a.totalWears);
+            return {
+                totalUniqueColors: Object.keys(colorStats).length,
+                mostWornColors
+            };
+        } catch (error) {
+            console.error('Error getting color analysis:', error);
+            return {
+                totalUniqueColors: 0,
+                mostWornColors: []
+            };
+        }
     }
 
     async getSustainabilityStats(userId) {
-        const items = await this.itemRepository.find({
-            where: { userId },
-            select: ['category', 'wearCount', 'createdAt', 'purchasePrice']
-        });
+        try {
+            const items = await this.itemRepository.find({
+                where: { userId },
+                select: ['wearCount', 'category']
+            });
 
-        const co2PerCategory = {
-            'tops': 5.5,        // Average t-shirt/shirt production
-            'bottoms': 7.0,     // Average jeans/pants production
-            'outerwear': 15.0,  // Average jacket/coat production
-            'shoes': 12.0,      // Average shoes production
-            'accessories': 2.0  // Average accessory production
-        };
-
-        let totalCO2Footprint = 0;
-        let totalWears = 0;
-        let itemsOver6Months = 0;
-        let totalSpent = 0;
-
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-        items.forEach(item => {
-            const wears = item.wearCount || 0;
-            const co2ForItem = co2PerCategory[item.category] || 5.0;
-            totalCO2Footprint += co2ForItem;
-            totalWears += wears;
-            totalSpent += item.purchasePrice || 0;
-            
-            if (new Date(item.createdAt) < sixMonthsAgo) {
-                itemsOver6Months++;
+            if (!items || items.length === 0) {
+                return {
+                    sustainabilityScore: 0,
+                    avgWearsPerItem: 0,
+                    totalCO2Footprint: 0,
+                    co2PerWear: 0,
+                    recommendation: 'Add items to your wardrobe to get sustainability insights'
+                };
             }
-        });
 
-        return {
-            totalCO2Footprint: totalCO2Footprint.toFixed(1),
-            totalWears,
-            totalItems: items.length,
-            avgWearsPerItem: items.length > 0 ? (totalWears / items.length).toFixed(1) : 0,
-            itemsOver6Months,
-            totalSpent: totalSpent.toFixed(2),
-            co2PerWear: totalWears > 0 ? (totalCO2Footprint / totalWears).toFixed(2) : totalCO2Footprint.toFixed(2),
-            sustainabilityScore: this.calculateSustainabilityScore(totalWears, items.length),
-            recommendation: this.getSustainabilityRecommendation(totalWears, items.length, itemsOver6Months)
-        };
+            const totalWears = items.reduce((sum, item) => sum + (item.wearCount || 0), 0);
+            const avgWearsPerItem = totalWears / items.length;
+            // Simple sustainability scoring based on wear frequency
+            let sustainabilityScore = 0;
+            if (avgWearsPerItem >= 10) sustainabilityScore = 90;
+            else if (avgWearsPerItem >= 7) sustainabilityScore = 80;
+            else if (avgWearsPerItem >= 5) sustainabilityScore = 70;
+            else if (avgWearsPerItem >= 3) sustainabilityScore = 60;
+            else if (avgWearsPerItem >= 1) sustainabilityScore = 40;
+            else sustainabilityScore = 20;
+            const avgCO2PerItem = 15; // kg CO2 per clothing item just an estimate
+            const totalCO2Footprint = items.length * avgCO2PerItem;
+            const co2PerWear = totalWears > 0 ? totalCO2Footprint / totalWears : totalCO2Footprint;
+
+            let recommendation = '';
+            if (sustainabilityScore < 60) {
+                recommendation = 'Try to wear your existing items more often before buying new ones to improve sustainability.';
+            } else if (sustainabilityScore < 80) {
+                recommendation = 'Good progress! Continue wearing items regularly to maximize their value.';
+            } else {
+                recommendation = 'Excellent! You\'re making great use of your wardrobe sustainably.';
+            }
+
+            return {
+                sustainabilityScore: Math.round(sustainabilityScore),
+                avgWearsPerItem: Math.round(avgWearsPerItem * 10) / 10,
+                totalCO2Footprint: Math.round(totalCO2Footprint),
+                co2PerWear: Math.round(co2PerWear * 10) / 10,
+                recommendation
+            };
+        } catch (error) {
+            console.error('Error getting sustainability stats:', error);
+            return {
+                sustainabilityScore: 0,
+                avgWearsPerItem: 0,
+                totalCO2Footprint: 0,
+                co2PerWear: 0,
+                recommendation: 'Unable to calculate sustainability metrics at this time'
+            };
+        }
     }
 
+    async getActionableInsights(userId) {
+        try {
+            const [
+                basicStats,
+                rarelyUsedItems,
+                sustainabilityStats
+            ] = await Promise.all([
+                this.getBasicWardrobeStats(userId),
+                this.getRarelyUsedItems(userId),
+                this.getSustainabilityStats(userId)
+            ]);
 
-    calculateSustainabilityScore(totalWears, totalItems) {
-        if (totalItems === 0) return 0;
-        
-        const avgWears = totalWears / totalItems;
-        // Score based on how well items are utilized
-        // 30+ wears per item = excellent (100 points)
-        // 20-29 wears = good (80 points) 
-        // 10-19 wears = fair (60 points)
-        // 5-9 wears = poor (40 points)
-        // <5 wears = very poor (20 points)
-        if (avgWears >= 30) return 100;
-        if (avgWears >= 20) return 80;
-        if (avgWears >= 10) return 60;
-        if (avgWears >= 5) return 40;
-        return 20;
+            const insights = [];
+            if (rarelyUsedItems.length > 5) {
+                insights.push({
+                    type: 'warning',
+                    title: 'Many unused items',
+                    description: `You have ${rarelyUsedItems.length} items that are rarely used. Consider donating them or creating new outfits.`,
+                    action: 'review_unused_items'
+                });
+            }
+
+            if (sustainabilityStats.sustainabilityScore < 60) {
+                insights.push({
+                    type: 'info',
+                    title: 'Improve sustainability',
+                    description: 'Try to wear your existing items more often before buying new ones.',
+                    action: 'focus_on_existing'
+                });
+            }
+
+            if (basicStats.totalOutfits < 5 && basicStats.totalItems > 10) {
+                insights.push({
+                    type: 'suggestion',
+                    title: 'Create more outfits',
+                    description: 'You have many items but few outfits. Creating outfits can help you wear items more consistently.',
+                    action: 'create_outfits'
+                });
+            }
+
+            return { insights };
+            
+        } catch (error) {
+            console.error('Error generating insights:', error);
+            return { insights: [] };
+        }
     }
-
-    //add notifications
 }

@@ -22,7 +22,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       throw new UnauthorizedException('Token has been revoked');
     }
 
-    return super.canActivate(context);
+    return await super.canActivate(context);
   }
 
   extractTokenFromHeader(request) {

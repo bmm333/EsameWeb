@@ -1,0 +1,22 @@
+.settings-wrapper { min-height: 100%; }
+.settings-tabs .nav-link { font-weight: 500; }
+.settings-avatar { width:150px; height:150px; object-fit:cover; }
+.profile-image-container { width:150px; height:150px; }
+
+.profile-image-edit {
+  position:absolute;
+  bottom:6px;
+  right:6px;
+  border-radius: 50%;
+  padding: .35rem .5rem;
+  line-height: 1;
+}
+.connected-account button { font-size:.75rem; }
+.card-title { font-weight:600; }
+.tab-pane { animation: fade .2s ease-in; }
+
+@keyframes fade { from { opacity:0 } to { opacity:1 } }
+
+@media (width <= 768px) {
+  .settings-avatar { width:120px; height:120px; }
+}

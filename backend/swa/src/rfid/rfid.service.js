@@ -1,571 +1,337 @@
-// src/rfid/rfid.service.js
-import { Injectable, Dependencies, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { RfidDevice } from './entities/rfid-device.entity.js';
 import { RfidTag } from './entities/rfid-tag.entity.js';
-import { UserService } from '../user/user.service.js';
-import { NotificationService } from '../notification/notification.service.js';
-
+import { Item } from '../item/entities/item.entity.js';
 
 @Injectable()
-@Dependencies('RfidDeviceRepository', 'RfidTagRepository', UserService, NotificationService)
 export class RfidService {
     constructor(
-        @InjectRepository(RfidDevice) rfidDeviceRepository,
-        @InjectRepository(RfidTag) rfidTagRepository,
-        userService,
-        notificationService
+        @InjectRepository(RfidDevice) deviceRepo,
+        @InjectRepository(RfidTag) tagRepo,
+        @InjectRepository(Item) itemRepo,
+        @InjectDataSource() dataSource 
     ) {
-        this.rfidDeviceRepository = rfidDeviceRepository;3
-        this.rfidTagRepository = rfidTagRepository;
-        this.userService = userService;
-        this.notificationService = notificationService;
-    }
-    generateApiKey() {
-        return require('crypto').randomBytes(32).toString('hex');
-    }
-  async generateDeviceApiKey(userId, deviceData) {
-    const user = await this.userService.findOneById(userId);
-    if (!user) {
-        throw new NotFoundException('User not found');
-    }
-    const apiKey = this.generateApiKey();
-    await this.rfidDeviceRepository.save({
-        apiKey,
-        deviceName: deviceData?.deviceName || 'Generated RFID Device',
-        status: 'temporary',
-        userId: user.id
-    });
-
-    return {
-        apiKey,
-        deviceName: deviceData?.deviceName || 'Generated RFID Device'
-    };
+        this.deviceRepo = deviceRepo;
+        this.tagRepo = tagRepo;
+        this.itemRepo = itemRepo;
+        this.dataSource = dataSource;
+        this.latestScans = new Map();
+        this.associationMode = new Map();
     }
 
 
-    
-
-    async confirmWiFiConfiguration(deviceSerial, wifiConfig) {
-    try {
-      console.log(`Confirming WiFi configuration for device: ${deviceSerial}`);
-
-      const device = await this.rfidDeviceRepository.findOne({
-        where: { serialNumber: deviceSerial }
-      });
-
-      if (!device) {
-        throw new NotFoundException('Device not found');
-      }
-
-      if (device.status !== 'pairing') {
-        throw new BadRequestException('Device must be in pairing mode');
-      }
-
-      // Store WiFi config (basic encryption for demo)
-      const encryptedConfig = {
-        ssid: wifiConfig.ssid,
-        security: wifiConfig.security || 'WPA2',
-        configuredAt: new Date()
-      };
-
-      await this.rfidDeviceRepository.update(device.id, {
-        wifiConfig: encryptedConfig,
-        status: 'configuring',
-        lastConfigured: new Date()
-      });
-
-      console.log(`WiFi configuration confirmed for device: ${deviceSerial}`);
-      return { message: 'WiFi configuration confirmed successfully' };
-    } catch (error) {
-      console.error('Error confirming WiFi configuration:', error);
-      throw error;
-    }
-  }
-
-    async activateDevice(deviceSerial, ipAddress = null) {
-    try {
-      console.log(`Activating device: ${deviceSerial}`);
-
-      const device = await this.rfidDeviceRepository.findOne({
-        where: { serialNumber: deviceSerial },
-        relations: ['user']
-      });
-
-      if (!device) {
-        throw new NotFoundException('Device not found');
-      }
-
-      await this.rfidDeviceRepository.update(device.id, {
-        status: 'active',
-        ipAddress: ipAddress,
-        isOnline: true,
-        lastHeartbeat: new Date()
-      });
-
-      await this.userService.updateUserRecord(device.userId, {
-        deviceSetupStatus: 'active',
-        deviceSetupCompletedAt: new Date()
-      });
-
-      console.log(`Device activated: ${deviceSerial}`);
-      return {
-        message: 'Device activated successfully!',
-        scanInterval: device.scanInterval,
-        powerSavingMode: device.powerSavingMode
-      };
-    } catch (error) {
-      console.error('Error activating device:', error);
-      throw error;
-    }
-  }
-
-
-    async validateDeviceApiKey(apiKey) {
-        try {
-        const device = await this.rfidDeviceRepository.findOne({
-            where: { apiKey },
-            relations: ['user']
-        });
-
-        if (!device) {
-            throw new UnauthorizedException('Invalid API key - not found in database');
-        }
-
-        if (device.status !== 'active' && device.status !== 'temporary') {
-            throw new UnauthorizedException('Device not authorized');
-        }
-
-        return device;
-        } catch (error) {
-        console.error('Error validating API key:', error);
-        throw new UnauthorizedException('Invalid API key');
+    async setAssociationMode(userId, isActive) {
+        if (isActive) {
+            this.associationMode.set(userId, true);
+            console.log('[RFID] User %s entered association mode', userId);
+        } else {
+            this.associationMode.delete(userId);
+            console.log('[RFID] User %s exited association mode', userId);
         }
     }
 
-    async processRealtimeRfidScan(apiKey, scanData) {
-        try {
-            console.log(`Processing RFID scan with API key: ${apiKey.substring(0, 8)}...`);
-            const device = await this.validateDeviceApiKey(apiKey);
-            const now = new Date();
-
-            await this.rfidDeviceRepository.update(device.id, {
-                lastHeartbeat: now,
-                lastScan: now,
-                isOnline: true
+    async generateApiKey(userId, deviceName) {
+        const apiKey = require('crypto').randomBytes(32).toString('hex');
+        
+        let device = await this.deviceRepo.findOne({ where: { userId } });
+        if (device) {
+            device.apiKey = apiKey;
+            device.deviceName = deviceName;
+        } else {
+            device = this.deviceRepo.create({
+                apiKey, deviceName, userId,
+                status: 'active', isOnline: false
             });
+        }
+        
+        await this.deviceRepo.save(device);
+        return { apiKey, deviceName };
+    }
 
-            const results = [];
-            for (const tagData of (scanData.detectedTags || [])) {
-                // Force simple "detected" semantics
-                tagData.event = 'detected';
-                const result = await this.processTagDetection(device, tagData);
-                results.push(result);
+    async validateApiKey(apiKey) {
+        const device = await this.deviceRepo.findOne({ where: { apiKey } });
+        if (!device) throw new UnauthorizedException('Invalid API key');
+        return device;
+    }
+
+    async heartbeat(apiKey) {
+        const device = await this.validateApiKey(apiKey);
+        device.lastHeartbeat = new Date();
+        device.isOnline = true;
+        await this.deviceRepo.save(device);
+        return { status: 'ok', nextScanInterval: 5000 };
+    }
+
+    async processScan(apiKey, scanData) {
+        console.log('[RFID] processScan called with apiKey:', apiKey, 'scanData:', scanData);
+        
+        try {
+            const device = await this.validateApiKey(apiKey);
+            console.log('[RFID] Device validated:', device.id, 'userId:', device.userId);
+            const isInAssociationMode = this.associationMode.has(device.userId);
+            console.log('[RFID] Association mode check:', isInAssociationMode);
+            if (!scanData || !scanData.detectedTags || !Array.isArray(scanData.detectedTags)) {
+                console.log('[RFID] Invalid scan data structure:', scanData);
+                return { message: 'Invalid scan data' };
+            }
+            
+            console.log('[RFID] Starting tag processing loop for', scanData.detectedTags.length, 'tags');
+            
+            for (const tagData of scanData.detectedTags) {
+                console.log('[RFID] Processing scan for tag:', tagData.tagId, 'user:', device.userId, 'associationMode:', isInAssociationMode);
+                
+                try {
+                    let tag = await this.tagRepo.findOne({ 
+                        where: { tagId: tagData.tagId, userId: device.userId }
+                    });
+                    console.log('[RFID] Tag lookup result:', tag ? 'FOUND' : 'NOT FOUND');
+                    if (tag) {
+                        console.log('[RFID] Found existing tag, current location:', tag.location, 'itemId:', tag.itemId);
+                        tag.lastDetected = new Date();
+                        tag.deviceId = device.id;
+                        if (isInAssociationMode) {
+                            tag.location = 'wardrobe';
+                            console.log('[RFID] Tag %s set to wardrobe (association mode)', tagData.tagId);
+                        } else if (tag.itemId) {
+                            const oldLocation = tag.location;
+                            const newLocation = oldLocation === 'wardrobe' ? 'being_worn' : 'wardrobe';
+                            tag.location = newLocation;
+                            console.log('[RFID] Tag %s location changed from %s to %s', tagData.tagId, oldLocation, newLocation);
+                            try {
+                                const associatedItem = await this.itemRepo.findOne({ 
+                                    where: { id: tag.itemId, userId: device.userId } 
+                                });
+                                
+                                if (associatedItem) {
+                                    associatedItem.location = newLocation;
+                                    associatedItem.lastLocationUpdate = new Date();
+                                    if (newLocation === 'being_worn') {
+                                        associatedItem.wearCount = (associatedItem.wearCount || 0) + 1;
+                                        associatedItem.lastWorn = new Date();
+                                        const wearHistory = associatedItem.wearHistory || [];
+                                        wearHistory.push({
+                                            date: new Date(),
+                                            location: 'being_worn'
+                                        });
+                                        associatedItem.wearHistory = wearHistory;
+                                    }
+                                    
+                                    await this.itemRepo.save(associatedItem);
+                                    console.log('[RFID] Updated item %s location to %s', associatedItem.name, newLocation);
+                                }
+                            } catch (itemError) {
+                                console.error('[RFID] Error updating associated item:', itemError);
+                            }
+                        } else {
+                            console.log('[RFID] Tag %s scanned but not associated with any item', tagData.tagId);
+                        }
+                        
+                        console.log('[RFID] About to save existing tag...');
+                        await this.tagRepo.save(tag);
+                        console.log('[RFID] Successfully saved existing tag');
+                        
+                    } else {
+                        console.log('[RFID] Tag not found for this user, checking global...');
+                        const existingTag = await this.tagRepo.findOne({ 
+                            where: { tagId: tagData.tagId } 
+                        });
+                        if (existingTag) {
+                            console.log('[RFID] Tag belongs to different user %s, transferring to %s', existingTag.userId, device.userId);
+                            existingTag.userId = device.userId;
+                            existingTag.deviceId = device.id;
+                            existingTag.lastDetected = new Date();
+                            existingTag.itemId = null; 
+                            existingTag.location = 'wardrobe';
+                            console.log('[RFID] About to save transferred tag...');
+                            await this.tagRepo.save(existingTag);
+                            console.log('[RFID] Successfully saved transferred tag');
+                            tag = existingTag;
+                        } else {
+                            console.log('[RFID] Creating new tag for user %s', device.userId);
+                            tag = this.tagRepo.create({
+                                tagId: tagData.tagId,
+                                userId: device.userId,
+                                deviceId: device.id,
+                                status: 'detected',
+                                location: 'wardrobe', 
+                                lastDetected: new Date()
+                            });
+                            
+                            console.log('[RFID] About to save new tag...');
+                            await this.tagRepo.save(tag);
+                            console.log('[RFID] Created new tag with ID:', tag.id);
+                        }
+                    }
+                    console.log('[RFID] CACHING SCAN FOR USER:', device.userId);
+                    const scanToCache = { 
+                        tagId: tag.tagId,
+                        timestamp: new Date(),
+                        consumed: false
+                    };
+                    this.latestScans.set(device.userId, scanToCache);
+                    console.log('[RFID] *** CACHED SCAN FOR USER %s: %s ***', device.userId, tag.tagId);
+                    console.log('[RFID] Cache contents:', this.latestScans.get(device.userId));
+                    
+                } catch (tagError) {
+                    console.error('[RFID] Error processing tag %s:', tagData.tagId, tagError);
+                }
+            }
+            
+            console.log('[RFID] processScan completed successfully');
+            return { message: 'Scan processed' };
+            
+        } catch (error) {
+            console.error('[RFID] processScan failed with error:', error);
+            return { message: 'Scan processing failed', error: error.message };
+        }
+    }
+
+    async getLatestScan(userId) {
+        const scan = this.latestScans.get(userId);
+        
+        if (scan && !scan.consumed) {
+            scan.consumed = true;
+            this.latestScans.set(userId, scan);
+            
+            console.log('[RFID] Returning fresh scan for user %s: %s', userId, scan.tagId);
+            return { 
+                tagId: scan.tagId, 
+                timestamp: scan.timestamp 
+            };
+        }
+        
+        console.log('[RFID] No fresh scans for user %s', userId);
+        return {};
+    }
+
+    async clearScanCache(userId) {
+        this.latestScans.delete(userId);
+        console.log('[RFID] Cleared scan cache for user %s', userId);
+    }
+
+    async associateTag(userId, tagId, itemId, forceOverride = false) {
+        console.log('[RFID] Associating tag %s with item %s for user %s (force: %s)', tagId, itemId, userId, forceOverride);
+        return await this.dataSource.transaction(async manager => {
+            const item = await manager.findOne(Item, { 
+                where: { id: itemId, userId },
+                lock: { mode: 'pessimistic_write' }
+            });
+            
+            if (!item) {
+                console.log('[RFID] Item %s not found for user %s', itemId, userId);
+                throw new NotFoundException(`Item with ID ${itemId} not found or doesn't belong to user`);
             }
 
-            console.log(`Processed ${results.length} tag detections for device ${device.serialNumber}`);
-            return {
-                message: 'RFID scan processed successfully',
-                device: device.serialNumber,
-                processedTags: results.length,
-                nextScanIn: device.scanInterval,
-                results
-            };
-
-        } catch (error) {
-            console.error('Error processing RFID scan:', error);
-            throw error;
-        }
-    }
-
-    async updateDeviceHeartbeat(apiKey) {
-        try {
-        const device = await this.rfidDeviceRepository.findOne({
-            where: { apiKey },
-            relations: ['user']
-        });
-
-        if (!device) {
-            throw new UnauthorizedException('Invalid API key - device not registered');
-        }
-
-        // Update heartbeat
-        await this.rfidDeviceRepository.update(device.id, {
-            isOnline: true,
-            lastHeartbeat: new Date()
-        });
-
-        console.log('Heartbeat updated for device:', device.id);
-        return { success: true };
-        } catch (error) {
-        console.error('Error updating heartbeat:', error);
-        throw error;
-        }
-    }
-
-    async processTagDetection(device, tagData) {
-        try {
-            let tag = await this.rfidTagRepository.findOne({
-                where: { tagId: tagData.tagId, deviceId: device.id },
-                relations: ['item']
+            let tag = await manager.findOne(RfidTag, { 
+                where: { tagId, userId },
+                lock: { mode: 'pessimistic_write' }
             });
-            const now = new Date();
+            
             if (!tag) {
-                tag = this.rfidTagRepository.create({
-                    tagId: tagData.tagId,
+                const device = await this.deviceRepo.findOne({ where: { userId } });
+                if (!device) throw new NotFoundException('No RFID device found for user');
+                tag = manager.create(RfidTag, {
+                    tagId, userId,
                     deviceId: device.id,
-                    userId: device.userId,
                     status: 'detected',
                     location: 'wardrobe',
-                    lastDetected: now,
-                    lastSeen: now,
-                    signalStrength: tagData.signalStrength || 0
+                    lastDetected: new Date()
                 });
-
-                console.log(`New RFID tag detected: ${tagData.tagId}`);
-            } else {
-                const wasOffline = tag.status === 'missing';
-                
-                tag.status = tagData.event === 'detected' ? 'detected' : 'missing';
-                tag.lastDetected = tagData.event === 'detected' ? now : tag.lastDetected;
-                tag.lastSeen = now;
-                tag.signalStrength = tagData.signalStrength || tag.signalStrength;
-
-                if (tagData.event === 'detected') {
-                    tag.location = 'wardrobe';
-                    // Keep associated item in sync with tag "in wardrobe"
-                    if (tag.item?.id) {
-                        await this.itemRepository.update(tag.item.id, {
-                            location: 'wardrobe',
-                            lastLocationUpdate: now
-                        });
-                    }
-                } else if (tagData.event === 'removed') {
-                    tag.location = 'being_worn';
-                    // Keep associated item in sync with tag "out of wardrobe"
-                    if (tag.item?.id) {
-                        await this.itemRepository.update(tag.item.id, {
-                            location: 'worn',
-                            lastLocationUpdate: now
-                        });
+                await manager.save(tag);
+                console.log('[RFID] Created new tag in transaction');
+            }
+            
+            let existingItem = null;
+            if (tag.itemId && tag.itemId !== itemId) {
+                existingItem = await manager.findOne(Item, { 
+                    where: { id: tag.itemId, userId },
+                    lock: { mode: 'pessimistic_write' }
+                });
+            }
+            
+            if (tag.itemId && tag.itemId !== itemId) {
+                if (!forceOverride) {
+                    return {
+                        success: false,
+                        conflict: true,
+                        message: `Tag is already associated with "${existingItem?.name || 'Unknown Item'}"`,
+                        existingItem: existingItem ? {
+                            id: existingItem.id,
+                            name: existingItem.name,
+                            category: existingItem.category
+                        } : null
+                    };
+                } else {
+                    if (existingItem) {
+                        console.log('[RFID] Removing old item %s during override', existingItem.name);
+                        tag.itemId = null;
+                        await manager.save(tag);
+                        
+                        existingItem.rfidTagId = null;
+                        await manager.save(existingItem);
+                        
+                        await manager.remove(existingItem);
+                        console.log('[RFID] Removed old item during override');
                     }
                 }
-
-                if (wasOffline && tagData.event === 'detected') {
-                    console.log(`RFID tag back online: ${tagData.tagId}`);
-                }
             }
-
-            await this.rfidTagRepository.save(tag);
-
-            // Optional: trigger suggestion when item just left the wardrobe
-            if (tag.item && tagData.event === 'removed') {
-                await this.triggerOutfitSuggestion(device.userId, tag.item.id);
-            }
-
-            return {
-                tagId: tag.tagId,
-                event: tagData.event,
-                location: tag.location,
-                hasItem: !!tag.item,
-                itemName: tag.item?.name,
-                signalStrength: tag.signalStrength
-            };
-
-        } catch (error) {
-            console.error(`Error processing tag ${tagData.tagId}:`, error);
-            return {
-                tagId: tagData.tagId,
-                error: error.message
-            };
-        }
-    }
-
-
-    async triggerOutfitSuggestion(userId, itemId) {
-        try {
-            console.log(`Triggering outfit suggestion for user ${userId}, item ${itemId}`);
-            const result = await this.notificationService.sendRfidNotification(userId, itemId);
-            if (result.success) {
-                console.log(`Outfit suggestion sent to user ${userId}`);
-            } else {
-                console.log(`Outfit suggestion failed: ${result.message}`);
-            }
-            return result;
-        } catch (error) {
-            console.error('Error triggering outfit suggestion:', error);
-        }
-    }
-
-    async updateDeviceHeartbeat(apiKey) {
-        try {
-            const device = await this.validateDeviceApiKey(apiKey);
-
-            await this.rfidDeviceRepository.update(device.id, {
-                lastHeartbeat: new Date(),
-                isOnline: true
+            
+            const finalItem = await manager.findOne(Item, { 
+                where: { id: itemId, userId },
+                lock: { mode: 'pessimistic_write' }
             });
-            return {
-                status: 'ok',
-                timestamp: new Date(),
-                nextScanInterval: device.scanInterval,
-                powerSavingMode: device.powerSavingMode
-            };
-
-        } catch (error) {
-            console.error('Error updating device heartbeat:', error);
-            throw error;
-        }
+            
+            if (!finalItem) {
+                throw new NotFoundException('Target item was deleted during operation');
+            }
+            
+            tag.itemId = itemId;
+            tag.location = 'wardrobe';
+            await manager.save(tag);
+            
+            finalItem.rfidTagId = tag.id;
+            finalItem.location = 'wardrobe';
+            await manager.save(finalItem);
+            
+            console.log('[RFID] Successfully associated tag %s with item %s (%s)', tagId, itemId, finalItem.name);
+            return { success: true, message: 'Tag associated successfully' };
+        });
     }
-
 
     async getDeviceStatus(userId) {
-        try {
-            const device = await this.rfidDeviceRepository.findOne({
-                where: { userId },
-                relations: ['tags', 'tags.item']
-            });
-
-            if (!device) {
-                return {
-                    hasDevice: false,
-                    setupRequired: true,
-                    message: 'No RFID device registered. Complete device setup to get started.'
-                };
-            }
-            const tags = device.tags;
-            const activeTags = tags.filter(t => t.status === 'detected');
-            const associatedTags = tags.filter(t => t.itemId);
-            const inWardrobe = tags.filter(t => t.location === 'wardrobe').length;
-            const beingWorn = tags.filter(t => t.location === 'being_worn').length;
-            return {
-                hasDevice: true,
-                device: {
-                    id: device.id,
-                    serialNumber: device.serialNumber,
-                    name: device.deviceName,
-                    status: device.status,
-                    isOnline: device.isOnline,
-                    firmwareVersion: device.firmwareVersion,
-                    lastHeartbeat: device.lastHeartbeat,
-                    lastScan: device.lastScan,
-                    ipAddress: device.ipAddress,
-                    scanInterval: device.scanInterval,
-                    powerSavingMode: device.powerSavingMode
-                },
-                statistics: {
-                    totalTags: tags.length,
-                    activeTags: activeTags.length,
-                    associatedTags: associatedTags.length,
-                    inWardrobe,
-                    beingWorn,
-                    missingTags: tags.filter(t => t.status === 'missing').length,
-                    unassociatedTags: tags.filter(t => !t.itemId).length
-                },
-                recentActivity: tags
-                    .sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen))
-                    .slice(0, 10)
-                    .map(tag => ({
-                        tagId: tag.tagId,
-                        itemName: tag.item?.name || 'Unassociated',
-                        location: tag.location,
-                        lastSeen: tag.lastSeen,
-                        status: tag.status,
-                        signalStrength: tag.signalStrength
-                    }))
-            };
-        } catch (error) {
-            console.error('Error getting device status:', error);
-            throw new BadRequestException('Failed to get device status');
+        const device = await this.deviceRepo.findOne({ where: { userId } });
+        if (!device) {
+            return { hasDevice: false };
         }
+        
+        return {
+            hasDevice: true,
+            device: {
+                id: device.id,
+                name: device.deviceName,
+                isOnline: device.isOnline,
+                lastHeartbeat: device.lastHeartbeat
+            }
+        };
     }
 
-    async getTagInfo(userId, tagId) {
-        try {
-            const tag = await this.rfidTagRepository.findOne({
-                where: { tagId, userId },
-                relations: ['item', 'device']
-            });
-
-            if (!tag) {
-                throw new NotFoundException('RFID tag not found. Make sure the tag has been detected by your device first.');
-            }
-
-            return {
-                tagId: tag.tagId,
-                status: tag.status,
-                location: tag.location,
-                lastSeen: tag.lastSeen,
-                signalStrength: tag.signalStrength,
-                isAssociated: !!tag.itemId,
-                currentItem: tag.item ? {
-                    id: tag.item.id,
-                    name: tag.item.name,
-                    category: tag.item.category,
-                    color: tag.item.color
-                } : null,
-                device: {
-                    name: tag.device.deviceName,
-                    serialNumber: tag.device.serialNumber
-                }
-            };
-
-        } catch (error) {
-            console.error('Error getting tag info:', error);
-            throw error;
-        }
-    }
-    async dissociateTagFromItem(userId, tagId) {
-        try {
-            console.log(`Dissociating tag ${tagId} from item for user ${userId}`);
-
-            const tag = await this.rfidTagRepository.findOne({
-                where: { tagId, userId },
-                relations: ['item']
-            });
-
-            if (!tag) {
-                throw new NotFoundException('RFID tag not found');
-            }
-
-            if (!tag.itemId) {
-                throw new BadRequestException('Tag is not associated with any item');
-            }
-
-            const previousItem = tag.item;
-            tag.itemId = null;
-            await this.rfidTagRepository.save(tag);
-
-            console.log(`Tag ${tagId} dissociated from item: ${previousItem?.name}`);
-            
-            return {
-                success: true,
-                message: 'RFID tag dissociated from item successfully',
-                tag: {
-                    tagId: tag.tagId,
-                    previousItem: previousItem ? {
-                        id: previousItem.id,
-                        name: previousItem.name
-                    } : null,
-                    status: tag.status,
-                    location: tag.location
-                }
-            };
-
-        } catch (error) {
-            console.error('Error dissociating tag from item:', error);
-            throw error;
-        }
-    }
-
-    async processTagDetection(device, tagData) {
-        try {
-            let tag = await this.rfidTagRepository.findOne({
-                where: { tagId: tagData.tagId, deviceId: device.id },
-                relations: ['item']
-            });
-            const now = new Date();
-            // We only care about "detected" from the reader
-            const event = 'detected';
-
-            if (!tag) {
-                tag = this.rfidTagRepository.create({
-                    tagId: tagData.tagId,
-                    deviceId: device.id,
-                    userId: device.userId,
-                    status: 'detected',
-                    location: 'wardrobe',
-                    lastDetected: now,
-                    lastSeen: now,
-                    signalStrength: tagData.signalStrength || 0
-                });
-                console.log(`New RFID tag detected: ${tagData.tagId}`);
-            } else {
-                tag.status = 'detected';
-                tag.lastDetected = now;
-                tag.lastSeen = now;
-                tag.signalStrength = tagData.signalStrength || tag.signalStrength;
-
-                // SIMPLE TOGGLE:
-                // - If associated and tag.location is 'wardrobe' -> move to 'being_worn' & item -> 'worn'
-                // - Else -> move back to 'wardrobe' & item -> 'wardrobe'
-                if (tag.item?.id) {
-                    if (tag.location === 'wardrobe') {
-                        tag.location = 'being_worn';
-                        await this.itemRepository.update(tag.item.id, {
-                            location: 'worn',
-                            lastLocationUpdate: now
-                        });
-                        // Optional: send suggestion when leaving wardrobe
-                        await this.triggerOutfitSuggestion(device.userId, tag.item.id);
-                    } else {
-                        tag.location = 'wardrobe';
-                        await this.itemRepository.update(tag.item.id, {
-                            location: 'wardrobe',
-                            lastLocationUpdate: now
-                        });
-                    }
-                } else {
-                    // Unassociated tag: just flip on the tag itself
-                    tag.location = (tag.location === 'wardrobe') ? 'being_worn' : 'wardrobe';
+    async getTags(userId) {
+        return await this.tagRepo.find({
+            where: { userId },
+            relations: ['item'],
+            select: {
+                id: true,
+                tagId: true,
+                location: true,
+                lastDetected: true,
+                item: {
+                    id: true,
+                    name: true,
+                    category: true
                 }
             }
-
-            await this.rfidTagRepository.save(tag);
-
-            return {
-                tagId: tag.tagId,
-                event,
-                location: tag.location,
-                hasItem: !!tag.item,
-                itemName: tag.item?.name,
-                signalStrength: tag.signalStrength
-            };
-
-        } catch (error) {
-            console.error(`Error processing tag ${tagData.tagId}:`, error);
-            return {
-                tagId: tagData.tagId,
-                error: error.message
-            };
-        }
-    }
-
-
-
-    async getUnassociatedTags(userId) {
-        try {
-            const tags = await this.rfidTagRepository.find({
-                where: { userId, itemId: null },
-                order: { lastDetected: 'DESC' }
-            });
-            return tags.map(tag => ({
-                id: tag.id,
-                tagId: tag.tagId,
-                status: tag.status,
-                location: tag.location,
-                lastDetected: tag.lastDetected,
-                lastSeen: tag.lastSeen,
-                signalStrength: tag.signalStrength
-            }));
-        } catch (error) {
-            console.error('Error getting unassociated tags:', error);
-            throw new BadRequestException('Failed to get unassociated tags');
-        }
-    }
-
-    
-
-    async getUserTags(userId) {
-        try {
-            return await this.rfidTagRepository.find({
-                where: { userId },
-                relations: ['device', 'item'],
-                order: { lastSeen: 'DESC' }
-            });
-        } catch (error) {
-            console.error('Error getting user tags:', error);
-            throw new BadRequestException('Failed to get user tags');
-        }
+        });
     }
 }

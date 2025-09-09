@@ -2,17 +2,13 @@ import { Injectable, BadRequestException, NotFoundException, Inject,Dependencies
 import { getRepositoryToken,InjectRepository } from '@nestjs/typeorm';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
-import { User } from './entities/user.entity.js';
+import { User } from './entities/user.entity.js'
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UserProfileSetupDto } from './dto/user-profile-setup.dto.js';
 import { UserStylePreference } from './entities/user-style-preferences.entity.js';
 import { UserColorPreference } from './entities/user-color-preferences.entity.js';
-import { UserFavoriteShop } from './entities/user-shop.entity.js';
-import { UserSize } from './entities/user-size.entity.js';
 import { UserLifestyle } from './entities/user-lifestyle.entity.js';
 import { UserOccasion } from './entities/user-occasion.entity.js';
-import { UserAvoidMaterial } from './entities/user-avoid.entity.js';
-import * as bcrypt from 'bcrypt';
 import {MediaService} from '../media/media.service.js';
 
 @Injectable()
@@ -21,59 +17,35 @@ export class UserService {
     @Inject(getRepositoryToken(User)) userRepository,
     @Inject(getRepositoryToken(UserStylePreference)) stylePreferenceRepository,
     @Inject(getRepositoryToken(UserColorPreference)) colorPreferenceRepository,
-    @Inject(getRepositoryToken(UserFavoriteShop)) favoriteShopRepository,
-    @Inject(getRepositoryToken(UserSize)) userSizeRepository,
     @Inject(getRepositoryToken(UserLifestyle)) userLifestyleRepository,
     @Inject(getRepositoryToken(UserOccasion)) userOccasionRepository,
-    @Inject(getRepositoryToken(UserAvoidMaterial)) userAvoidMaterialRepository,
     @Inject(MediaService)mediaService
   ) {
     this.userRepository = userRepository;
     this.stylePreferenceRepository = stylePreferenceRepository;
     this.colorPreferenceRepository = colorPreferenceRepository;
-    this.favoriteShopRepository = favoriteShopRepository;
-    this.userSizeRepository = userSizeRepository;
     this.userLifestyleRepository = userLifestyleRepository;
     this.userOccasionRepository = userOccasionRepository;
-    this.userAvoidMaterialRepository = userAvoidMaterialRepository;
     this.mediaService = mediaService;
   }
 
-  async findAll() {
+  async findOneByIdWithPassword(id) {
     try {
-      return await this.userRepository.find({
-        select: ['id', 'firstName', 'lastName', 'email', 'createdAt', 'isVerified']
-      });
-    } catch (error) {
-      console.error('Error finding all users:', error);
-      throw new BadRequestException('Error retrieving users');
-    }
-  }
-
-  async findOneById(id) {
-    try {
+      console.log('UserService: Finding user by ID with password:', id);
       const user = await this.userRepository.findOne({
-        where: { id },
-        select: [
-          'id', 'firstName', 'lastName', 'email', 'phoneNumber',
-          'dateOfBirth', 'gender', 'riskTolerance',
-          'sustainabilityFocus', 'location', 'climate', 
-          'enableRecommendations', 'enableWeatherNotifications', 
-          'enableOutfitReminders', 'morningNotificationTime', 
-          'subscriptionTier', 'trial', 'trialExpires', 'isVerified', 
-          'profilePicture', 'profileSetupCompleted', 'profileSetupCompletedAt',
-          'createdAt', 'updatedAt', 'lastLoginAt', 'primarySize',
-          'skinTone', 'deviceSetupStatus', 'deviceSetupCompletedAt'
-        ],
-        relations: [
-          'stylePreferences', 'colorPreferences', 'favoriteShops',
-          'sizes', 'lifestyles', 'occasions', 'avoidMaterials'
-        ]
+        where: { id: parseInt(id) }
+      });
+      
+      console.log('UserService: User found with password:', { 
+        id: user?.id, 
+        email: user?.email, 
+        hasPassword: !!user?.password 
       });
       
       if (!user) {
         throw new NotFoundException(`User with ID ${id} not found`);
       }
+      
       return user;
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -83,6 +55,44 @@ export class UserService {
       throw new BadRequestException('Error retrieving user');
     }
   }
+
+  async updatePassword(userId, hashedPassword) {
+    try {
+      console.log('UserService: Updating password for user:', userId);
+      
+      const result = await this.userRepository.update(userId, {
+        password: hashedPassword,
+        passwordChangedAt: new Date(),
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+        updatedAt: new Date()
+      });
+      
+      console.log('UserService: Password update result:', result);
+      return this.findOneById(userId);
+    } catch (error) {
+      console.error(`Error updating password for user ${userId}:`, error);
+      throw new BadRequestException('Error updating password');
+    }
+  }
+  async findOneById(id) {
+    try {
+        console.log(`Finding user by id ${id}`);
+        
+        const user = await this.userRepository.findOneBy({ id });
+        
+        if (!user) {
+            console.log(`User with id ${id} not found`);
+            return null;
+        }
+
+        console.log(`User found: ${user.email}`);
+        return user;
+    } catch (error) {
+        console.error(`Error finding user by id ${id}:`, error);
+        throw new BadRequestException('Error retrieving user');
+    }
+}
 
   async findByEmail(email) {
     try {
@@ -100,80 +110,59 @@ export class UserService {
     }
   }
 
-  async findByGoogleId(googleId) {
-    try {
-      return await this.userRepository.findOne({
-        where: { googleId },
-        select: ['id', 'email', 'firstName', 'lastName', 'profileSetupCompleted']
-      });
-    } catch (error) {
-      console.error(`Error finding user by Google ID:`, error);
-      throw new BadRequestException('Error finding user');
-    }
-  }
-
   async createUser(userData) {
-    try {
-      const dto = plainToClass(CreateUserDto, userData);
-      const validationErrors = await validate(dto);
-      
-      if (validationErrors.length > 0) {
-        const errorMessages = validationErrors
-          .map(error => Object.values(error.constraints))
-          .flat();
-        throw new BadRequestException(`Validation failed: ${errorMessages.join(', ')}`);
+      try {
+          const dto = plainToClass(CreateUserDto, userData);
+          const validationErrors = await validate(dto);
+          
+          if (validationErrors.length > 0) {
+              const errorMessages = validationErrors
+                  .map(error => Object.values(error.constraints))
+                  .flat();
+              throw new BadRequestException(`Validation failed: ${errorMessages.join(', ')}`);
+          }
+
+          const existingUser = await this.findByEmail(dto.email);
+          if (existingUser) {
+              throw new BadRequestException('User with this email already exists');
+          }
+
+          const newUser = this.userRepository.create({
+              firstName: userData.firstName,
+              lastName: userData.lastName || '',
+              email: userData.email,
+              password: dto.password,
+              gender: userData.gender,
+              verificationToken: userData.verificationToken,
+              verificationTokenExpires: userData.verificationTokenExpires,
+              passwordChangedAt: userData.passwordChangedAt,
+              trial: userData.trial || false,
+              trialExpires: userData.trialExpires,
+              subscriptionTier: userData.subscriptionTier || 'free',
+              provider: 'local',
+              isVerified: false
+          });
+
+          const savedUser = await this.userRepository.save(newUser);
+          
+          const { password, ...userResponse } = savedUser;
+          return userResponse;
+
+      } catch (error) {
+          if (error instanceof BadRequestException) {
+              throw error;
+          }
+          console.error('Error creating user entity:', error);
+          throw new BadRequestException('Error creating user entity');
       }
-
-      const existingUser = await this.findByEmail(dto.email);
-      if (existingUser) {
-        throw new BadRequestException('User with this email already exists');
-      }
-
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(dto.password, salt);
-
-      const trialExpires = new Date();
-      trialExpires.setDate(trialExpires.getDate() + 30);
-
-      const newUser = this.userRepository.create({
-        firstName: userData.firstName,
-        lastName: userData.lastName || '',
-        email: userData.email,
-        password: hashedPassword,
-        phoneNumber: userData.phoneNumber,
-        dateOfBirth: userData.dateOfBirth,
-        gender: userData.gender,
-        verificationToken: userData.verificationToken,
-        verificationTokenExpires: userData.verificationTokenExpires,
-        passwordChangedAt: userData.passwordChangedAt,
-        trial: true,
-        trialExpires,
-        subscriptionTier: 'free',
-        enableRecommendations: true,
-        enableWeatherNotifications: true,
-        riskTolerance: 'moderate',
-        provider: 'local',
-        isVerified: false
-      });
-
-      const savedUser = await this.userRepository.save(newUser);
-      
-      const { password, ...userResponse } = savedUser;
-      return userResponse;
-
-    } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      console.error('Error creating user entity:', error);
-      throw new BadRequestException('Error creating user entity');
-    }
   }
 
   async updateUserRecord(userId, updateData) {
     try {
-      //updating only scalar fields, not relations
-      const { stylePreferences, colorPreferences, favoriteShops, sizes, lifestyles, occasions, avoidMaterials, ...scalarData } = updateData;
+      const { stylePreferences, colorPreferences, lifestyles, occasions, defaultWeatherLocation, ...scalarData } = updateData;
+      if (defaultWeatherLocation !== undefined) {
+        scalarData.location = defaultWeatherLocation;
+      }
       
       await this.userRepository.update(userId, {
         ...scalarData,
@@ -215,18 +204,7 @@ export class UserService {
         firstName: dto.firstName || user.firstName,
         lastName: dto.lastName || user.lastName,
         gender: dto.gender || null,
-        dateOfBirth: dto.dateOfBirth || null,
-        phoneNumber: dto.phoneNumber || null,
         location: dto.location || null,
-        climate: dto.climate || null,
-        primarySize: dto.primarySize || null,
-        skinTone: dto.skinTone || null,
-        riskTolerance: dto.riskTolerance || 'moderate',
-        sustainabilityFocus: dto.sustainabilityFocus ?? false,
-        enableRecommendations: dto.enableRecommendations ?? true,
-        enableWeatherNotifications: dto.enableWeatherNotifications ?? true,
-        enableOutfitReminders: dto.enableOutfitReminders ?? false,
-        morningNotificationTime: dto.morningNotificationTime || null,
         profilePicture: profilePictureUrl,
         profileSetupCompleted: true,
         profileSetupCompletedAt: new Date(),
@@ -273,35 +251,6 @@ export class UserService {
           await this.colorPreferenceRepository.save(colorPrefs);
         }
       }
-      if (dto.favoriteShops && Array.isArray(dto.favoriteShops)) {
-        await this.favoriteShopRepository.delete({ userId });
-        if (dto.favoriteShops.length > 0) {
-          const shopPrefs = dto.favoriteShops.map(shop => 
-            this.favoriteShopRepository.create({
-              userId,
-              shopName: typeof shop === 'string' ? shop : shop.shopName || shop.name,
-              category: typeof shop === 'object' ? shop.category : null,
-              rating: typeof shop === 'object' ? shop.rating : null
-            })
-          );
-          await this.favoriteShopRepository.save(shopPrefs);
-        }
-      }
-      if (dto.sizes && Array.isArray(dto.sizes)) {
-        await this.userSizeRepository.delete({ userId });
-        if (dto.sizes.length > 0) {
-          const sizePrefs = dto.sizes.map(size => 
-            this.userSizeRepository.create({
-              userId,
-              category: typeof size === 'object' ? size.category : 'general',
-              size: typeof size === 'string' ? size : size.size,
-              brand: typeof size === 'object' ? size.brand : null
-            })
-          );
-          await this.userSizeRepository.save(sizePrefs);
-        }
-      }
-
       if (dto.lifestyles && Array.isArray(dto.lifestyles)) {
         await this.userLifestyleRepository.delete({ userId });
         if (dto.lifestyles.length > 0) {
@@ -315,8 +264,6 @@ export class UserService {
           await this.userLifestyleRepository.save(lifestylePrefs);
         }
       }
-      
-      // Occasions
       if (dto.occasions && Array.isArray(dto.occasions)) {
         await this.userOccasionRepository.delete({ userId });
         if (dto.occasions.length > 0) {
@@ -330,22 +277,6 @@ export class UserService {
           await this.userOccasionRepository.save(occasionPrefs);
         }
       }
-      
-      // Avoid Materials
-      if (dto.avoidMaterials && Array.isArray(dto.avoidMaterials)) {
-        await this.userAvoidMaterialRepository.delete({ userId });
-        if (dto.avoidMaterials.length > 0) {
-          const avoidMaterialPrefs = dto.avoidMaterials.map(material => 
-            this.userAvoidMaterialRepository.create({
-              userId,
-              material: typeof material === 'string' ? material : material.material || material.materialName,
-              reason: typeof material === 'object' ? material.reason : 'preference',
-              notes: typeof material === 'object' ? material.notes : null
-            })
-          );
-          await this.userAvoidMaterialRepository.save(avoidMaterialPrefs);
-        }
-      }
     } catch (error) {
       throw new BadRequestException(`Error saving user preferences: ${error.message}`);
     }
@@ -356,7 +287,7 @@ export class UserService {
     neutral: 0,
     disliked: -1
   };
-  return preferenceMap[preference] || 0; // Default to "neutral" if not found
+  return preferenceMap[preference] || 0;
 }
   async updateLastLogin(userId) {
     try {
@@ -403,21 +334,6 @@ export class UserService {
     } catch (error) {
       console.error(`Error setting reset password token for user ${userId}:`, error);
       throw new BadRequestException('Error setting reset password token');
-    }
-  }
-  async updateNotificationSettings(userId, settings) {
-    try {
-      await this.userRepository.update(userId, {
-        enableRecommendations: settings.enableRecommendations,
-        enableWeatherNotifications: settings.enableWeatherNotifications,
-        enableOutfitReminders: settings.enableOutfitReminders,
-        morningNotificationTime: settings.morningNotificationTime,
-        updatedAt: new Date()
-      });
-      return this.findOneById(userId);
-    } catch (error) {
-      console.error(`Error updating notification settings for user ${userId}:`, error);
-      throw new BadRequestException('Error updating notification settings');
     }
   }
   async findByVerificationToken(token) {

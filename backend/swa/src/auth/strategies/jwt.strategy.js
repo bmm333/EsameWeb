@@ -11,7 +11,7 @@ export class JwtStrategy extends PassportStrategy(Strategy){
     super({
       jwtFromRequest:ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration:false,
-      secretOrKey:process.env.JWT_SECRET||'feb47943bb2f57edd2371543f849c6354ddb70a9f3bb6e057758c74c2927686b' //fallback for dev simplicity
+      secretOrKey:process.env.JWT_SECRET
     });
     this.userService=userService;
   }
@@ -20,13 +20,12 @@ export class JwtStrategy extends PassportStrategy(Strategy){
     try{
       const user=await this.userService.findOneById(payload.sub);
       if(!user){
-        throw new Error('JWTSTRATEGY: User not found for id :',payload.sub);
+        throw new Error(`JWTSTRATEGY: User not found for id : ${payload.sub}`);
       }
       const { password, verificationToken, resetPasswordToken, ...userWithoutSensitiveData } = user;
       const validatedUser = {
         id: user.id,
-        userId: user.id, //bckw compatibility
-        sub: user.id,
+        userId: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,

@@ -1,0 +1,19 @@
+.modal { z-index: 1050; }
+.modal-backdrop { z-index: 1040; }
+
+.modal.show { z-index: 1055; }
+.modal.show ~ .modal-backdrop { z-index: 1045; }
+
+.modal-backdrop + .modal-backdrop { display: none !important; }
+
+.modal:nth-of-type(even) { z-index: 1056; }
+.modal:nth-of-type(even) + .modal-backdrop { z-index: 1046; }
+
+.item-card.selected {
+  border: 2px solid var(--primary-color) !important;
+  box-shadow: 0 0 0 2px rgb(99 102 241 / 25%);
+}
+
+.selected-items-container .badge {
+  font-size: 0.9em;
+}

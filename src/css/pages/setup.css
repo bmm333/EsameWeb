@@ -51,13 +51,15 @@
   height: 2px;
   background-color: var(--border-color);
   margin-top: 20px;
+  border-radius: var(--border-radius-md);
+
 }
 
 .setup-step {
   display: none;
   padding: var(--spacing-lg);
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-md);
   margin-bottom: var(--spacing-lg);
   background-color: var(--card-bg);
 }
@@ -109,46 +111,6 @@
   color: var(--danger-text);
 }
 
-.btn {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
-}
-
-.btn-primary {
-  background-color: var(--primary-color);
-  color: var(--bg-color);
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-hover);
-}
-
-.btn-secondary {
-  background-color: var(--secondary-color);
-  color: var(--text-color);
-}
-
-.btn-secondary:hover {
-  background-color: var(--secondary-hover);
-}
-
-.btn-success {
-  background-color: var(--success-color);
-  color: var(--bg-color);
-}
-
-.btn-success:hover {
-  background-color: var(--success-hover);
-}
-
-.btn-sm {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: 0.9rem;
-}
 
 .card {
   border: 1px solid var(--border-color);
@@ -201,14 +163,16 @@ code {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .step-indicator {
     flex-direction: column;
     align-items: center;
   }
+
   .step-circle {
     margin-bottom: var(--spacing-sm);
   }
+
   .step-line {
     width: 2px;
     height: 40px;

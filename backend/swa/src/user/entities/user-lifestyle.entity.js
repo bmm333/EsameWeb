@@ -14,7 +14,7 @@ export class UserLifestyle {
     lifestyle;
 
     @Column({ type: 'int', default: 50 })
-    percentage; // What % of time spent in this lifestyle
+    percentage;
 
     @CreateDateColumn()
     createdAt;

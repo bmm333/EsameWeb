@@ -11,10 +11,10 @@ export class UserColorPreference {
     color;
 
     @Column({ type: 'varchar', length: 7, nullable: true })
-    hexCode; // #FF0000
+    hexCode;
 
     @Column({ type: 'int', default: 1 })
-    preference; // 1 = love, 2 = like, 3 = neutral, 4 = dislike, 5 = hate
+    preference;
 
     @CreateDateColumn()
     createdAt;

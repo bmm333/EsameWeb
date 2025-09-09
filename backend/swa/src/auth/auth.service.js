@@ -11,85 +11,165 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { MailingService } from '../mailing/mailing.service';
 
-
 @Injectable()
-@Dependencies(UserService, JwtService,MailingService)
+@Dependencies(UserService, JwtService, MailingService)
 export class AuthService {
-  constructor(userService, jwtService,mailingService) {
+  constructor(userService, jwtService, mailingService) {
     this.userService = userService;
     this.jwtService = jwtService;
     this.mailingService = mailingService;
     this.blacklistedTokens = new Set();
+    this.blacklistedRefreshTokens = new Set();
+    this.initcleanup();
+  }
+
+  initcleanup() {
+    setInterval(() => {
+      if (this.blacklistedTokens.size > 1000) {
+        this.blacklistedTokens.clear();
+      }
+      if (this.blacklistedRefreshTokens.size > 1000) {
+        this.blacklistedRefreshTokens.clear();
+      }
+    }, 3600000);
+  }
+
+  async handleerror(operation, error) {
+    console.error(`${operation} error:`, error);
+    if (error instanceof BadRequestException || 
+        error instanceof UnauthorizedException || 
+        error instanceof NotFoundException) {
+      throw error;
+    }
+    throw new BadRequestException(`${operation} failed`);
+  }
+
+  async hashpassword(password) {
+    const salt = await bcrypt.genSalt(12);
+    return await bcrypt.hash(password, salt);
+  }
+
+  async comparepassword(password, hash) {
+    return await bcrypt.compare(password, hash);
+  }
+
+  createtoken(payload, expiresin = '15m') {
+    return this.jwtService.sign(payload, { expiresIn: expiresin });
+  }
+
+  verifytoken(token, secret = null) {
+    const options = secret ? { secret } : {};
+    return this.jwtService.verify(token, options);
+  }
+
+  generatetoken() {
+    return crypto.randomBytes(32).toString('hex');
+  }
+
+  addexpiry(hours = 1) {
+    const expires = new Date();
+    expires.setHours(expires.getHours() + hours);
+    return expires;
+  }
+
+  validatepasswordstrength(password) {
+    if (password.length < 8) {
+      return { isvalid: false, message: 'Password must be at least 8 characters long' };
+    }
+    if (!/(?=.*[a-z])/.test(password)) {
+      return { isvalid: false, message: 'Password must contain at least one lowercase letter' };
+    }
+    if (!/(?=.*[A-Z])/.test(password)) {
+      return { isvalid: false, message: 'Password must contain at least one uppercase letter' };
+    }
+    if (!/(?=.*\d)/.test(password)) {
+      return { isvalid: false, message: 'Password must contain at least one number' };
+    }
+    return { isvalid: true };
+  }
+
+  async sendemail(type, user, token = null) {
+    try {
+      switch (type) {
+        case 'verification':
+          await this.mailingService.sendVerificationEmail(user, token);
+          break;
+        case 'passwordreset':
+          await this.mailingService.sendPasswordResetEmail(user, token);
+          break;
+        case 'passwordchange':
+          await this.mailingService.sendPasswordChangeConfirmation(user);
+          break;
+      }
+    } catch (error) {
+      console.error(`Failed to send ${type} email:`, error);
+    }
+  }
+
+  cleanuser(user) {
+    const { password, verificationToken, resetPasswordToken, refreshToken, ...cleaneduser } = user;
+    return cleaneduser;
+  }
+
+  createresponse(statuscode, message, data = {}) {
+    return {
+      statusCode: statuscode,
+      message,
+      ...data
+    };
   }
 
   async validateUser(email, password) {
-    console.log('validateUser called with:', { email, passwordLength: password?.length });
-    
-    const user = await this.userService.findByEmail(email);
-    console.log('User found:', { 
-      id: user?.id, 
-      email: user?.email, 
-      hasPassword: !!user?.password,
-      passwordHash: user?.password?.substring(0, 20) + '...',
-      isVerified: user?.isVerified 
-    });
-    
-    if (!user) {
-      console.log('No user found');
-      return null;
-    }
-    
-    if(user.lockedUntil && new Date() < new Date(user.lockedUntil)) {
-      console.log('Account locked until:', user.lockedUntil);
-      throw new UnauthorizedException('Account is temporarily locked due to too many failed login attempts');
-    }
-    
-    const normalizedPassword = password.trim();
-    console.log('Comparing normalized password...');
-    
-    const isPasswordValid = await bcrypt.compare(normalizedPassword, user.password);
-    console.log('Password comparison result:', isPasswordValid);
-    
-    if (!isPasswordValid) {
-      console.log('Password invalid, handling failed login');
-      await this.handleFailedLogin(user);
-      return null;
-    }
-    
-    console.log('Password valid, resetting failed attempts');
-    await this.resetFailedLoginAttempts(user.id);
-    return user;
-  }
-  async handleFailedLogin(user)
-  {
-    const maxAttempts=5;
-    const lockTimeMinutes=30;
-    const failedAttempts=(user.failedLoginAttempts||0)+1;
-    if(failedAttempts>=maxAttempts)
-    {
-      const lockUntil=new Date();
-      lockUntil.setMinutes(lockUntil.getMinutes()+lockTimeMinutes);
-      await this.userService.updateUserRecord(user.id,{
-        failedLoginAttempts:failedAttempts,
-        lockedUntil:lockUntil
-      });
-    }else{
-      await this.userService.updateUserRecord(user.id,{
-        failedLoginAttempts:failedAttempts
-      });
+    try {
+      const user = await this.userService.findByEmail(email);
+      if (!user) {
+        return null;
+      }
+
+      if (user.lockedUntil && new Date() < new Date(user.lockedUntil)) {
+        throw new UnauthorizedException('Account is temporarily locked due to too many failed login attempts');
+      }
+
+      const normalizedpassword = password.trim();
+      const ispasswordvalid = await this.comparepassword(normalizedpassword, user.password);
+
+      if (!ispasswordvalid) {
+        await this.handlefailedlogin(user);
+        return null;
+      }
+
+      await this.resetfailedloginattempts(user.id);
+      return user;
+    } catch (error) {
+      await this.handleerror('validateUser', error);
     }
   }
-  async resetFailedLoginAttempts(userId)
-  {
-    await this.userService.updateUserRecord(userId,{
-      failedLoginAttempts:0,
-      lockedUntil:null
+
+  async handlefailedlogin(user) {
+    const maxattempts = 5;
+    const locktimeminutes = 30;
+    const failedattempts = (user.failedLoginAttempts || 0) + 1;
+
+    const updatedata = { failedLoginAttempts: failedattempts };
+    
+    if (failedattempts >= maxattempts) {
+      const lockuntil = new Date();
+      lockuntil.setMinutes(lockuntil.getMinutes() + locktimeminutes);
+      updatedata.lockedUntil = lockuntil;
+    }
+
+    await this.userService.updateUserRecord(user.id, updatedata);
+  }
+
+  async resetfailedloginattempts(userid) {
+    await this.userService.updateUserRecord(userid, {
+      failedLoginAttempts: 0,
+      lockedUntil: null
     });
   }
+
   async signin(user) {
     try {
-      console.log('AuthService: Processing signin for validated user:', user.email);
-      
       if (!user.isVerified) {
         throw new UnauthorizedException('Please verify your email before signing in');
       }
@@ -102,288 +182,332 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName 
       };
-      const token = this.jwtService.sign(payload);
-      const { verificationToken, resetPasswordToken, ...userResponse } = user;
-      
-      return {
-        statusCode: 200,
-        message: 'Sign in successful',
-        token,
-        user: userResponse,
-        needsProfileSetup: user.profileSetupCompleted ? false : true
-      };
 
+      const accesstoken = this.createtoken(payload);
+      const refreshtoken = this.generaterefreshtoken(user.id);
+
+      // Store the refresh token directly (it's already a JWT)
+      await this.userService.updateUserRecord(user.id, { 
+        refreshToken: refreshtoken 
+      });
+
+      return this.createresponse(200, 'Sign in successful', {
+        token: accesstoken,
+        accessToken: accesstoken,
+        refreshToken: refreshtoken,
+        user: this.cleanuser(user),
+        needsProfileSetup: !user.profileSetupCompleted
+      });
     } catch (error) {
-      console.error('AuthService signin error:', error);
-      
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      
-      throw new BadRequestException('Sign in failed. Please try again.');
+      await this.handleerror('signin', error);
     }
   }
-  async login(user) {
-    await this.userService.updateLastLogin(user.id);
 
-    const payload = {
-      email: user.email,
-      sub: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      iat: Math.floor(Date.now() / 1000)
-    };
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        isVerified:user.isVerified
-      }
-    };
-  }
-
-  async signup(signupData) {
-    const { email, password, firstName, lastName } = signupData;
-    const normalizedPassword = password.trim();
-    console.log('Signup - Normalized password length:', normalizedPassword.length);
-    
+  async signup(signupdata) {
     try {
-      const existingUser = await this.userService.findByEmail(email);
-      if (existingUser) {
+      const { email, password, firstName, lastName, enableTrial } = signupdata;
+
+      if (!email || !password || !firstName || !lastName) {
+        throw new BadRequestException('All fields are required');
+      }
+
+      const normalizedpassword = password.trim();
+      if (!normalizedpassword) {
+        throw new BadRequestException('Password cannot be empty');
+      }
+
+      const existinguser = await this.userService.findByEmail(email);
+      if (existinguser) {
         throw new BadRequestException('Email already exists');
       }
-      const passwordValidation = this.validatePasswordStrength(normalizedPassword);
-      if (!passwordValidation.isValid) {
-        throw new BadRequestException(passwordValidation.message);
+
+      const passwordvalidation = this.validatepasswordstrength(normalizedpassword);
+      if (!passwordvalidation.isvalid) {
+        throw new BadRequestException(passwordvalidation.message);
       }
-      const verificationToken = crypto.randomBytes(32).toString('hex');
+
+      const verificationtoken = this.generatetoken();
       const now = new Date();
-      const expires = new Date(now);
-      expires.setDate(expires.getDate() + 1); 
-      const trialExpires = new Date(now);
-      trialExpires.setDate(trialExpires.getDate() + 30);
-      const userData = {
+      const expires = this.addexpiry(24);
+      const trialexpires = new Date(now);
+      trialexpires.setDate(trialexpires.getDate() + 30);
+
+      const hashedpassword = await this.hashpassword(normalizedpassword);
+
+      const userdata = {
         email,
-        password: normalizedPassword,
+        password: hashedpassword,
         firstName,
         lastName,
-        verificationToken,
+        verificationToken: verificationtoken,
         verificationTokenExpires: expires,
         passwordChangedAt: now,
-        trial: true,
-        trialExpires,
+        trial: enableTrial || false,
+        trialExpires: enableTrial ? trialexpires : null,
+        subscriptionTier: enableTrial ? 'trial' : 'free',
         provider: 'local'
       };
-      const savedUser = await this.userService.createUser(userData);
-      try {
-        await this.mailingService.sendVerificationEmail(savedUser, verificationToken);
-        console.log('Verification mail sent successfully');
-      } catch (error) {
-        console.error('Failed to send verification email:', error);
-      }
-      
-      const { password: _, ...userResponse } = savedUser;
-      return {
-        statusCode: 201,
-        message: 'User registered successfully. Please check your email for verification.',
-        user: userResponse
+
+      const saveduser = await this.userService.createUser(userdata);
+      await this.sendemail('verification', saveduser, verificationtoken);
+
+      const responsedata = {
+        user: this.cleanuser(saveduser)
       };
-    } catch (error) {
-      console.error('AuthService signup error:', error);
-      
-      if (error instanceof BadRequestException) {
-        throw error;
+
+      if (enableTrial) {
+        responsedata.trial = {
+          enabled: true,
+          expiresAt: trialexpires,
+          message: 'Trial account created! You have 30 days to explore our features.'
+        };
       }
-      
-      throw new BadRequestException('Registration failed. Please try again.');
+
+      return this.createresponse(201, 'User registered successfully. Please check your email for verification.', responsedata);
+    } catch (error) {
+      await this.handleerror('signup', error);
     }
   }
-  async verifyEmail(token)
-  {
-    try{
-      const user=await this.userService.findByVerificationToken(token);
-      if(!user)
-      {
+
+  generaterefreshtoken(userid) {
+    return this.createtoken(
+      { sub: userid, type: 'refresh' },
+      '7d'
+    );
+  }
+
+  async refreshToken(refreshtoken) {
+    try {
+      if (this.isrefreshtokenblacklisted(refreshtoken)) {
+        throw new UnauthorizedException('Refresh token has been revoked');
+      }
+
+      // Use the same secret as configured in the module
+      const payload = this.verifytoken(refreshtoken);
+      
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      const user = await this.userService.findOneById(payload.sub);
+      if (!user || !user.refreshToken) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      // Compare JWT tokens directly
+      if (refreshtoken !== user.refreshToken) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const newpayload = { 
+        sub: user.id, 
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName 
+      };
+
+      const newaccesstoken = this.createtoken(newpayload);
+      const newrefreshtoken = this.generaterefreshtoken(user.id);
+
+      // Store the new refresh token directly
+      await this.userService.updateUserRecord(user.id, { 
+        refreshToken: newrefreshtoken 
+      });
+
+      this.blacklistedRefreshTokens.add(refreshtoken);
+
+      return this.createresponse(200, null, {
+        accessToken: newaccesstoken,
+        refreshToken: newrefreshtoken,
+        token: newaccesstoken
+      });
+    } catch (error) {
+      await this.handleerror('refreshToken', error);
+    }
+  }
+
+  async verifyEmail(token) {
+    try {
+      const user = await this.userService.findByVerificationToken(token);
+      if (!user) {
         throw new BadRequestException('Invalid verification token');
       }
-      if(new Date()>new Date(user.verificationTokenExpires)){
+
+      if (new Date() > new Date(user.verificationTokenExpires)) {
         throw new BadRequestException('Verification token has expired');
       }
+
       await this.userService.verifyUser(user.id);
-      return {
-        message:'Email verified successfully',
-        user:{
-          id:user.id,
-          email:user.email,
-          firstName:user.firstName,
-          isVerified:true
+
+      return this.createresponse(200, 'Email verified successfully', {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          isVerified: true
         }
-      };
-    }catch(error)
-    {
-      if(error instanceof BadRequestException)
-      {
-        throw error;
-      }
-      throw new BadRequestException('Email verification failed');
+      });
+    } catch (error) {
+      await this.handleerror('verifyEmail', error);
     }
   }
+
   async resendVerificationEmail(email) {
     try {
       const user = await this.userService.findByEmail(email);
       if (!user) {
         throw new NotFoundException('User not found');
       }
+
       if (user.isVerified) {
         throw new BadRequestException('Email is already verified');
       }
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-      const verificationExpires = new Date();
-      verificationExpires.setHours(verificationExpires.getHours() + 24);
-      await this.userService.setVerificationToken(user.id, verificationToken, verificationExpires);
-      await this.mailingService.sendVerificationEmail(user, verificationToken);
-      return { message: 'Verification email resent successfully' };
+
+      const verificationtoken = this.generatetoken();
+      const verificationexpires = this.addexpiry(24);
+
+      await this.userService.setVerificationToken(user.id, verificationtoken, verificationexpires);
+      await this.sendemail('verification', user, verificationtoken);
+
+      return this.createresponse(200, 'Verification email resent successfully');
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new BadRequestException('Failed to resend verification email');
+      await this.handleerror('resendVerificationEmail', error);
     }
   }
-  async logout(token) {
-    this.blacklistedTokens.add(token);
-    return { message: 'Logged out successfully' };
+
+  async logout(token, refreshtoken = null) {
+    try {
+      if (token) {
+        this.blacklistedTokens.add(token);
+      }
+
+      if (refreshtoken) {
+        this.blacklistedRefreshTokens.add(refreshtoken);
+        try {
+          // Use the same secret as configured in the module
+          const payload = this.verifytoken(refreshtoken);
+          await this.userService.updateUserRecord(payload.sub, { 
+            refreshToken: null 
+          });
+        } catch (error) {
+          console.error('Error clearing refresh token from database:', error);
+        }
+      }
+
+      return this.createresponse(200, 'Logged out successfully');
+    } catch (error) {
+      return this.createresponse(200, 'Logged out successfully');
+    }
   }
 
   isTokenBlacklisted(token) {
     return this.blacklistedTokens.has(token);
   }
 
+  isrefreshtokenblacklisted(token) {
+    return this.blacklistedRefreshTokens.has(token);
+  }
+
   async validateToken(token) {
     try {
-      if (this.isTokenBlacklisted(token)) {
+      if (this.istokenblacklisted(token)) {
         return null;
       }
-      const payload = this.jwtService.verify(token);
-      return payload;
+      return this.verifytoken(token);
     } catch (error) {
       return null;
     }
   }
+
   async requestPasswordReset(email) {
     try {
       const user = await this.userService.findByEmail(email);
-      
+      const genericmessage = 'If an account with this email exists, you will receive a password reset link';
+
       if (!user) {
-        return { message: 'If an account with this email exists, you will receive a password reset link' };
+        return this.createresponse(200, genericmessage);
       }
 
-      const resetToken = crypto.randomBytes(32).toString('hex');
-      const resetExpires = new Date();
-      resetExpires.setHours(resetExpires.getHours() + 1); // 1 hour expiration
+      const resettoken = this.generatetoken();
+      const resetexpires = this.addexpiry(1);
 
-      await this.userService.setResetPasswordToken(user.id, resetToken, resetExpires);
-      await this.mailingService.sendPasswordResetEmail(user, resetToken);
+      await this.userService.setResetPasswordToken(user.id, resettoken, resetexpires);
+      await this.sendemail('passwordreset', user, resettoken);
 
-      return { message: 'If an account with this email exists, you will receive a password reset link' };
+      return this.createresponse(200, genericmessage);
     } catch (error) {
-      console.error('Password reset request error:', error);
-      throw new BadRequestException('Failed to process password reset request');
+      await this.handleerror('requestPasswordReset', error);
     }
   }
+
   validatePasswordStrength(password) {
-  if (password.length < 8) {
-    return { isValid: false, message: 'Password must be at least 8 characters long' };
+    return this.validatepasswordstrength(password);
   }
-  if (!/(?=.*[a-z])/.test(password)) {
-    return { isValid: false, message: 'Password must contain at least one lowercase letter' };
-  }
-  if (!/(?=.*[A-Z])/.test(password)) {
-    return { isValid: false, message: 'Password must contain at least one uppercase letter' };
-  }
-  if (!/(?=.*\d)/.test(password)) {
-    return { isValid: false, message: 'Password must contain at least one number' };
-  }
-  return { isValid: true };
-}
-  async resetPassword(token, newPassword) {
+
+  async resetPassword(token, newpassword) {
     try {
       const user = await this.userService.findByResetToken(token);
       if (!user) {
         throw new BadRequestException('Invalid or expired reset token');
       }
+
       if (new Date() > new Date(user.resetPasswordExpires)) {
         throw new BadRequestException('Reset token has expired');
       }
-      const passwordValidation = this.validatePasswordStrength(newPassword);
-      if (!passwordValidation.isValid) {
-        throw new BadRequestException(passwordValidation.message);
-      }
-      const salt = await bcrypt.genSalt(12);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
-      await this.userService.updatePassword(user.id, hashedPassword);
-      try {
-        await this.mailingService.sendPasswordChangeConfirmation(user);
-      } catch (emailError) {
-        console.error('Failed to send password change confirmation:', emailError);
+
+      const passwordvalidation = this.validatepasswordstrength(newpassword);
+      if (!passwordvalidation.isvalid) {
+        throw new BadRequestException(passwordvalidation.message);
       }
 
-      return { message: 'Password reset successfully' };
+      const hashedpassword = await this.hashpassword(newpassword);
+      await this.userService.updatePassword(user.id, hashedpassword);
+      await this.sendemail('passwordchange', user);
+
+      return this.createresponse(200, 'Password reset successfully');
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new BadRequestException('Password reset failed');
+      await this.handleerror('resetPassword', error);
     }
   }
-  async changePassword(userId, currentPassword, newPassword) {
+
+  async changePassword(userid, currentpassword, newpassword) {
     try {
-      const user = await this.userService.findOneById(userId);
-      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
-      if (!isCurrentPasswordValid) {
+      const user = await this.userService.findOneByIdWithPassword(userid);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const iscurrentpasswordvalid = await this.comparepassword(currentpassword, user.password);
+      if (!iscurrentpasswordvalid) {
         throw new BadRequestException('Current password is incorrect');
       }
-      const passwordValidation = this.validatePasswordStrength(newPassword);
-      if (!passwordValidation.isValid) {
-        throw new BadRequestException(passwordValidation.message);
+
+      const passwordvalidation = this.validatepasswordstrength(newpassword);
+      if (!passwordvalidation.isvalid) {
+        throw new BadRequestException(passwordvalidation.message);
       }
-      const isSamePassword = await bcrypt.compare(newPassword, user.password);
-      if (isSamePassword) {
+
+      const issamepassword = await this.comparepassword(newpassword, user.password);
+      if (issamepassword) {
         throw new BadRequestException('New password must be different from current password');
       }
 
-      const salt = await bcrypt.genSalt(12);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
-      await this.userService.update(userId, {
-        password: hashedPassword,
-        passwordChangedAt: new Date(),
-      });
-      try {
-        await this.mailingService.sendPasswordChangeConfirmation(user);
-      } catch (emailError) {
-        console.error('Failed to send password change confirmation:', emailError);
-      }
+      const hashedpassword = await this.hashpassword(newpassword);
+      await this.userService.updatePassword(userid, hashedpassword);
+      await this.sendemail('passwordchange', user);
 
-      return { message: 'Password changed successfully' };
+      return this.createresponse(200, 'Password changed successfully');
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new BadRequestException('Password change failed');
+      await this.handleerror('changePassword', error);
     }
   }
+
   async verifyToken(user) {
-    console.log('AuthService verifyToken: User from JWT:', user);
-    
-    return {
-      statusCode: 200,
+    return this.createresponse(200, null, {
       valid: true,
       user: {
-        id: user.id || user.userId,
-        userId: user.id || user.userId,
+        id: user.id,
+        userId: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -391,31 +515,30 @@ export class AuthService {
         profileSetupCompleted: user.profileSetupCompleted,
         profilePicture: user.profilePicture
       }
-    };
+    });
   }
+
   async getProfile(user) {
-    console.log('AuthService getProfile: Getting profile for user:', user.email);
-    const freshUser = await this.userService.findOneById(user.id || user.userId);
+    const freshuser = await this.userService.findOneById(user.id || user.userId);
     
-    return {
-      statusCode: 200,
+    return this.createresponse(200, null, {
       user: {
-        id: freshUser.id,
-        email: freshUser.email,
-        firstName: freshUser.firstName,
-        lastName: freshUser.lastName,
-        profilePicture: freshUser.profilePicture,
-        isVerified: freshUser.isVerified,
-        profileSetupCompleted: freshUser.profileSetupCompleted,
-        stylePreferences: freshUser.stylePreferences,
-        colorPreferences: freshUser.colorPreferences,
-        phoneNumber: freshUser.phoneNumber,
-        dateOfBirth: freshUser.dateOfBirth,
-        gender: freshUser.gender,
-        createdAt: freshUser.createdAt,
-        updatedAt: freshUser.updatedAt,
-        lastLoginAt: freshUser.lastLoginAt
+        id: freshuser.id,
+        email: freshuser.email,
+        firstName: freshuser.firstName,
+        lastName: freshuser.lastName,
+        profilePicture: freshuser.profilePicture,
+        isVerified: freshuser.isVerified,
+        profileSetupCompleted: freshuser.profileSetupCompleted,
+        stylePreferences: freshuser.stylePreferences,
+        colorPreferences: freshuser.colorPreferences,
+        phoneNumber: freshuser.phoneNumber,
+        dateOfBirth: freshuser.dateOfBirth,
+        gender: freshuser.gender,
+        createdAt: freshuser.createdAt,
+        updatedAt: freshuser.updatedAt,
+        lastLoginAt: freshuser.lastLoginAt
       }
-    };
+    });
   }
 }

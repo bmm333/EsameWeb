@@ -25,37 +25,7 @@ export class AuthController {
   constructor(authService) {
     this.authService = authService;
   }
-  @Post('debug-reset-password')
-@Bind(Body())
-async debugResetPassword(@Body() body) {
-  const { email, password } = body;
-  const bcrypt = await import('bcrypt');
   
-  try {
-    const user = await this.authService.userService.findByEmail(email);
-    if (!user) {
-      return { success: false, message: 'User not found' };
-    }
-    
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    
-    await this.authService.userService.updateUserRecord(user.id, { 
-      password: hashedPassword,
-      failedLoginAttempts: 0,
-      lockedUntil: null
-    });
-    
-    return { 
-      success: true,  
-      message: `Password reset to "${password}" for ${email}. You can now login.` 
-    };
-  } catch (error) {
-    console.error('Debug password reset error:', error);
-    return { success: false, error: error.message };
-  }
-}
-
   @UseGuards(LocalAuthGuard)
   @Post('signin')
   @Bind(Request())
@@ -69,14 +39,12 @@ async debugResetPassword(@Body() body) {
     return this.authService.signup(signupData);
   }
 
-  // Email verification route - GET /auth/verify/:token
   @Get('verify/:token')
   @Bind(Param())
   async verifyEmail({ token }) {
     return this.authService.verifyEmail(token);
   }
 
-  // Token verification route - GET /auth/verify (with JWT guard)
   @Get('verify')
   @UseGuards(JwtAuthGuard)
   @Bind(Request())
@@ -107,7 +75,7 @@ async debugResetPassword(@Body() body) {
   @Bind(Request(), Body())
   async changePassword(req, { currentPassword, newPassword }) {
     try {
-      const userId = req.user.sub || req.user.id;
+      const userId = req.user.id;
       console.log('AuthController: change password request for user:', userId);
       return await this.authService.changePassword(userId, currentPassword, newPassword);
     } catch (error) {
@@ -115,13 +83,22 @@ async debugResetPassword(@Body() body) {
       throw error;
     }
   }
+  @Post('refresh')
+  @Bind(Body())
+  async refreshToken({ refreshToken }) {
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token is required');
+    }
+    return this.authService.refreshToken(refreshToken);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  @Bind(Request())
-  async logout(req) {
+  @Bind(Request(), Body())
+  async logout(req, body) {
     const token = this.extractTokenFromRequest(req);
-    return this.authService.logout(token);
+    const refreshToken = body?.refreshToken || null;
+    return this.authService.logout(token, refreshToken);
   }
 
   @UseGuards(JwtAuthGuard)

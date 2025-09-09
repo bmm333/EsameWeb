@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn,OneToOne } from 'typeorm';
 import { User } from '../../user/entities/user.entity.js';
 import { RfidTag } from '../../rfid/entities/rfid-tag.entity.js';
 
@@ -12,7 +12,7 @@ export class Item {
 
     @Column({ 
         type: 'enum',
-        enum: ['tops', 'bottoms', 'outerwear', 'shoes', 'accessories']
+        enum: ['tops', 'bottoms', 'outerwear', 'shoes', 'accessories', 'dresses', 'bags']
     })
     category;
 
@@ -21,7 +21,7 @@ export class Item {
 
     @Column({ 
         type: 'enum',
-        enum: ['wardrobe', 'closet', 'laundry', 'worn', 'missing'],
+        enum: ['wardrobe', 'being_worn'],
         default: 'wardrobe'
     })
     location;
@@ -33,34 +33,26 @@ export class Item {
     lastWorn;
 
     @Column({ type: 'json', nullable: true })
-    wearHistory; // Array of wear events
+    wearHistory; 
 
     @Column({type:'boolean', default: false })
     isFavorite;
 
-    @Column({ type: 'json', nullable: true })
-    tags; // Array of strings like ['formal', 'casual']
-
     @Column({type:'varchar', length: 50, nullable: true })
     color;
 
-    @Column({type:'varchar', length: 50, nullable: true })
-    brand;
-
-    @Column({type:'varchar', length: 20, nullable: true })
-    size;
+    @Column({ 
+        type: 'enum',
+        enum: ['casual', 'formal', 'sporty'],
+        nullable: true 
+    })
+    occasion;
 
     @Column({ type: 'json', nullable: true })
     season; // Array: ['spring', 'summer', etc.]
 
     @Column({ type: 'text', nullable: true })
     notes;
-
-    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-    price;
-
-    @Column({ type: 'date', nullable: true })
-    purchaseDate;
 
     @CreateDateColumn()
     dateAdded;
@@ -78,7 +70,11 @@ export class Item {
     @Column({ type: 'int' })
     userId;
 
-    @ManyToOne(() => RfidTag,tag=>tag.item, { nullable: true })
+    @OneToOne(() => RfidTag, tag => tag.item, { 
+        nullable: true,
+        onDelete: 'SET NULL',
+        cascade: ['update']
+    })
     @JoinColumn({ name: 'rfidTagId' })
     rfidTag;
 

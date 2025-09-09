@@ -1,309 +1,194 @@
-import { OnboardingManager } from '../onboarding-manager.js';
+export async function render() {
+    return `
+    <div class="container py-4 onboarding-container">
+      <div class="progress mb-4">
+        <div class="progress-bar" role="progressbar" id="progressBar" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      
+      <div id="onbAlert"></div>
+      
+      <!-- Step 1: Basic Profile -->
+      <div id="step1" class="onboarding-step active">
+        <h2 class="mb-3">Welcome! Let's set up your profile</h2>
+        <form id="profileForm" class="card p-4">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">First name *</label>
+                <input id="firstName" class="form-control" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Last name</label>
+                <input id="lastName" class="form-control">
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Default weather location</label>
+            <input id="weatherLoc" class="form-control" placeholder="e.g., New York, NY">
+            <div class="form-text">This helps us provide weather-appropriate outfit suggestions.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Gender (optional)</label>
+            <select id="gender" class="form-select">
+              <option value="">Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-primary" id="step1NextBtn">Continue</button>
+          </div>
+        </form>
+      </div>
 
-class OnboardingPageManager extends OnboardingManager {
-  constructor() {
-    super();
-    this.setupPageSpecificEventListeners();
-  }
+      <!-- Step 2: Style Preferences -->
+      <div id="step2" class="onboarding-step">
+        <h2 class="mb-3">What's your style?</h2>
+        <div class="card p-4">
+          <p class="text-muted mb-4">Select the styles that best describe your fashion preferences (choose at least one):</p>
+          <div class="row" id="styleOptions">
+            <div class="col-md-4 mb-3">
+              <div class="style-option" data-style="casual">
+                <i class="bi bi-house-door-fill"></i>
+                <span>Casual</span>
+                <small class="text-muted d-block mt-1">Comfortable, everyday wear</small>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="style-option" data-style="business">
+                <i class="bi bi-briefcase-fill"></i>
+                <span>Business</span>
+                <small class="text-muted d-block mt-1">Professional, work attire</small>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="style-option" data-style="formal">
+                <i class="bi bi-suit-club-fill"></i>
+                <span>Formal</span>
+                <small class="text-muted d-block mt-1">Elegant, special occasions</small>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="style-option" data-style="sporty">
+                <i class="bi bi-heart-pulse-fill"></i>
+                <span>Sporty</span>
+                <small class="text-muted d-block mt-1">Athletic, active wear</small>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="style-option" data-style="bohemian">
+                <i class="bi bi-flower3"></i>
+                <span>Bohemian</span>
+                <small class="text-muted d-block mt-1">Free-spirited, artistic</small>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="style-option" data-style="minimalist">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Minimalist</span>
+                <small class="text-muted d-block mt-1">Simple, clean lines</small>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-outline-secondary" id="step2BackBtn">Back</button>
+            <button type="button" class="btn btn-primary" id="step2NextBtn">Continue</button>
+          </div>
+        </div>
+      </div>
 
-  setupPageSpecificEventListeners() {
-    const nextStepBtns = document.querySelectorAll('.next-step');
-    const prevStepBtns = document.querySelectorAll('.prev-step');
-
-    nextStepBtns.forEach(btn => {
-      btn.addEventListener('click', () => this.nextStep());
-    });
-    prevStepBtns.forEach(btn => {
-      btn.addEventListener('click', () => this.previousStep());
-    });
-
-    const imageUpload = document.getElementById('imageUpload');
-    if (imageUpload) {
-      imageUpload.addEventListener('change', this.handleImageUpload.bind(this));
-    }
-    const finishSetupBtn = document.querySelector('.finish-setup');
-    if (finishSetupBtn) {
-      finishSetupBtn.addEventListener('click', () => this.finishSetup());
-    }
-    this.setupAutoSave();
-  }
-
-  setupAutoSave() {
-    const profileForm = document.getElementById('profileForm');
-    if (profileForm) {
-      const inputs = profileForm.querySelectorAll('input, select, textarea');
-      inputs.forEach(input => {
-        input.addEventListener('change', () => {
-          this.saveStepData(1);
-        });
-      });
-    }
-    const styleInputs = document.querySelectorAll('input[name="style"]');
-    styleInputs.forEach(input => {
-      input.addEventListener('change', () => {
-        this.saveStepData(2);
-      });
-    });
-
-    const colorInputs = document.querySelectorAll('input[name="colors"]');
-    colorInputs.forEach(input => {
-      input.addEventListener('change', () => {
-        this.saveStepData(3);
-      });
-    });
-  }
-
-  saveProfileData() {
-    const user = window.authManager.user;
-    
-    this.profileData.firstName = user.firstName;
-    this.profileData.lastName = user.lastName;
-    this.profileData.email = user.email;
-    
-    const fullName = document.getElementById('fullName').value;
-    if (fullName) {
-      const nameParts = fullName.trim().split(' ');
-      this.profileData.firstName = nameParts[0];
-      this.profileData.lastName = nameParts.slice(1).join(' ') || '';
-    }
-
-    const nickname = document.getElementById('nickname').value;
-    if (nickname) {
-      this.profileData.nickname = nickname;
-    }
-
-    const gender = document.querySelector('input[name="gender"]:checked');
-    if (gender) {
-      this.profileData.gender = gender.value;
-    }
-
-    console.log('Profile data saved:', this.profileData);
-  }
-
-  saveStylePreferences() {
-    //ui->Backend values
-    const styleMap = {
-      'Formal': 'formal',
-      'Casual': 'casual',
-      'Business Casual': 'business',
-      'Sporty': 'sporty',
-      'Evening': 'classic', //just a mapping rule for now 
-      'Trendy': 'trendy'
-    };
-
-    const selectedStyles = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
-      .filter(input => input.id.startsWith('style'))
-      .map(input => {
-        const label = input.parentElement.querySelector('span');
-        const uiLabel = label ? label.textContent.trim() : input.value;
-        return styleMap[uiLabel] || input.value.toLowerCase();
-      });
-
-    this.profileData.stylePreferences = selectedStyles;
-    console.log('Style preferences saved:', selectedStyles);
-  }
-
-  saveColorPreferences() {
-    const selectedColors = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
-      .filter(input => input.id.startsWith('color'))
-      .map(input => {
-        const label = input.parentElement.querySelector('.visually-hidden');
-        return label ? label.textContent.trim().toLowerCase() : input.value;
-      });
-    
-    this.profileData.colorPreferences = selectedColors;
-    console.log('Color preferences saved:', selectedColors);
-  }
-
-  validateProfileStep() {
-    const gender = document.querySelector('input[name="gender"]:checked');
-    if (!gender) {
-      this.showAlert('Please select your gender', 'warning');
-      return false;
-    }
-    return true;
-  }
-
-  validateStyleStep() {
-    const selectedStyles = document.querySelectorAll('input[type="checkbox"]:checked');
-    const styleCount = Array.from(selectedStyles).filter(input => input.id.startsWith('style')).length;
-    
-    if (styleCount === 0) {
-      this.showAlert('Please select at least one style preference', 'warning');
-      return false;
-    }
-    return true;
-  }
-
-  validateColorStep() {
-    const selectedColors = document.querySelectorAll('input[type="checkbox"]:checked');
-    const colorCount = Array.from(selectedColors).filter(input => input.id.startsWith('color')).length;
-    
-    if (colorCount === 0) {
-      this.showAlert('Please select at least one color preference', 'warning');
-      return false;
-    }
-    return true;
-  }
-
-  updateStepDisplay() {
-    document.querySelectorAll('.step').forEach((step, index) => {
-      const stepNumber = index + 1;
-      step.classList.toggle('active', stepNumber === this.currentStep);
-      step.classList.toggle('completed', stepNumber < this.currentStep);
-    });
-
-    document.querySelectorAll('.step-pane').forEach((pane, index) => {
-      pane.classList.toggle('active', index + 1 === this.currentStep);
-    });
-
-    const progress = (this.currentStep / this.totalSteps) * 100;
-    const progressBar = document.querySelector('.progress .progress-bar');
-    if (!progressBar) {
-      const progressContainer = document.querySelector('.progress');
-      if (progressContainer) {
-        progressContainer.innerHTML = `<div class="progress-bar" role="progressbar" style="width: ${progress}%"></div>`;
-      }
-    } else {
-      progressBar.style.width = `${progress}%`;
-    }
-
-    const prevBtns = document.querySelectorAll('.prev-step');
-    const nextBtns = document.querySelectorAll('.next-step');
-    
-    prevBtns.forEach(btn => {
-      btn.style.display = this.currentStep === 1 ? 'none' : 'inline-block';
-    });
-
-    if (this.currentStep === this.totalSteps) {
-      this.updateSummary();
-      const lastStepNextBtn = document.querySelector('#step4 .next-step');
-      if (lastStepNextBtn) {
-        lastStepNextBtn.textContent = 'Complete Setup';
-        lastStepNextBtn.classList.remove('next-step');
-        lastStepNextBtn.classList.add('finish-setup');
-        lastStepNextBtn.onclick = () => this.finishSetup();
-      }
-    }
-  }
-
-  updateSummary() {
-    const summaryName = document.getElementById('summaryName');
-    if (summaryName && this.profileData.firstName) {
-      summaryName.textContent = `${this.profileData.firstName} ${this.profileData.lastName || ''}`.trim();
-    }
-
-    const summaryStyles = document.getElementById('summaryStyles');
-    if (summaryStyles && this.profileData.stylePreferences) {
-      summaryStyles.textContent = this.profileData.stylePreferences.join(', ');
-    }
-
-    const summaryColors = document.getElementById('summaryColors');
-    if (summaryColors && this.profileData.colorPreferences) {
-      const colorMapping = {
-        'black': '#000000',
-        'white': '#ffffff',
-        'blue': '#6366f1',
-        'green': '#10b981',
-        'red': '#ef4444',
-        'yellow': '#f59e0b',
-        'purple': '#8b5cf6',
-        'pink': '#ec4899',
-        'gray': '#78716c',
-        'grey': '#78716c',
-        'brown': '#854d0e'
-      };
-
-      summaryColors.innerHTML = this.profileData.colorPreferences
-        .map(color => {
-          const colorCode = colorMapping[color.toLowerCase()] || '#6366f1';
-          return `<span class="color-dot" style="background-color: ${colorCode};"></span>`;
-        })
-        .join(' ');
-    }
-  }
-
-  handleImageUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imagePreview = document.getElementById('imagePreview');
-        if (imagePreview) {
-          imagePreview.style.backgroundImage = `url(${e.target.result})`;
-        }
-        this.profileData.profilePicture = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-  
-  async finishSetup() {
-  try {
-    this.saveStepData(this.currentStep);
-
-    const finishBtn = document.querySelector('.finish-setup');
-    if (finishBtn) {
-      const originalText = finishBtn.textContent;
-      finishBtn.disabled = true;
-      finishBtn.textContent = 'Completing setup...';
-      const formData = new FormData();
-      for (const [key, value] of Object.entries(this.profileData)) {
-      if (key !== 'profilePicture') {
-        if (Array.isArray(value)) {
-          formData.append(key, JSON.stringify(value));
-        } else {
-          formData.append(key, value);
-        }
-      }
-    }
-      const imageInput = document.getElementById('imageUpload');
-      if (imageInput && imageInput.files && imageInput.files[0]) {
-        formData.append('profilePicture', imageInput.files[0]);
-      }
-
-        const apiBase = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://localhost:3001';
-        const response = await fetch(`${apiBase}/user/profile/setup`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${window.authManager.token}`
-        },
-        body: formData
-      });
-
-      const result = await response.json();
-
-      if (result.statusCode === 200 || result.success) {
-        this.showAlert('Profile setup completed successfully!', 'success');
-        setTimeout(() => {
-          window.location.href = '/dashboard.html';
-        }, 2000);
-      } else {
-        this.showAlert(result.error || 'Failed to complete profile setup', 'danger');
-        finishBtn.disabled = false;
-        finishBtn.textContent = originalText;
-      }
-    }
-  } catch (error) {
-    console.error('Profile setup error:', error);
-    this.showAlert('An unexpected error occurred. Please try again.', 'danger');
-
-    const finishBtn = document.querySelector('.finish-setup');
-    if (finishBtn) {
-      finishBtn.disabled = false;
-      finishBtn.textContent = 'Complete Setup';
-    }
-    }
-  }
+      <!-- Step 3: Color Preferences -->
+      <div id="step3" class="onboarding-step">
+        <h2 class="mb-3">Your favorite colors</h2>
+        <div class="card p-4">
+          <p class="text-muted mb-4">Select colors you love wearing (choose at least one):</p>
+          <div class="color-grid" id="colorOptions">
+            <div class="color-option" data-color="black" data-hex="#000000" title="Black"></div>
+            <div class="color-option" data-color="white" data-hex="#FFFFFF" title="White"></div>
+            <div class="color-option" data-color="navy" data-hex="#001f3f" title="Navy"></div>
+            <div class="color-option" data-color="blue" data-hex="#0074D9" title="Blue"></div>
+            <div class="color-option" data-color="red" data-hex="#FF4136" title="Red"></div>
+            <div class="color-option" data-color="green" data-hex="#2ECC40" title="Green"></div>
+            <div class="color-option" data-color="yellow" data-hex="#FFDC00" title="Yellow"></div>
+            <div class="color-option" data-color="purple" data-hex="#B10DC9" title="Purple"></div>
+            <div class="color-option" data-color="pink" data-hex="#F012BE" title="Pink"></div>
+            <div class="color-option" data-color="orange" data-hex="#FF851B" title="Orange"></div>
+            <div class="color-option" data-color="brown" data-hex="#8B4513" title="Brown"></div>
+            <div class="color-option" data-color="gray" data-hex="#808080" title="Gray"></div>
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-outline-secondary" id="step3BackBtn">Back</button>
+            <button type="button" class="btn btn-success" id="finishBtn">
+              <i class="bi bi-check-circle me-2"></i>Complete Setup
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const initOnboarding = () => {
-    if (window.authManager) {
-      new OnboardingPageManager();
-    } else {
-      setTimeout(initOnboarding, 100);
+export async function init() {
+    const { OnboardingManager } = await import('../onboarding-manager.js');
+    const manager = new OnboardingManager();
+    const user = window.app.userContext.get();
+    if (user) {
+        setTimeout(() => {
+            const firstNameInput = document.getElementById('firstName');
+            const lastNameInput = document.getElementById('lastName');
+            const weatherLocInput = document.getElementById('weatherLoc');
+            const genderSelect = document.getElementById('gender');
+            
+            if (firstNameInput) firstNameInput.value = user.firstName || '';
+            if (lastNameInput) lastNameInput.value = user.lastName || '';
+            if (weatherLocInput) weatherLocInput.value = user.location || '';
+            if (genderSelect) genderSelect.value = user.gender || '';
+        }, 100);
     }
-  };
-  setTimeout(initOnboarding, 100);
-});
+    setupEventListeners(manager);
+    setTimeout(() => {
+        manager.restoreSelections();
+        manager.updateStepDisplay();
+    }, 100);
+
+    function setupEventListeners(manager) {
+        document.getElementById('step1NextBtn')?.addEventListener('click', () => manager.nextStep());
+        document.getElementById('step2BackBtn')?.addEventListener('click', () => manager.previousStep());
+        document.getElementById('step2NextBtn')?.addEventListener('click', () => manager.nextStep());
+        document.getElementById('step3BackBtn')?.addEventListener('click', () => manager.previousStep());
+        document.getElementById('finishBtn')?.addEventListener('click', () => manager.finishOnboarding());
+        document.querySelectorAll('.style-option').forEach(option => {
+            option.addEventListener('click', () => {
+                option.classList.toggle('selected');
+                manager.saveStylePreferences();
+            });
+        });
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                option.classList.toggle('selected');
+                manager.saveColorPreferences();
+            });
+        });
+        const profileInputs = ['firstName', 'lastName', 'weatherLoc', 'gender'];
+        profileInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('blur', () => {
+                    manager.saveProfileData();
+                });
+            }
+        });
+        const profileForm = document.getElementById('profileForm');
+        if (profileForm) {
+            profileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                manager.nexttep();
+            });
+        }
+    }
+}

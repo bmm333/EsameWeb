@@ -1,139 +1,93 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // Wait for AuthManager to be available
-  setTimeout(() => {
-    if (window.authManager && window.authManager.isAuthenticated()) {
-      window.location.href = '/dashboard.html';
-      return;
-    }
-
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-      loginForm.addEventListener('submit', handleLogin);
-    }
-    const signupForm = document.getElementById('signupForm');
-    if (signupForm) {
-      signupForm.addEventListener('submit', handleSignup);
-    }
-  }, 100);
-});
-
-async function handleLogin(e) {
-  e.preventDefault();
+import { LoginForm } from '../components/forms/login-form.js';
+import { SignupForm } from '../components/forms/signup-form.js';
+export async function render() {
+  const isSignup = window.location.pathname === '/signup';
   
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const submitButton = e.target.querySelector('button[type="submit"]');
-  const originalText = submitButton.textContent;
-  submitButton.disabled = true;
-  submitButton.textContent = 'Signing in...';
-  try {
-    const result = await window.authManager.login({ email, password });
+  return `
+    <nav class="navbar fixed-top" aria-label="Primary navigation">
+      <div class="container">
+        <a href="/" data-nav class="navbar-brand" aria-label="Smart Wardrobe home">Smart Wardrobe</a>
+        <div class="d-flex align-items-center">
+          <button id="themeSwitcherAuth" type="button" class="btn btn-link text-decoration-none" aria-label="Toggle theme" title="Toggle theme">
+            <i class="bi bi-sun-fill theme-icon-light" aria-hidden="true"></i>
+            <i class="bi bi-moon-fill theme-icon-dark d-none" aria-hidden="true"></i>
+            <span class="visually-hidden">Toggle theme</span>
+          </button>
+          ${isSignup 
+            ? '<a href="/login" data-nav class="btn btn-outline-primary btn-sm ms-2">Login</a>'
+            : '<a href="/signup" data-nav class="btn btn-primary btn-sm ms-2">Sign Up</a>'
+          }
+        </div>
+      </div>
+    </nav>
     
-    if (result.success) {
-      showAlert('Sign in successful!', 'success');
-      window.authManager.isNavigating = true;
-
-      if (result.needsProfileSetup) {
-        setTimeout(() => {
-          window.location.href = '/onboarding.html';
-        }, 1000);
-      } else {
-        setTimeout(() => {
-          window.location.href = '/dashboard.html';
-        }, 1000);
-      }
-    } else {
-      showAlert(result.error, 'danger');
-    }
-  } catch (error) {
-    console.error('Login error:', error);
-    showAlert('An unexpected error occurred. Please try again.', 'danger');
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = originalText;
-  }
-}
-
-async function handleSignup(e) {
-  e.preventDefault();
-  
-  const name = document.getElementById('name').value;
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const termsAgree = document.getElementById('termsAgree')?.checked;
-  const submitButton = e.target.querySelector('button[type="submit"]');
-  
-  // Validate terms agreement (if checkbox exists)
-  if (document.getElementById('termsAgree') && !termsAgree) {
-    showAlert('Please agree to the Terms of Service and Privacy Policy', 'warning');
-    return;
-  }
-
-  // Validate password length
-  if (password.length < 8) {
-    showAlert('Password must be at least 8 characters long', 'warning');
-    return;
-  }
-
-  // Split name into firstName and lastName
-  const nameParts = name.trim().split(' ');
-  const firstName = nameParts[0];
-  const lastName = nameParts.slice(1).join(' ') || '';
-
-  // Show loading state
-  const originalText = submitButton.textContent;
-  submitButton.disabled = true;
-  submitButton.textContent = 'Creating account...';
-  
-  try {
-    const result = await window.authManager.register({
-      firstName,
-      lastName,
-      email,
-      password
-    });
-    
-    if (result.success) {
-      showAlert('Account created successfully! Please sign in.', 'success');
-      setTimeout(() => {
-        window.location.href = '/login.html';
-      }, 2000);
-    } else {
-      showAlert(result.error, 'danger');
-    }
-  } catch (error) {
-    console.error('Registration error:', error);
-    showAlert('An unexpected error occurred. Please try again.', 'danger');
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = originalText;
-  }
-}
-
-function showAlert(message, type = 'info') {
-  const existingAlert = document.querySelector('.alert');
-  if (existingAlert) {
-    existingAlert.remove();
-  }
-
-  const alert = document.createElement('div');
-  alert.className = `alert alert-${type} alert-dismissible fade show`;
-  alert.innerHTML = `
-    ${message}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="d-flex justify-content-center align-items-center min-vh-100" role="main">
+      <div id="authContainer" class="w-100" ></div>
+    </div>
   `;
-
-  const authCard = document.querySelector('.auth-card');
-  const authHeader = document.querySelector('.auth-header');
-  if (authHeader) {
-    authHeader.insertAdjacentElement('afterend', alert);
-  } else if (authCard) {
-    authCard.insertBefore(alert, authCard.firstChild);
-  }
-
-  setTimeout(() => {
-    if (alert.parentNode) {
-      alert.remove();
+}
+export async function init() {
+  const isSignup = window.location.pathname === '/signup';
+  const container = document.getElementById('authContainer');
+  if (!container) return;
+  document.body.classList.remove('landing-active');
+  const opts = {
+    onSubmit: async (data) => {
+      if (isSignup) {
+        const response = await window.app.api.post('/auth/signup', {
+          email: data.email,
+          password: data.password,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          enableTrial: data.enableTrial || false 
+        });
+        if (window.toast) {
+            const message = response.trial?.enabled 
+            ? 'Trial account created! You have 3 days to explore our features.'
+          : 'Account created. Check your email for verification.';
+          window.toast.success(message);
+        }
+        setTimeout(() => window.app.router.navigate('/login'), 2500);
+      } else {
+        const result = await window.authManager.login({
+          email: data.email,
+          password: data.password
+        });
+        try { 
+          await window.app.userContext.load(); 
+        } catch {}
+        const user = window.app.userContext.get();
+        if (user && !user.profileSetupCompleted) {
+          if (window.toast) window.toast.success('Welcome! Let\'s set up your profile.');
+          window.app.router.navigate('/onboarding');
+        } else {
+          if (window.toast) window.toast.success('Logged in');
+          window.app.router.navigate('/dashboard');
+        }
+      }
     }
-  }, 5000);
+  };
+  if (isSignup) {
+    new SignupForm(container, opts);
+  } else {
+    new LoginForm(container, opts);
+  }
+  setTimeout(() => {
+    const authContainer = container.querySelector('.auth-container');
+    if (authContainer) {
+      authContainer.style.minHeight = 'auto';
+      const innerContainer = authContainer.querySelector('.container');
+      if (innerContainer) {
+        innerContainer.classList.remove('container');
+        innerContainer.style.maxWidth = 'none';
+        innerContainer.style.padding = '0';
+      }
+    }
+  }, 0);
+  document.querySelectorAll('[data-nav]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      window.app.router.navigate(el.getAttribute('href'));
+    });
+  });
 }

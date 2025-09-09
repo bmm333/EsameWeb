@@ -5,11 +5,8 @@ import { UserService } from './user.service.js';
 import { User } from './entities/user.entity.js';
 import { UserStylePreference } from './entities/user-style-preferences.entity.js';
 import { UserColorPreference } from './entities/user-color-preferences.entity.js';
-import { UserFavoriteShop } from './entities/user-shop.entity.js';
-import { UserSize } from './entities/user-size.entity.js';
 import { UserLifestyle } from './entities/user-lifestyle.entity.js';
 import { UserOccasion } from './entities/user-occasion.entity.js';
-import { UserAvoidMaterial } from './entities/user-avoid.entity.js';
 import { MediaModule } from '../media/media.module.js';
 
 @Module({
@@ -18,11 +15,8 @@ import { MediaModule } from '../media/media.module.js';
       User,
       UserStylePreference,
       UserColorPreference,
-      UserFavoriteShop,
-      UserSize,
       UserLifestyle,
       UserOccasion,
-      UserAvoidMaterial
     ]),
     MediaModule
   ],

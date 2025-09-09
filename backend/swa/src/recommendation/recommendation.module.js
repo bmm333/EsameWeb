@@ -1,19 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RecommendationService } from './recommendation.service.js';
 import { RecommendationController } from './recommendation.controller.js';
+import { RecommendationService } from './recommendation.service.js';
 import { Recommendation } from './entities/recommendation.entity.js';
 import { Item } from '../item/entities/item.entity.js';
-import { Outfit } from '../outfit/entities/outfit.entity.js';
-import { User } from '../user/entities/user.entity.js';
-import { WeatherService } from '../weather/weather.service.js';
-
+import { MailingModule } from '../mailing/mailing.module.js';
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Recommendation, Item, Outfit, User]),
-  ],
-  providers: [RecommendationService,WeatherService], 
-  controllers: [RecommendationController],
-  exports: [RecommendationService] 
+    imports: [
+        TypeOrmModule.forFeature([Recommendation, Item]),
+        MailingModule
+    ],
+    controllers: [RecommendationController],
+    providers: [RecommendationService],
+    exports: [RecommendationService]
 })
 export class RecommendationModule {}

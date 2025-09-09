@@ -4,10 +4,20 @@
   align-items: center;
   text-align: center;
 }
-@media (min-width: 992px) {
+
+@media (width >= 992px) {
   .hero-section {
     text-align: left;
   }
+}
+
+.hero-image {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 10%), 0 10px 10px -5px rgb(0 0 0 / 4%);
+  transition: transform 0.3s ease;
 }
 
 .hero-image-container {
@@ -15,6 +25,7 @@
   max-width: 100%;
   margin: 0 auto;
 }
+
 .floating-element {
   position: absolute;
   background-color: var(--bg-color);
@@ -28,7 +39,7 @@
   z-index: 1;
 }
 
-@media (min-width: 992px) {
+@media (width >= 992px) {
   .floating-element {
     display: flex;
   }
@@ -56,21 +67,26 @@
   left: 10%;
   animation-delay: 2s;
 }
+
 @keyframes float {
   0% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
+
   100% {
-    transform: translateY(0px);
+    transform: translateY(0);
   }
 }
+
 .features-section {
   background-color: var(--bg-color);
   padding: var(--spacing-2xl) 0;
 }
+
 .feature-card {
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-lg);
@@ -100,10 +116,12 @@
   font-size: 1.5rem;
   color: var(--primary-color);
 }
+
 .how-it-works-section {
   background-color: var(--bg-secondary);
   padding: var(--spacing-2xl) 0;
 }
+
 .step-card {
   position: relative;
   padding: var(--spacing-lg);
@@ -132,17 +150,20 @@
   background-color: var(--bg-color);
   padding: var(--spacing-2xl) 0;
 }
+
 .testimonial-card {
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-lg);
   background-color: var(--bg-secondary);
   margin-bottom: var(--spacing-lg);
 }
+
 .testimonial-author {
   display: flex;
   align-items: center;
   margin-top: var(--spacing-md);
 }
+
 .testimonial-author-avatar {
   width: 50px;
   height: 50px;
@@ -180,7 +201,7 @@
   text-align: center;
 }
 
-@media (min-width: 992px) {
+@media (width >= 992px) {
   .footer {
     text-align: left;
   }
@@ -211,7 +232,7 @@
   margin: var(--spacing-lg) 0;
 }
 
-@media (min-width: 992px) {
+@media (width >= 992px) {
   .social-icons {
     justify-content: flex-start;
   }

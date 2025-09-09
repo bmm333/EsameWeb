@@ -1,137 +1,292 @@
-.setup-main {
-  padding-top: 80px;
-  min-height: 100vh;
-  background: linear-gradient(135deg, var(--bs-primary-bg-subtle) 0%, var(--bs-body-bg) 100%);
-}
-
-.setup-container {
-  max-width: 800px;
-  margin: 0 auto;
+.device-setup-container {
+  max-width: 820px;
 }
 
 .setup-progress {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 2rem;
-  position: relative;
+  margin-bottom: var(--spacing-lg);
 }
 
-.setup-progress::before {
+.step-indicators {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: var(--spacing-lg);
+}
+
+.step-indicators::before {
   content: '';
   position: absolute;
-  top: 25px;
+  top: 15px;
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--bs-border-color);
+  background-color: var(--border-color);
   z-index: 1;
 }
 
-.step {
+.step-indicator {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
   position: relative;
   z-index: 2;
+  flex: 1;
 }
 
-.step-number {
-  width: 50px;
-  height: 50px;
+.step-circle {
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: var(--bs-body-bg);
-  border: 3px solid var(--bs-border-color);
+  background-color: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  transition: all 0.3s ease;
+  margin-bottom: var(--spacing-xs);
+  transition: var(--transition);
 }
 
-.step.active .step-number {
-  background: var(--bs-primary);
-  border-color: var(--bs-primary);
+.step-indicator.active .step-circle {
+  background-color: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 
-.step.completed .step-number {
-  background: var(--bs-success);
-  border-color: var(--bs-success);
+.step-indicator.completed .step-circle {
+  background-color: var(--success);
+  border-color: var(--success);
   color: white;
+}
+
+.step-indicator.completed .step-circle::after {
+  content: '✓';
 }
 
 .step-label {
-  font-size: 0.875rem;
+  font-size: var(--font-size-xs);
   font-weight: 500;
-  color: var(--bs-secondary);
+  color: var(--text-muted);
+  transition: var(--transition);
 }
 
-.step.active .step-label {
-  color: var(--bs-primary);
+.step-indicator.active .step-label {
+  color: var(--primary);
+  font-weight: 600;
 }
 
-.setup-content {
-  max-width: 600px;
-  margin: 0 auto;
+.setup-card {
+  box-shadow: var(--shadow-md);
 }
 
 .setup-step {
   display: none;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
 }
 
 .setup-step.active {
   display: block;
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.step-card {
-  background: var(--bs-body-bg);
-  border: 1px solid var(--bs-border-color);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+.step-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 }
 
-.step-card h3 {
-  margin-bottom: 1rem;
-  color: var(--bs-heading-color);
+.step-content {
+  padding: 0 var(--spacing-lg);
 }
 
-.bluetooth-status,
-.activation-status {
-  padding: 2rem;
+.setup-checklist {
+  margin-bottom: var(--spacing-lg);
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+}
+
+.step-actions {
   text-align: center;
-  background: var(--bs-light);
-  border-radius: 12px;
-  margin: 1rem 0;
 }
 
-.bluetooth-status i {
-  animation: pulse 2s infinite;
+.step-continue-btn,
+.generate-key-btn,
+.step3-continue-btn {
+  min-width: 200px;
 }
 
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+.api-key-container {
+  margin-top: var(--spacing-lg);
 }
 
-@media (max-width: 768px) {
-  .setup-progress {
-    gap: 1rem;
+.api-key-success {
+  border-left: 4px solid var(--success);
+}
+
+.api-key-input-group {
+  margin-top: var(--spacing-sm);
+}
+
+.api-key-input {
+  font-family: Monaco, Menlo, monospace;
+  font-size: var(--font-size-sm);
+}
+
+.api-key-copy-btn {
+  border-left: none;
+}
+
+.api-key-note {
+  font-style: italic;
+}
+
+.device-config-row {
+  margin-top: var(--spacing-lg);
+}
+
+.config-instructions {
+  padding-right: var(--spacing-lg);
+}
+
+.config-steps {
+  padding-left: var(--spacing-md);
+}
+
+.config-steps li {
+  margin-bottom: var(--spacing-sm);
+}
+
+.device-illustration-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device-illustration {
+  padding: var(--spacing-xl);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--border-radius-lg);
+  border: 2px dashed var(--border-color);
+}
+
+.device-icon {
+  font-size: 4rem;
+}
+
+.device-label {
+  margin-top: var(--spacing-sm);
+  font-weight: 500;
+}
+
+.connection-status {
+  margin-bottom: var(--spacing-lg);
+}
+
+.status-waiting {
+  border-left: 4px solid var(--info);
+}
+
+.status-spinner {
+  flex-shrink: 0;
+}
+
+.status-note {
+  font-style: italic;
+}
+
+.setup-complete-actions {
+  animation: fadeIn 0.5s ease;
+}
+
+.setup-success {
+  border-left: 4px solid var(--success);
+}
+
+.success-icon {
+  font-size: 2rem;
+}
+
+.setup-navigation {
+  margin-top: var(--spacing-lg);
+}
+
+.nav-wardrobe,
+.nav-dashboard {
+  min-width: 150px;
+}
+
+.setup-divider {
+  margin: var(--spacing-xl) 0;
+}
+
+.restart-btn {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+.restart-btn:hover {
+  color: var(--primary);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (width <= 768px) {
+  .device-setup-container {
+    max-width: 100%;
   }
   
-  .step-number {
-    width: 40px;
-    height: 40px;
+  .step-indicators {
+    flex-direction: column;
+    gap: var(--spacing-md);
   }
   
-  .step-label {
-    font-size: 0.75rem;
+  .step-indicators::before {
+    display: none;
   }
   
-  .step-card {
-    padding: 1.5rem;
+  .step-indicator {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+  
+  .step-circle {
+    margin-bottom: 0;
+    margin-right: var(--spacing-sm);
+  }
+  
+  .device-config-row {
+    flex-direction: column;
+  }
+  
+  .config-instructions {
+    padding-right: 0;
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .setup-navigation {
+    flex-direction: column;
+  }
+  
+  .nav-wardrobe,
+  .nav-dashboard {
+    width: 100%;
   }
 }

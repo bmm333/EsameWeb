@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Dashboard - Smart Wardrobe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/css/variables.css">
+    <link rel="stylesheet" href="src/css/base.css">
+    <link rel="stylesheet" href="src/css/components.css">
+    <link rel="stylesheet" href="src/css/layout.css">
+    <link rel="stylesheet" href="src/css/pages/dashboard.css">
+</head>
+<body data-bs-theme="light" data-page="dashboard">
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <!-- Main content will  not show untill authenticatdd-->
+    <div class="content-wrapper" id="contentWrapper">
+        <nav class="navbar fixed-top">
+            <div class="container">
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu" aria-label="Toggle navigation">
+                    <i class="bi bi-list fs-3"></i>
+                </button>
+                <a href="dashboard.html" class="navbar-brand">Smart Wardrobe</a>
+                <div class="d-flex align-items-center">
+                    <button id="themeSwitcher" class="btn btn-link text-decoration-none">
+                        <i class="bi bi-sun-fill theme-icon-light"></i>
+                        <i class="bi bi-moon-fill theme-icon-dark d-none"></i>
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-link text-decoration-none dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://placehold.co/32x32/f9fafb/6366f1?text=Loading..." alt="User" class="rounded-circle" id="userAvatar">
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="settings.html">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="login.html" id="logoutBtn">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="sideMenu" aria-labelledby="sideMenuLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="sideMenuLabel">Smart Wardrobe</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a href="dashboard.html" class="nav-link"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                    <li class="nav-item"><a href="wardrobe.html" class="nav-link"><i class="bi bi-grid-3x3-gap me-2"></i>My Wardrobe</a></li>
+                    <li class="nav-item"><a href="outfit.html" class="nav-link"><i class="bi bi-layers me-2"></i>Outfits</a></li>
+                    <li class="nav-item"><a href="recommendations.html" class="nav-link"><i class="bi bi-lightbulb me-2"></i>Recommendations</a></li>
+                    <li class="nav-item"><a href="settings.html" class="nav-link"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                    <li class="nav-item mt-4"><a href="index.html" class="btn btn-outline-primary w-100">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+        <main class="dashboard-main">
+            <div class="container py-4">
+                <header class="dashboard-header mb-5">
+                    <h1 id="welcomeMessage">Good morning, <span id="userGreeting">User</span></h1>
+                    <p class="text-muted">Your Wardrobe Overview</p>
+                </header>
+                <div class="row g-4 mb-5">
+                    <div class="col-lg-7">
+                        <div class="dashboard-card">
+                            <div class="dashboard-card-header">
+                                <h2>Todays Outfit</h2>
+                                <div class="weather-badge" id="weatherInfo">
+                                    <i class="bi bi-cloud-sun"></i>
+                                    <span id="weatherTemp">--</span>
+                                </div>
+                            </div>
+                            <div class="dashboard-card-body">
+                                <div class="outfit-display" id="todayOutfit">
+                                    <!-- Dynamic outfit loading -->
+                                    <div class="text-center text-muted py-5">
+                                        <i class="bi bi-layers fs-1 mb-3"></i>
+                                        <h5>No outfit suggested today</h5>
+                                        <p>Create an outfit or check recommendations!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="dashboard-card">
+                            <div class="dashboard-card-header">
+                                <h2>Wardrobe Stats</h2>
+                            </div>
+                            <div class="dashboard-card-body">
+                                <div class="stats-container" id="wardrobeStats">
+                                    <div class="text-center text-muted py-3">
+                                        <i class="bi bi-bar-chart fs-1 mb-3"></i>
+                                        <h5>Loading stats...</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="dashboard-card-header">
+                                <h2>Quick Actions</h2>
+                            </div>
+                            <div class="dashboard-card-body">
+                                <div class="list-group" id="quickActions">
+                                    <a href="wardrobe.html" class="list-group-item list-group-item-action">
+                                        <i class="bi bi-plus-circle me-2"></i>
+                                        Add new item
+                                    </a>
+                                    <a href="outfit.html" class="list-group-item list-group-item-action">
+                                        <i class="bi bi-palette me-2"></i>
+                                        Create outfit
+                                    </a>
+                                    <a href="recommendations.html" class="list-group-item list-group-item-action">
+                                        <i class="bi bi-lightbulb me-2"></i>
+                                        Get recommendations
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="dashboard-card">
+                            <div class="dashboard-card-header">
+                                <h2>Recent Activity</h2>
+                            </div>
+                            <div class="dashboard-card-body">
+                                <ul class="activity-list" id="recentActivity">
+                                    <li class="text-center text-muted py-5">
+                                        <i class="bi bi-clock-history fs-1 mb-3"></i>
+                                        <h5>No recent activity</h5>
+                                        <p>Start using your wardrobe to see activity here!</p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="src/js/utils.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+    <script type="module" src="src/js/services/auth-manager.js"></script>
+    <script type="module" src="src/js/pages/dashboard.js"></script>
+</body>
+</html>

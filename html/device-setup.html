@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Wardrobe Device Setup</title>
+  <link rel="stylesheet" href="src/css/base.css">
+  <link rel="stylesheet" href="src/css/components.css">
+  <link rel="stylesheet" href="src/css/layout.css">
+  <link rel="stylesheet" href="src/css/pages/setup.css">
+</head>
+<body class="page-container">
+  <main class="main-content">
+    <div class="container">
+      <h1 class="page-title">Smart Wardrobe Device Setup</h1>
+      
+      <div class="step-indicator">
+        <div class="step-circle active" id="step-circle-1">1</div>
+        <div class="step-line"></div>
+        <div class="step-circle" id="step-circle-2">2</div>
+        <div class="step-line"></div>
+        <div class="step-circle" id="step-circle-3">3</div>
+        <div class="step-line"></div>
+        <div class="step-circle" id="step-circle-4">4</div>
+      </div>
+      
+      <!-- Step 1: Power on device -->
+      <div class="setup-step active" id="step-1">
+        <h3 class="step-title">Step 1: Power On Your Smart Wardrobe</h3>
+        <p class="step-description">Let's set up your Smart Wardrobe device:</p>
+        <ol class="step-list">
+          <li>Plug in your Smart Wardrobe device to a power source.</li>
+          <li>Wait until the indicator light starts flashing blue (approximately 30 seconds).</li>
+          <li>The device is now ready for setup.</li>
+        </ol>
+        <div class="alert alert-info">
+          <i class="icon-info"></i>
+          The flashing blue light indicates that your device is in setup mode.
+        </div>
+        <button class="btn btn-primary" id="step1-continue">I've Powered On My Device</button>
+      </div>
+      
+      <!-- Step 2: Generate API Key -->
+      <div class="setup-step" id="step-2">
+        <h3 class="step-title">Step 2: Generate Device Key</h3>
+        <p class="step-description">Now we'll generate a unique key for your device:</p>
+        <div class="mb-3">
+          <button class="btn btn-primary" id="generate-api-key">Generate Device Key</button>
+        </div>
+        <div id="api-key-container" class="d-none mb-3">
+          <p><strong>Your Device Key:</strong></p>
+          <div class="api-key mb-2" id="api-key-display"></div>
+          <button class="btn btn-secondary btn-sm" id="copy-api-key">
+            <i class="icon-copy"></i> Copy to Clipboard
+          </button>
+        </div>
+        <div class="alert alert-warning">
+          <i class="icon-warning"></i>
+          Keep this key safe! You'll need it in the next step.
+        </div>
+        <button class="btn btn-primary d-none" id="step2-continue">Continue</button>
+      </div>
+      
+      <!-- Step 3: Connect to device WiFi -->
+      <div class="setup-step" id="step-3">
+        <h3 class="step-title">Step 3: Connect to Device WiFi</h3>
+        <p class="step-description">Connect your computer or phone to the device's WiFi network:</p>
+        <div class="card mb-4">
+          <div class="card-body">
+            <p><strong>WiFi Name:</strong> <code>Smartwardrobe-setup</code></p>
+            <p><strong>Password:</strong> <code>smartwardrobe123</code></p>
+          </div>
+        </div>
+        <p>Once connected to the device's WiFi:</p>
+        <ol class="step-list">
+          <li>Your device should automatically show a setup page (or navigate to <code>http://192.168.4.1</code>)</li>
+          <li>Enter your home WiFi name and password</li>
+          <li>Enter the device key you generated in the previous step</li>
+          <li>Click "Connect" on the device setup page</li>
+        </ol>
+        <div class="alert alert-info">
+          <i class="icon-info"></i>
+          The device will use these credentials to connect to your home WiFi network.
+        </div>
+        <button class="btn btn-primary" id="step3-continue">I've Completed These Steps</button>
+      </div>
+      
+      <!-- Step 4: Wait for device to connect -->
+      <div class="setup-step" id="step-4">
+        <h3 class="step-title">Step 4: Finalizing Setup</h3>
+        <p class="step-description">Your device is connecting to your home WiFi and registering with our servers...</p>
+        <div class="progress mb-4">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div id="connection-status"></div>
+        <div id="setup-complete-actions" class="d-none mt-4">
+          <a href="wardrobe.html" class="btn btn-success">Go to My Wardrobe</a>
+          <button class="btn btn-secondary" id="restart-setup">Start Over</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Auth Manager script -->
+  <script src="src/js/services/auth-manager.js"></script>
+  <script src="src/js/pages/device-setup.js"></script>
+</body>
+</html>

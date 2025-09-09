@@ -71,13 +71,7 @@ img[src^="data:"] {
   margin-bottom: var(--spacing-xs);
 }
 
-.dashboard-card {
-  background-color: var(--bg-color);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  margin-bottom: var(--spacing-lg);
-}
+
 
 .dashboard-card-header {
   padding: var(--spacing-lg);
@@ -91,6 +85,10 @@ img[src^="data:"] {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
+}
+
+.img-fluid {
+  height: 80px; width: 100%; object-fit: cover;
 }
 
 .dashboard-card-body {
@@ -113,13 +111,15 @@ img[src^="data:"] {
   gap: var(--spacing-lg);
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .outfit-display {
     flex-direction: row;
   }
+
   .outfit-image {
     flex: 1;
   }
+
   .outfit-details {
     flex: 1;
   }
@@ -220,4 +220,41 @@ img[src^="data:"] {
   font-size: 0.875rem;
   color: var(--primary-color);
   text-decoration: none;
+}
+
+.dashboard-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.quick-action-card {
+  background: var(--bg-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.quick-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 15%);
+  border-color: var(--primary-color);
+}
+
+.quick-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 1.5rem;
 }

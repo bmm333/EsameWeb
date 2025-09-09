@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable, CreateDateColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity.js';
+import { Item } from '../../item/entities/item.entity.js';
 
 @Entity('recommendations')
 export class Recommendation {
@@ -9,39 +10,41 @@ export class Recommendation {
     @Column({type:'int'})
     userId;
 
-    @Column({ type: 'varchar', length: 50 })
-    type; // 'scheduled', 'rfid-triggered', 'manual', 'weather-based'
+    @Column({type: 'varchar', length: 100})
+    title;
 
-    @Column({ type: 'varchar', length: 100 })
-    occasion; // 'work', 'casual', 'formal', 'sport'
+    @Column({ type: 'text', nullable: true })
+    reason;
+    
+    @Column({type:'varchar', length: 100, nullable: true })
+    occasion;
 
-    @Column({ type: 'json' })
-    outfitSuggestion; // Complete outfit with items
+    @Column({ type: 'text', nullable: true })
+    imageUrl;
 
-    @Column({ type: 'json', nullable: true })
-    weatherData; // Weather context
-
-    @Column({ type: 'decimal', precision: 5, scale: 2 })
-    confidenceScore; // 0.00 - 100.00
-
-    @Column({ type: 'json', nullable: true })
-    reasoning; // Why this outfit was recommended
-
-    @Column({ type: 'boolean', default: false })
-    wasAccepted;
-
-    @Column({ type: 'boolean', default: false })
-    wasViewed;
+    @Column({type:'boolean', default: false })
+    wasWorn;
 
     @Column({ type: 'timestamp', nullable: true })
-    viewedAt;
+    wornAt;
+    
+    @Column({ type: 'timestamp', nullable: true, name: 'rejectedAt' })
+    rejectedAt;
 
-    @Column({ type: 'timestamp', nullable: true })
-    acceptedAt;
+    @Column({ type: 'text', nullable: true, name: 'rejectionReason' })
+    rejectionReason;
 
-    @ManyToOne(() => User)
+    @CreateDateColumn({type:'timestamp'})
+    createdAt;
+
+    @ManyToOne(() => User, user => user.recommendations)
     user;
 
-    @CreateDateColumn()
-    createdAt;
+    @ManyToMany(() => Item)
+    @JoinTable({
+        name: 'recommendation_items',
+        joinColumn: { name: 'recommendationId', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'itemId', referencedColumnName: 'id' }
+    })
+    items;
 }

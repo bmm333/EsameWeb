@@ -1,398 +1,493 @@
-class AnalyticsManager {
-  constructor() {
-    this.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-      ? 'http://localhost:3001' 
-      : '';
-    this.analyticsData = null;
-    this.charts = {};
-    this.init();
-  }
+import { AnalyticsClient } from '../services/analytics-service.js';
 
-  async init() {
-    // Check authentication
-    if (!window.authManager?.isAuthenticated()) {
-      window.location.href = '/login.html';
-      return;
-    }
 
-    await this.loadAnalytics();
-    this.bindEvents();
-    this.renderCharts();
-    this.renderStats();
-  }
-
-  async loadAnalytics() {
-    try {
-      const token = window.authManager?.token;
-      const response = await fetch(`${this.API_BASE}/analytics`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      
-      if (response.ok) {
-        this.analyticsData = await response.json();
-        console.log('Analytics data loaded:', this.analyticsData);
-      } else {
-        console.error('Failed to load analytics:', response.status);
-        this.showError('Failed to load analytics data');
-      }
-    } catch (error) {
-      console.error('Analytics load error:', error);
-      this.showError('Unable to connect to analytics service');
-    }
-  }
-
-  renderStats() {
-    if (!this.analyticsData) return;
-
-    const stats = this.analyticsData.summary || {};
-    
-    // Update stat cards
-    this.updateStatCard('totalWears', stats.totalWears || 0);
-    this.updateStatCard('mostWornItem', stats.mostWornItem?.name || 'N/A');
-    this.updateStatCard('favoriteCategory', stats.favoriteCategory || 'N/A');
-    this.updateStatCard('avgWearsPerWeek', stats.avgWearsPerWeek || 0);
-    this.updateStatCard('wardrobeUtilization', `${stats.wardrobeUtilization || 0}%`);
-    this.updateStatCard('outfitVariety', stats.outfitVariety || 0);
-  }
-
-  updateStatCard(statId, value) {
-    const element = document.getElementById(statId);
-    if (element) {
-      element.textContent = value;
-    }
-  }
-
-  renderCharts() {
-    if (!this.analyticsData) return;
-
-    this.renderWearsChart();
-    this.renderCategoryChart();
-    this.renderTrendChart();
-    this.renderHeatmap();
-  }
-
-  renderWearsChart() {
-    const ctx = document.getElementById('wearsChart');
-    if (!ctx || !this.analyticsData.wearsByItem) return;
-
-    const data = this.analyticsData.wearsByItem.slice(0, 10); // Top 10 items
-    
-    if (this.charts.wears) {
-      this.charts.wears.destroy();
-    }
-
-    this.charts.wears = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: data.map(item => item.name),
-        datasets: [{
-          label: 'Times Worn',
-          data: data.map(item => item.wearCount),
-          backgroundColor: 'rgba(99, 102, 241, 0.6)',
-          borderColor: 'rgba(99, 102, 241, 1)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Most Worn Items'
-          }
-        }
-      }
-    });
-  }
-
-  renderCategoryChart() {
-    const ctx = document.getElementById('categoryChart');
-    if (!ctx || !this.analyticsData.wearsByCategory) return;
-
-    const data = this.analyticsData.wearsByCategory;
-    
-    if (this.charts.category) {
-      this.charts.category.destroy();
-    }
-
-    this.charts.category = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: data.map(cat => cat.category),
-        datasets: [{
-          data: data.map(cat => cat.wearCount),
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.6)',
-            'rgba(54, 162, 235, 0.6)',
-            'rgba(255, 205, 86, 0.6)',
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(153, 102, 255, 0.6)',
-            'rgba(255, 159, 64, 0.6)'
-          ],
-          borderColor: [
-            'rgba(255, 99, 132, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 205, 86, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)'
-          ],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom'
-          },
-          title: {
-            display: true,
-            text: 'Wears by Category'
-          }
-        }
-      }
-    });
-  }
-
-  renderTrendChart() {
-    const ctx = document.getElementById('trendChart');
-    if (!ctx || !this.analyticsData.wearsTrend) return;
-
-    const data = this.analyticsData.wearsTrend;
-    
-    if (this.charts.trend) {
-      this.charts.trend.destroy();
-    }
-
-    this.charts.trend = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: data.map(point => point.date),
-        datasets: [{
-          label: 'Items Worn',
-          data: data.map(point => point.count),
-          borderColor: 'rgba(99, 102, 241, 1)',
-          backgroundColor: 'rgba(99, 102, 241, 0.1)',
-          tension: 0.4,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: 'Wear Trend (Last 30 Days)'
-          }
-        }
-      }
-    });
-  }
-
-  renderHeatmap() {
-    const container = document.getElementById('wearHeatmap');
-    if (!container || !this.analyticsData.wearHeatmap) return;
-
-    const heatmapData = this.analyticsData.wearHeatmap;
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    
-    let heatmapHTML = `
-      <div class="heatmap-grid">
-        <div class="heatmap-days">
-          ${days.map(day => `<div class="heatmap-day-label">${day}</div>`).join('')}
-        </div>
-        <div class="heatmap-cells">
-    `;
-
-    heatmapData.forEach(week => {
-      week.forEach(day => {
-        const intensity = Math.min(day.count / 3, 1); // Max intensity at 3+ wears
-        heatmapHTML += `
-          <div class="heatmap-cell" 
-               style="opacity: ${intensity}"
-               data-date="${day.date}"
-               data-count="${day.count}"
-               title="${day.date}: ${day.count} items worn">
-          </div>
-        `;
-      });
-    });
-
-    heatmapHTML += '</div></div>';
-    container.innerHTML = heatmapHTML;
-  }
-
-  renderInsights() {
-    const container = document.getElementById('insightsContainer');
-    if (!container || !this.analyticsData.insights) return;
-
-    const insights = this.analyticsData.insights;
-    
-    container.innerHTML = insights.map(insight => `
-      <div class="insight-card alert alert-${insight.type || 'info'}">
-        <div class="d-flex align-items-center">
-          <i class="bi ${this.getInsightIcon(insight.type)} me-2"></i>
-          <div>
-            <strong>${insight.title}</strong>
-            <p class="mb-0">${insight.message}</p>
-          </div>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  getInsightIcon(type) {
-    const icons = {
-      'info': 'bi-info-circle',
-      'warning': 'bi-exclamation-triangle',
-      'success': 'bi-check-circle',
-      'tip': 'bi-lightbulb'
-    };
-    return icons[type] || 'bi-info-circle';
-  }
-
-  renderTopItems() {
-    const container = document.getElementById('topItemsList');
-    if (!container || !this.analyticsData.topItems) return;
-
-    container.innerHTML = this.analyticsData.topItems.map(item => `
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
-          <img src="${item.imageUrl || 'https://placehold.co/40x40'}" 
-               alt="${item.name}" class="rounded me-3" width="40" height="40">
-          <div>
-            <h6 class="mb-0">${item.name}</h6>
-            <small class="text-muted">${item.category}</small>
-          </div>
-        </div>
-        <span class="badge bg-primary">${item.wearCount} wears</span>
-      </div>
-    `).join('');
-  }
-
-  renderUnderutilized() {
-    const container = document.getElementById('underutilizedList');
-    if (!container || !this.analyticsData.underutilized) return;
-
-    container.innerHTML = this.analyticsData.underutilized.map(item => `
-      <div class="list-group-item d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
-          <img src="${item.imageUrl || 'https://placehold.co/40x40'}" 
-               alt="${item.name}" class="rounded me-3" width="40" height="40">
-          <div>
-            <h6 class="mb-0">${item.name}</h6>
-            <small class="text-muted">Last worn: ${item.lastWorn ? new Date(item.lastWorn).toLocaleDateString() : 'Never'}</small>
-          </div>
-        </div>
-        <span class="badge bg-warning">${item.daysSinceWorn} days</span>
-      </div>
-    `).join('');
-  }
-
-  bindEvents() {
-    // Time period selector
-    const periodSelect = document.getElementById('analyticsPeriod');
-    if (periodSelect) {
-      periodSelect.addEventListener('change', (e) => {
-        this.loadAnalytics(e.target.value);
-      });
-    }
-
-    // Export button
-    const exportBtn = document.getElementById('exportAnalytics');
-    if (exportBtn) {
-      exportBtn.addEventListener('click', () => this.exportData());
-    }
-
-    // Refresh button
-    const refreshBtn = document.getElementById('refreshAnalytics');
-    if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => this.loadAnalytics());
-    }
-  }
-
-  async exportData() {
-    try {
-      const token = window.authManager?.token;
-      const response = await fetch(`${this.API_BASE}/analytics/export`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `wardrobe-analytics-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+export async function render() {
+    return `
+    <div class="container py-4" id="analyticsPage">
+        <div id="alertContainer"></div>
         
-        this.showSuccess('Analytics exported successfully!');
-      } else {
-        throw new Error('Export failed');
-      }
-    } catch (error) {
-      console.error('Export error:', error);
-      this.showError('Failed to export analytics');
-    }
-  }
+        <!-- Page Header -->
+        <header class="dashboard-header mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1>Analytics</h1>
+                    <p class="text-muted">Insights about your wardrobe usage</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" id="refreshAnalytics">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </header>
+        <!-- Analytics Content -->
+        <div id="analyticsContent">
+            <!-- Basic Stats Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="dashboard-card text-center">
+                        <div class="dashboard-card-body">
+                            <i class="bi bi-grid-3x3-gap text-primary fs-1 mb-3"></i>
+                            <h3 id="totalItems" class="mb-1">-</h3>
+                            <p class="text-muted mb-0">Total Items</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="dashboard-card text-center">
+                        <div class="dashboard-card-body">
+                            <i class="bi bi-layers text-success fs-1 mb-3"></i>
+                            <h3 id="totalOutfits" class="mb-1">-</h3>
+                            <p class="text-muted mb-0">Total Outfits</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="dashboard-card text-center">
+                        <div class="dashboard-card-body">
+                            <i class="bi bi-star-fill text-warning fs-1 mb-3"></i>
+                            <h3 id="favoriteItems" class="mb-1">-</h3>
+                            <p class="text-muted mb-0">Favorite Items</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="dashboard-card text-center">
+                        <div class="dashboard-card-body">
+                            <i class="bi bi-trophy text-primary fs-1 mb-3"></i>
+                            <h3 id="sustainabilityScore" class="mb-1">-</h3>
+                            <p class="text-muted mb-0">Sustainability Score</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-  showError(message) {
-    const alertContainer = document.getElementById('alertContainer');
-    if (alertContainer) {
-      alertContainer.innerHTML = `
-        <div class="alert alert-danger alert-dismissible fade show">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      `;
-    }
-  }
+            <!-- Most Worn Items -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="dashboard-card h-100">
+                        <div class="dashboard-card-header">
+                            <h5 class="mb-0">Most Worn Items</h5>
+                        </div>
+                        <div class="dashboard-card-body">
+                            <div id="mostWornItems">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="dashboard-card h-100">
+                        <div class="dashboard-card-header">
+                            <h5 class="mb-0">Category Breakdown</h5>
+                        </div>
+                        <div class="dashboard-card-body">
+                            <div id="categoryStats">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-  showSuccess(message) {
-    const alertContainer = document.getElementById('alertContainer');
-    if (alertContainer) {
-      alertContainer.innerHTML = `
-        <div class="alert alert-success alert-dismissible fade show">
-          <i class="bi bi-check-circle-fill me-2"></i>
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <!-- Color Analysis & Sustainability -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="dashboard-card h-100">
+                        <div class="dashboard-card-header">
+                            <h5 class="mb-0">Color Analysis</h5>
+                        </div>
+                        <div class="dashboard-card-body">
+                            <div id="colorAnalysis">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="dashboard-card h-100">
+                        <div class="dashboard-card-header">
+                            <h5 class="mb-0">Sustainability Insights</h5>
+                        </div>
+                        <div class="dashboard-card-body">
+                            <div id="sustainabilityInsights">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rarely Used Items -->
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Rarely Used Items</h5>
+                                <span class="badge bg-warning" id="rarelyUsedCount">0</span>
+                            </div>
+                        </div>
+                        <div class="dashboard-card-body">
+                            <div id="rarelyUsedItems">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      `;
-    }
-  }
+    </div>
+    `;
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  window.analyticsManager = new AnalyticsManager();
-});
+export async function init() {
+    console.log('Analytics page: Initializing...');
+    
+    const api = window.app.api;
+    const analyticsClient = new AnalyticsClient(api);
+    let analyticsData = null;
+    if (window.app?.theme) {
+        window.app.theme.applyThemeToAllElements(window.app.theme.getCurrentTheme());
+    }
+    setupEventListeners();
+    await loadAnalytics();
+    function setupEventListeners() {
+        document.getElementById('refreshAnalytics')?.addEventListener('click', loadAnalytics);
+    }
+    async function loadAnalytics() {
+        try {
+            showLoading(true);
+            const [basicStats, detailedAnalytics] = await Promise.all([
+                analyticsClient.getBasicStats(),
+                analyticsClient.getAnalytics()
+            ]);
+            analyticsData = {
+                basicStats,
+                ...detailedAnalytics
+            };
+            renderAnalytics(analyticsData); 
+        } catch (error) {
+            console.error('Failed to load analytics:', error);
+            showError('Failed to load analytics data: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function showLoading(show) {
+        const spinner = document.getElementById('loadingSpinner');
+        const content = document.getElementById('analyticsContent');
+        
+        console.log('showLoading called with:', show);
+        console.log('Spinner element:', spinner);
+        console.log('Content element:', content);
+        
+        if (spinner) {
+            spinner.style.display = show ? 'block' : 'none';
+            console.log('Spinner display set to:', spinner.style.display);
+        }
+        if (content) {
+            content.style.display = show ? 'none' : 'block';
+            console.log('Content display set to:', content.style.display);
+        }
+    }
+
+    function renderAnalytics(data) {
+        console.log('Rendering analytics with data:', data);
+        renderBasicStats(data.basicStats);
+        renderMostWornItems(data.mostWornItems);
+        renderCategoryStats(data.categoryStats);
+        renderColorAnalysis(data.colorAnalysis);
+        renderSustainabilityInsights(data.sustainabilityStats);
+        renderRarelyUsedItems(data.rarelyUsedItems);
+    }
+
+    function renderBasicStats(stats) {
+        if (!stats) return;
+
+        document.getElementById('totalItems').textContent = stats.totalItems || 0;
+        document.getElementById('totalOutfits').textContent = stats.totalOutfits || 0;
+        document.getElementById('favoriteItems').textContent = stats.favoriteItems || 0;
+        if (analyticsData?.sustainabilityStats?.sustainabilityScore) {
+            document.getElementById('sustainabilityScore').textContent = 
+                analyticsData.sustainabilityStats.sustainabilityScore + '%';
+        }
+    }
+    function renderMostWornItems(items) {
+        const container = document.getElementById('mostWornItems');
+        if (!container) return;
+
+        if (!items || items.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox"></i>
+                    <p class="mt-2">No worn items yet</p>
+                </div>
+            `;
+            return;
+        }
+
+    container.innerHTML = items.slice(0, 5).map((item, index) => `
+            <div class="d-flex align-items-center mb-3">
+                <div class="position-relative me-3">
+            <img src="${item.imageUrl || 'https://placehold.co/50x50/f9fafb/6366f1?text=Item'}" 
+             class="rounded" width="50" height="50" style="object-fit: cover;" alt="${item.name || 'Item'} thumbnail">
+                    <span class="position-absolute top-0 start-0 badge bg-primary rounded-pill">${index + 1}</span>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-medium">${item.name}</div>
+                    <small class="text-muted">${item.category}</small>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold text-primary">${item.wearCount}</div>
+                    <small class="text-muted">wears</small>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderCategoryStats(stats) {
+        const container = document.getElementById('categoryStats');
+        if (!container) return;
+
+        if (!stats || stats.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox"></i>
+                    <p class="mt-2">No category data</p>
+                </div>
+            `;
+            return;
+        }
+
+        const maxCount = Math.max(...stats.map(s => s.count));
+
+        container.innerHTML = stats.map(stat => {
+            const percentage = (stat.count / maxCount) * 100;
+            return `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-medium text-capitalize">${stat.category}</span>
+                        <span class="text-muted">${stat.count} items</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" style="width: ${percentage}%"></div>
+                    </div>
+                    <small class="text-muted">${stat.totalWears} total wears, ${stat.avgWears} avg per item</small>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderColorAnalysis(analysis) {
+        const container = document.getElementById('colorAnalysis');
+        if (!container) return;
+
+        if (!analysis || !analysis.mostWornColors || analysis.mostWornColors.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-palette"></i>
+                    <p class="mt-2">No color data available</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="mb-3">
+                <small class="text-muted">You have ${analysis.totalUniqueColors} unique colors in your wardrobe</small>
+            </div>
+            ${analysis.mostWornColors.slice(0, 6).map(color => `
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="d-flex align-items-center">
+                        <div class="color-swatch me-2" style="background-color: ${color.color}; width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--border-color);"></div>
+                        <span class="fw-medium text-capitalize">${color.color}</span>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">${color.totalWears}</div>
+                        <small class="text-muted">${color.itemCount} items</small>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    function renderSustainabilityInsights(stats) {
+        const container = document.getElementById('sustainabilityInsights');
+        if (!container) return;
+
+        if (!stats) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-leaf"></i>
+                    <p class="mt-2">No sustainability data</p>
+                </div>
+            `;
+            return;
+        }
+
+        const scoreColor = stats.sustainabilityScore >= 80 ? 'success' : 
+                          stats.sustainabilityScore >= 60 ? 'warning' : 'danger';
+
+        container.innerHTML = `
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="text-center">
+                        <div class="h4 text-${scoreColor}">${stats.sustainabilityScore}%</div>
+                        <small class="text-muted">Sustainability Score</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-center">
+                        <div class="h4 text-info">${stats.avgWearsPerItem}</div>
+                        <small class="text-muted">Avg Wears/Item</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-center">
+                        <div class="h4 text-primary">${stats.totalCO2Footprint}kg</div>
+                        <small class="text-muted">CO₂ Footprint</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-center">
+                        <div class="h4 text-secondary">${stats.co2PerWear}kg</div>
+                        <small class="text-muted">CO₂/Wear</small>
+                    </div>
+                </div>
+            </div>
+            ${stats.recommendation ? `
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    ${stats.recommendation}
+                </div>
+            ` : ''}
+        `;
+    }
+
+    function renderRarelyUsedItems(items) {
+        const container = document.getElementById('rarelyUsedItems');
+        const countBadge = document.getElementById('rarelyUsedCount');
+        
+        if (countBadge) {
+            countBadge.textContent = items?.length || 0;
+        }
+
+        if (!container) return;
+
+        if (!items || items.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-check-circle text-success fs-1"></i>
+                    <h5 class="mt-3">Great job!</h5>
+                    <p>All your items are being used regularly</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="row g-3">
+                ${items.slice(0, 12).map(item => `
+                    <div class="col-md-4 col-lg-3">
+                        <div class="card h-100">
+                       <img src="${item.imageUrl || 'https://placehold.co/150x120/f9fafb/6366f1?text=Item'}" 
+                           class="card-img-top" style="height: 120px; object-fit: cover;" alt="${item.name || 'Item'} image">
+                            <div class="card-body p-2">
+                                <h6 class="card-title">${item.name}</h6>
+                                <p class="card-text">
+                                    <small class="text-muted">${item.category}</small><br>
+                                    <small class="text-danger">${item.wearCount} wears in ${item.monthsOld} months</small>
+                                </p>
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="createOutfitWith('${item.id}')">
+                                        Use
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="donateItem('${item.id}')">
+                                        Donate
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            ${items.length > 12 ? `
+                <div class="text-center mt-3">
+                    <button class="btn btn-outline-primary" onclick="showAllRarelyUsed()">
+                        Show All ${items.length} Items
+                    </button>
+                </div>
+            ` : ''}
+        `;
+    }
+
+
+    function showLoading(show) {
+        const spinner = document.getElementById('loadingSpinner');
+        const content = document.getElementById('analyticsContent');
+        
+        if (spinner) spinner.style.display = show ? 'block' : 'none';
+        if (content) content.style.display = show ? 'none' : 'block';
+    }
+
+    function showSuccess(message) {
+        showAlert(message, 'success');
+    }
+
+    function showError(message) {
+        showAlert(message, 'danger');
+    }
+
+    function showAlert(message, type) {
+        const container = document.getElementById('alertContainer');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+
+        setTimeout(() => {
+            const alert = container.querySelector('.alert');
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+    }
+
+    window.createOutfitWith = function(itemId) {
+        showSuccess('Redirecting to outfit creation...');
+        setTimeout(() => {
+            window.app.router.navigate('/outfit');
+        }, 1000);
+    };
+
+    window.donateItem = function(itemId) {
+        if (confirm('Are you sure you want to mark this item for donation?')) {
+            showSuccess('Item marked for donation');
+        }
+    };
+
+    window.showAllRarelyUsed = function() {
+        renderRarelyUsedItems(analyticsData.rarelyUsedItems);
+    };
+
+    console.log('Analytics page: Initialization complete');
+}

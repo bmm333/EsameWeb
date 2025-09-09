@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import AWS from 'aws-sdk';
 import fetch from 'node-fetch';
 import { Media } from './entities/media.entity.js';
+import FormData from 'form-data';
+
 
 @Injectable()
 export class MediaService{
@@ -18,96 +20,104 @@ export class MediaService{
         this.bucketName=process.env.AWS_BUCKET_NAME;
         this.removeBgApiKey=process.env.REMOVE_BG_API_KEY;
     }
-    async uploadImage(userId,file,options={})
-    {
-        try{
-            if(!file){
-                throw new BadRequestException('No file provided');
-            }
-            if(!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/))
-            {
-                throw new BadRequestException('Only image files are allowed');
-            }
-            if(file.size>5*1024*1024)
-            {
-                throw new BadRequestException('File size exceeds the limit of 5MB');
-            }
-            let processedBuffer=file.buffer;
-            if(options.removeBackground&&this.removeBgApiKey)
-            {
-                processedBuffer=await this.removeBackground(file.buffer);
-            }
-            const timestamp=Date.now();
-            const ext=file.originalname.split('.').pop();
-            const folder=options.folder||'general';
-            const key=`${folder}/${userId}/${timestamp}.${ext}`;
-
-            const uploadParams={
-                Bucket:this.bucketName,
-                Key:key,
-                Body:processedBuffer,
-                ContentType:file.mimetype,
-                //ACL:'public-read'
-            }
-            const result=await this.s3.upload(uploadParams).promise();
-            //saving to db only record 
-            const media = this.mediaRepository.create({
-            userId,
-            originalName: file.originalname,
-            fileName: key,
-            url: result.Location,
-            mimeType: file.mimetype,
-            size: processedBuffer.length,
-            folder,
-            backgroundRemoved: options.removeBackground || false,
-            metadata: options.metadata || {}
-        });
-
-        await this.mediaRepository.save(media);
-
-        return {
-            success: true,
-            media: {
-            id: media.id,
-            url: result.Location,
-            fileName: key,
-            originalName: file.originalname
-            }
-        };
-        }catch(error)
-        {
-            throw new BadRequestException(`Image upload failed ${error.message}`);
-        }
+  async uploadImage(userId, file, options = {}) {
+  try {
+    console.log('MediaService.uploadImage called with userId:', userId);
+    
+    if (!file) {
+      throw new BadRequestException('No file provided');
     }
-    async removeBackground(imageBuffer) {
+    if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+      throw new BadRequestException('Only image files are allowed');
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('File size exceeds the limit of 5MB');
+    }
+
+    let processedBuffer = file.buffer;
+    let backgroundRemoved = false;
+
+    if (options.removeBackground && this.removeBgApiKey) {
+      const result = await this.removeBackground(file);
+      if (result?.buffer && result.buffer.length > 0) {
+        processedBuffer = result.buffer;
+        backgroundRemoved = result.removed === true;
+      }
+    }
+    const timestamp = Date.now();
+    const ext = (file.originalname.split('.').pop() || 'png').toLowerCase();
+    const folder = options.folder || 'general';
+    const key = `${folder}/${userId}/${timestamp}.${ext}`;
+    const uploadParams = {
+      Bucket: this.bucketName,
+      Key: key,
+      Body: processedBuffer,
+      ContentType: file.mimetype,
+     // ACL: 'public-read',
+    }; 
+    const result = await this.s3.upload(uploadParams).promise();
+    const media = this.mediaRepository.create({
+      userId,
+      originalName: file.originalname,
+      fileName: key,
+      url: result.Location,
+      mimeType: file.mimetype,
+      size: processedBuffer.length,
+      folder,
+      backgroundRemoved,
+      metadata: options.metadata || {}
+    });
+
+    await this.mediaRepository.save(media);
+    const response = {
+      success: true,
+      url: result.Location,
+      media: {
+        id: media.id,
+        url: result.Location,
+        fileName: key,
+        originalName: file.originalname,
+        backgroundRemoved
+      }
+    };
+    return response;
+    
+  } catch (error) {
+    throw new BadRequestException(`Image upload failed: ${error.message}`);
+  }
+}
+
+  async removeBackground(file) {
     try {
       if (!this.removeBgApiKey) {
-        console.warn('Remove.bg API key not configured, skipping background removal');
-        return imageBuffer;
+        return { buffer: file.buffer, removed: false };
       }
 
-      const formData = new FormData();
-      formData.append('image_file', new Blob([imageBuffer]), 'image.png');
-      formData.append('size', 'auto');
+      const form = new FormData();
+      form.append('image_file', file.buffer, {
+        filename: file.originalname || 'image.png',
+        contentType: file.mimetype || 'image/png'
+      });
+      form.append('size', 'auto');
 
       const response = await fetch('https://api.remove.bg/v1.0/removebg', {
         method: 'POST',
         headers: {
           'X-Api-Key': this.removeBgApiKey,
+          ...form.getHeaders()
         },
-        body: formData
+        body: form
       });
+
       if (!response.ok) {
-        const error = await response.text();
-        console.error('Remove.bg API error:', error);
-        return imageBuffer;
+        const errorText = await response.text().catch(() => '');
+        return { buffer: file.buffer, removed: false };
       }
-      const processedImageBuffer = await response.buffer();
-      console.log('Background removed successfully');
-      return processedImageBuffer;
+
+      const processed = await response.buffer();
+      return { buffer: processed, removed: true };
     } catch (error) {
-      console.error('Background removal error:', error);
-      return imageBuffer;
+      return { buffer: file.buffer, removed: false };
     }
   }
   async deleteImage(mediaId, userId) {
@@ -125,7 +135,6 @@ export class MediaService{
       await this.mediaRepository.remove(media);
       return { success: true, message: 'Media deleted successfully' };
     } catch (error) {
-      console.error('Media deletion error:', error);
       throw new BadRequestException(`Media deletion failed: ${error.message}`);
     }
   }

@@ -1,163 +1,173 @@
 import { Injectable, Dependencies, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Item } from './entities/item.entity.js';
-import { Repository, Not, IsNull } from 'typeorm';
 import { RfidTag } from '../rfid/entities/rfid-tag.entity.js';
-import { MediaService } from '../media/media.service.js';
+import { UserService } from '../user/user.service.js';
 
 @Injectable()
-@Dependencies('ItemRepository', 'RfidTagRepository',MediaService)
+@Dependencies('ItemRepository', 'RfidTagRepository',UserService)
 export class ItemService {
     constructor(
         @InjectRepository(Item) itemRepository,
         @InjectRepository(RfidTag) rfidTagRepository,
-        mediaService
+        userService
     ) {
         this.itemRepository = itemRepository;
         this.rfidTagRepository = rfidTagRepository;
-        this.mediaService = mediaService;
+        this.userService = userService;
     }
-    async uploadItemImage(userId,file,itemData={})
-    {
-        return this.mediaService.uploadImage(userId,file,{
-            folder:'items',
-            removeBackground:true,
-            metadata:itemData
+
+    async create(userId, itemData) {
+        const user = await this.userService.findOneById(userId);
+        const item = this.itemRepository.create({
+            ...itemData,
+            userId,
+            dateAdded: new Date(),
+            lastUpdated: new Date(),
+            wearCount: 0,
+            isFavorite: false,
+            location: 'wardrobe'
         });
-    }
-    async addOrUpdateItem(userId, tagId, itemData, override = false) {
-        const tag = await this.rfidTagRepository.findOne({ 
-            where: { tagId, userId },
-            relations: ['item']
-        });
-        if (!tag) {
-            throw new NotFoundException('RFID Tag not found');
-        }
-        
-        if (tag.item && !override) {
-            return {
-                conflict: true,
-                existingItem: {
-                    name: tag.item.name,
-                    category: tag.item.category,
-                    id: tag.item.id
-                }
-            };
-        }
-        let item;
-        if (tag.item && override) {
-            Object.assign(tag.item, itemData);
-            item = await this.itemRepository.save(tag.item);
-        } else {
-            item = this.itemRepository.create({
-                ...itemData,
-                userId,
-                rfidTagId: tag.id,
-                dateAdded: new Date()
+        const savedItem = await this.itemRepository.save(item);
+        if (user.subscriptionTier === 'trial') {
+            await this.userService.updateUserRecord(userId, {
+                trialItemsUsed: (user.trialItemsUsed || 0) + 1
             });
-            item = await this.itemRepository.save(item);
-            
-            tag.item = item;
-            await this.rfidTagRepository.save(tag);
         }
+        return savedItem;
+    }
+
+    async findAll(userId, filters = {}) {
+        try {
+            console.log('Finding all items for user:', userId);
+            const user = await this.userService.findOneById(userId);
+            if (!user) {
+                throw new NotFoundException('User not found');
+            }
+            const queryBuilder = this.itemRepository
+                .createQueryBuilder('item')
+                .leftJoinAndSelect('item.rfidTag', 'rfidTag')
+                .where('item.userId = :userId', { userId });
+            if (filters.category) {
+                queryBuilder.andWhere('item.category = :category', { category: filters.category });
+            }
+            if (filters.location) {
+                queryBuilder.andWhere('item.location = :location', { location: filters.location });
+            }
+            if (filters.isFavorite === 'true') {
+                queryBuilder.andWhere('item.isFavorite = :isFavorite', { isFavorite: true });
+            }
+            const items = await queryBuilder.orderBy('item.dateAdded', 'DESC').getMany();
+            return await Promise.all(items.map(async (item) => {
+                let actualLocation = item.location;
+                let isAvailable = item.location === 'wardrobe';
+                let lastSeen = item.lastLocationUpdate;
+                if (item.rfidTag) {
+                    const tag = await this.rfidTagRepository.findOne({
+                        where: { id: item.rfidTag.id },
+                        select: ['location', 'lastDetected', 'isActive']
+                    });
+                    
+                    if (tag) {
+                        actualLocation = tag.location;
+                        isAvailable = tag.location === 'wardrobe';
+                        lastSeen = tag.lastDetected || item.lastLocationUpdate;
+                    }
+                }
+                return {
+                    ...item,
+                    actualLocation,
+                    isAvailable,
+                    lastSeen,
+                    hasRfidTag: !!item.rfidTag && user.subscriptionTier !== 'trial'
+                };
+            }));
+        } catch (error) {
+            console.error('Error finding items:', error);
+            throw new BadRequestException('Error retrieving items');
+        }
+    }
+    async findOne(userId, itemId) {
+        const item = await this.itemRepository.findOne({
+            where: { id: itemId, userId },
+            relations: ['rfidTag']
+        });
         
-        return { success: true, item };
-    }
-    async getItemsByCategory(userId, category) {
-        return this.getAllItems(userId, { category });
-    }
-    async getAllItems(userId, filters = {}) {
-        const queryBuilder = this.itemRepository
-            .createQueryBuilder('item')
-            .leftJoinAndSelect('item.rfidTag', 'rfidTag')
-            .where('item.userId = :userId', { userId });
-
-        if (filters.category) {
-            queryBuilder.andWhere('item.category = :category', { category: filters.category });
-        }
-        if (filters.location) {
-            queryBuilder.andWhere('item.location = :location', { location: filters.location });
-        }
-        if (filters.isFavorite === 'true') {
-            queryBuilder.andWhere('item.isFavorite = :isFavorite', { isFavorite: true });
-        }
-        if (filters.color) {
-            queryBuilder.andWhere('item.color = :color', { color: filters.color });
-        }
-
-        return await queryBuilder.getMany();
-    }
-
-    async getItemByTagId(userId, tagId) {
-        const item = await this.itemRepository
-            .createQueryBuilder('item')
-            .leftJoinAndSelect('item.rfidTag', 'rfidTag')
-            .where('rfidTag.tagId = :tagId', { tagId })
-            .andWhere('item.userId = :userId', { userId })
-            .getOne();
-            
         if (!item) {
             throw new NotFoundException('Item not found');
         }
-        
-        return item;
-    }
-
-    async updateItem(userId, tagId, itemData) {
-        const item = await this.getItemByTagId(userId, tagId);     
-        Object.assign(item, itemData);
-        item.lastUpdated = new Date();
-        
-        return await this.itemRepository.save(item);
-    }
-
-    async logWear(userId, tagId) {
-        const item = await this.getItemByTagId(userId, tagId);
-        const wearHistory = item.wearHistory || [];
-        wearHistory.push({
-            date: new Date(),
-            duration: null,
-            occasion: null
-        });
-        item.wearCount = (item.wearCount || 0) + 1;
-        item.lastWorn = new Date();
-        item.wearHistory = wearHistory;
-        item.location = 'worn';
-        item.lastUpdated = new Date();
-        await this.itemRepository.save(item);
-        return { success: true, item };
-    }
-    async updateLocation(userId, tagId, location) {
-        const item = await this.getItemByTagId(userId, tagId);
-        item.location = location;
-        item.lastLocationUpdate = new Date();
-        item.lastUpdated = new Date();
-        await this.itemRepository.save(item);
-        return { success: true, item };
-    }
-    async toggleFavorite(userId, tagId) {
-        const item = await this.getItemByTagId(userId, tagId);
-        item.isFavorite = !item.isFavorite;
-        item.lastUpdated = new Date();
-        await this.itemRepository.save(item);
-        return { success: true, isFavorite: item.isFavorite };
-    }
-    async getWearHistory(userId, tagId) {
-        const item = await this.getItemByTagId(userId, tagId);
+        let actualLocation = item.location;
+        let isAvailable = item.location === 'wardrobe';
+        let lastSeen = item.lastLocationUpdate;
+        if (item.rfidTag) {
+            const tag = await this.rfidTagRepository.findOne({
+                where: { id: item.rfidTag.id },
+                select: ['location', 'lastDetected', 'isActive']
+            });
+            
+            if (tag) {
+                actualLocation = tag.location;
+                isAvailable = tag.location === 'wardrobe';
+                lastSeen = tag.lastDetected || item.lastLocationUpdate;
+            }
+        }
         return {
-            itemName: item.name,
-            wearCount: item.wearCount || 0,
-            lastWorn: item.lastWorn,
-            wearHistory: item.wearHistory || []
+            ...item,
+            actualLocation,
+            isAvailable,
+            lastSeen,
+            hasRfidTag: !!item.rfidTag
         };
     }
-    async deleteItem(userId, tagId) {
-        const item = await this.getItemByTagId(userId, tagId);
-        if (item.imageUrl) {
-            await this.deleteImageFromS3(item.imageUrl);
+
+    async update(itemId, userId, updateData) {
+        const item = await this.itemRepository.findOne({
+            where: { id: itemId, userId }
+        });
+        
+        if (!item) {
+            throw new NotFoundException('Item not found');
+        }
+        if (updateData.imageUrl === null) {
+            item.imageUrl = null;
+        } else if (updateData.imageUrl !== undefined) {
+            item.imageUrl = updateData.imageUrl;
+        }
+        Object.keys(updateData).forEach(key => {
+            if (key !== 'imageUrl' && updateData[key] !== undefined) {
+                item[key] = updateData[key];
+            }
+        });
+        item.lastUpdated = new Date();
+        return await this.itemRepository.save(item);
+    }
+    async remove(userId, itemId) {
+        const item = await this.findOne(userId, itemId);
+        if (item.rfidTag) {
+            item.rfidTag.itemId = null;
+            await this.rfidTagRepository.save(item.rfidTag);
         }
         await this.itemRepository.remove(item);
         return { success: true, message: 'Item deleted successfully' };
     }
 
+    async toggleFavorite(userId, itemId, isFavorite) {
+        const item = await this.findOne(userId, itemId);
+        item.isFavorite = isFavorite;
+        item.lastUpdated = new Date();
+        return this.itemRepository.save(item);
+    }
+
+    async getItemAvailability(userId, itemId) {
+        const item = await this.itemRepository.findOne({
+            where: { id: itemId, userId },
+            select: ['id', 'name', 'location', 'lastLocationUpdate']
+        });
+        return {
+            itemId: item.id,
+            name: item.name,
+            location: item.location,
+            lastSeen: item.lastLocationUpdate
+        };
+    }
 }

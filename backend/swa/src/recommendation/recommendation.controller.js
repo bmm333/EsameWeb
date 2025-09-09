@@ -1,48 +1,57 @@
-import { Controller,Dependencies, Inject,Get, Post, Put, Body, Param, Query, Req, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete,Dependencies, Body, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { RecommendationService } from './recommendation.service.js';
-import { GenerateRecommendationDto } from './dto/generate-recommendation.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { MailingService } from '../mailing/mailing.service.js';
 
 @Controller('recommendation')
-@Dependencies(RecommendationService)
+@Dependencies(RecommendationService, MailingService)
+@UseGuards(JwtAuthGuard)
 export class RecommendationController {
-  constructor(@Inject(RecommendationService) recommendationService) {
-    this.recommendationService = recommendationService;
-  }
+    constructor(recommendationService, mailingService) {
+        this.recommendationService = recommendationService;
+        this.mailingService = mailingService;
+    }
+
+    @Get()
+    async getRecommendations(@Request() req, @Query() query) {
+        return this.recommendationService.getRecommendations(req.user.id, query);
+    }
+
     @Post('generate')
-    async generateRecommendations(@Req() req, @Body() generateDto) {
+    async generateRecommendations(@Request() req, @Body() body) {
         const userId = req.user.id;
-        return await this.recommendationService.generateOutfitRecommendations(userId, generateDto);
-    }
-    @Get('today')
-    async getTodaysRecommendations(@Req() req) {
-        const userId = req.user.id;
-        return await this.recommendationService.getTodaysRecommendations(userId);
-    }
-    @Post('scheduled')
-    async generateScheduledRecommendations(@Req() req, @Body() body) {
-        const userId = req.user.id;
-        const { occasion = 'any', weatherData = null } = body;
-        return await this.recommendationService.generateScheduledRecommendations(userId, occasion, null,location);
+        const recommendations = await this.recommendationService.generateRecommendations(userId, body);
+        try {
+            await this.mailingService.sendRecommendationNotification(req.user, recommendations);
+            console.log('Recommendation email sent to:', req.user.email);
+        } catch (emailError) {
+            console.error('Failed to send recommendation email:', emailError);
+        }
+        return recommendations;
     }
 
-    @Post('rfid-trigger')
-    async generateRfidRecommendation(@Req() req, @Body() body) {
-        const userId = req.user.id;
-        const { itemId } = body;
-        return await this.recommendationService.generateRfidTriggeredRecommendation(userId, itemId);
+    @Get('history')
+    async getHistory(@Request() req) {
+        return this.recommendationService.getRecommendationHistory(req.user.id);
     }
-    
-
-    @Put(':id/feedback')
-    async updateFeedback(@Req() req, @Param('id', ParseIntPipe) recommendationId, @Body() feedback) {
+    @Put(':id/reject')
+    async rejectRecommendation(@Request() req, @Param('id') id, @Body() body) {
         const userId = req.user.id;
-        return await this.recommendationService.updateRecommendationFeedback(userId, recommendationId, feedback);
+        const { reason } = body;
+        return await this.recommendationService.rejectRecommendation(userId, id, reason);
+    }
+    @Post()
+    async saveRecommendation(@Request() req, @Body() body) {
+        return this.recommendationService.saveRecommendation(req.user.id, body);
     }
 
-    @Get('stats')
-    async getStats(@Req() req) {
-        const userId = req.user.id;
-        return await this.recommendationService.getRecommendationStats(userId);
+    @Put(':id/worn')
+    async markAsWorn(@Request() req, @Param('id') id) {
+        return this.recommendationService.markAsWorn(req.user.id, +id);
+    }
+
+    @Delete(':id')
+    async deleteRecommendation(@Request() req, @Param('id') id) {
+        return this.recommendationService.deleteRecommendation(req.user.id, +id);
     }
 }

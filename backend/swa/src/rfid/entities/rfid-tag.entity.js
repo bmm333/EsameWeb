@@ -9,13 +9,17 @@ export class RfidTag {
     id;
 
     @Column({ type: 'varchar', unique: true })
-    tagId; // RFID tag UID
+    tagId;
 
     @Column({ type: 'varchar', default: 'detected' })
-    status; // 'detected', 'missing', 'inactive'
+    status; 
 
-    @Column({ type: 'varchar', default: 'wardrobe' })
-    location; // 'wardrobe', 'being_worn', 'laundry', 'unknown'
+    @Column({ 
+        type: 'enum',
+        enum: ['wardrobe', 'being_worn'],
+        default: 'wardrobe' 
+    })
+    location;
 
     @Column({ type: 'timestamp', nullable: true })
     lastDetected;
@@ -24,7 +28,7 @@ export class RfidTag {
     lastSeen;
 
     @Column({ type: 'int', default: 0 })
-    signalStrength; // RSSI value
+    signalStrength; 
 
     @Column({ type: 'boolean', default: true })
     isActive;
@@ -42,14 +46,18 @@ export class RfidTag {
     @Column({ type: 'int' })
     userId;
 
-    @OneToOne(() => Item, item => item.rfidTag, { nullable: true })
+    @OneToOne(() => Item, item => item.rfidTag, { 
+        nullable: true,
+        onDelete: 'SET NULL',
+        cascade: ['update'] //updates cascade
+    })
     @JoinColumn({ name: 'itemId' })
     item;
 
     @Column({ type: 'int', nullable: true })
     itemId;
 
-    @ManyToOne(() => RfidDevice, device => device.tags)
+    @ManyToOne(() => RfidDevice, device => device.tags, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'deviceId' })
     device;
     

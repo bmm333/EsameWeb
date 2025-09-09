@@ -1,295 +1,358 @@
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-  ? 'http://localhost:3002' 
-  : '';
+class RfidUi {
+    constructor() {
+        this.currentPollInterval = null;
+        this.isScanning = false;
+        this.rfidClient = null;
+    }
 
-class RfidSetupManager {
-  constructor() {
-    this.deviceInfo = null;
-    this.bleDevice = null;
-    this.serviceUUID = '12345678-1234-5678-9abc-123456789abc';
-    this.deviceInfoCharUUID = '12345678-1234-5678-9abc-123456789abe';
-    this.wifiCharUUID = '12345678-1234-5678-9abc-123456789abd';
-    this.httpDiscoveryMode = false;
-    this.setupPairButton();
-  }
-
-  setupPairButton() {
-    const pairBtn = document.getElementById('pair-btn');
-    if (pairBtn) {
-      pairBtn.addEventListener('click', async (ev) => {
-        ev.preventDefault();
-        try {
-          // Try BLE first, then fallback to HTTP discovery
-          await this.discoverAndPair();
-        } catch (err) {
-          console.error('[Device] Pairing error:', err);
-          throw err; // Let device-setup.js handle the error display
+    async init() {
+        if (!this.rfidClient && window.app?.api) {
+            const { RfidClient } = await import('../services/rfid-client.js');
+            this.rfidClient = new RfidClient(window.app.api);
         }
-      });
-    }
-  }
-
-  async discoverAndPair() {
-    // Try Web Bluetooth first
-    try {
-      console.log('[Device] Attempting Web Bluetooth discovery...');
-      await this.bluetoothPairAndSend(null);
-      return;
-    } catch (bleError) {
-      console.warn('[Device] Web Bluetooth failed:', bleError.message);
-      
-      // Fallback to HTTP discovery
-      console.log('[Device] Trying HTTP discovery fallback...');
-      await this.httpDiscoveryFallback();
-    }
-  }
-
-  async httpDiscoveryFallback() {
-    const piIPInput = document.getElementById('pi-ip-input');
-    
-    if (!piIPInput) {
-      // Create IP input modal
-      this.showIPInputModal();
-      return new Promise((resolve, reject) => {
-        this.ipInputResolve = resolve;
-        this.ipInputReject = reject;
-      });
-    }
-    
-    const piIP = piIPInput.value.trim();
-    if (!piIP) {
-      throw new Error('Please enter your Raspberry Pi IP address');
     }
 
-    await this.connectViaHTTP(piIP);
-  }
-
-  showIPInputModal() {
-    const modalHtml = `
-      <div class="modal fade" id="piIpModal" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Connect via IP Address</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <p class="text-muted mb-3">Web Bluetooth couldn't find your device. Let's connect directly via IP address.</p>
-              <div class="mb-3">
-                <label for="piIpInput" class="form-label">Raspberry Pi IP Address</label>
-                <input type="text" class="form-control" id="piIpInput" placeholder="192.168.1.100">
-                <div class="form-text">
-                  Find your Pi's IP by running: <code>hostname -I</code>
+    async load_modal_html() {
+        if (document.getElementById('rfidModal')) return;
+        try {
+            const res = await fetch('/rfid-scan-modal.html');
+            const html = await res.text();
+            document.body.insertAdjacentHTML('beforeend', html);
+        } catch (e) {
+            const modalHtml = `
+        <div class="modal fade" id="rfidModal" tabindex="-1" aria-labelledby="rfidScanModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="rfidScanModalLabel">Scan RFID Tag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body text-center">
+                <div class="rfid-scan-animation">
+                  <div class="rfid-scan-icon"><i class="bi bi-broadcast"></i></div>
+                </div>
+                <h4 class="mt-3">Waiting for RFID Tag</h4>
+                <p class="text-muted">Place a tag on the reader</p>
+                <div class="rfid-scan-status mt-3">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="mt-2">Scanning...</p>
+                </div>
+                <div class="rfid-scan-success mt-4" >
+                  <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                  <p class="mt-2">Done</p>
+                </div>
+                <div class="rfid-conflict mt-4">
+                  <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
+                  <h5 class="mt-2">Tag Already Associated</h5>
+                  <p class="conflict-message"></p>
+                  <div class="btn-group mt-3">
+                    <button class="btn btn-secondary" id="scanAnotherBtn">Scan Another</button>
+                    <button class="btn btn-warning" id="overrideBtn">Override</button>
+                  </div>
                 </div>
               </div>
-              <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
-                Make sure your Pi is on the same network and the device server is running.
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-primary" onclick="window.rfidSetup.connectFromModal()">Connect</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    // Remove existing modal
-    const existingModal = document.getElementById('piIpModal');
-    if (existingModal) existingModal.remove();
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const modal = new bootstrap.Modal(document.getElementById('piIpModal'));
-    modal.show();
-
-    // Handle modal close
-    document.getElementById('piIpModal').addEventListener('hidden.bs.modal', () => {
-      if (this.ipInputReject) {
-        this.ipInputReject(new Error('IP input cancelled'));
-      }
-    });
-  }
-
-  async loadRfidModalHtml() {
-    if (document.getElementById('rfidScanModal')) return;
-    try {
-      const res = await fetch('/rfid-scan-modal.html');
-      const html = await res.text();
-      document.body.insertAdjacentHTML('beforeend', html);
-    } catch (err) {
-      console.warn('Could not load rfid-scan-modal.html:', err);
-      this.createRfidModalFallback();
-    }
-  }
-
-  createRfidModalFallback() {
-    const modalHtml = `
-      <div class="modal fade" id="rfidScanModal" tabindex="-1" aria-labelledby="rfidScanModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="rfidScanModalLabel">Scan RFID Tag</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-              <div class="rfid-scan-animation">
-                <div class="rfid-scan-icon">
-                  <i class="bi bi-broadcast"></i>
-                </div>
-              </div>
-              <h4 class="mt-4">Waiting for RFID Tag</h4>
-              <p class="text-muted">Please place an unused RFID tag on the reader to associate it with your item</p>
-              <div class="rfid-scan-status mt-4">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Scanning...</p>
-              </div>
-              <div class="rfid-scan-success mt-4" style="display: none;">
-                <i class="bi bi-check-circle-fill text-success fs-1"></i>
-                <p class="mt-2">RFID tag successfully associated</p>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-  }
+        </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+    }
 
-    async openScanModalAndAssociate(itemId, onSuccess = null) {
-        await this.loadRfidModalHtml();
+    stopScanning() {
+        console.log('Stopping RFID scanning...');
+        this.isScanning = false;
+        
+        if (this.currentPollInterval) {
+            clearInterval(this.currentPollInterval);
+            this.currentPollInterval = null;
+            console.log('Cleared polling interval');
+        }
+    }
+
+    async scanTagOnly(onTagScanned = null) {
+        await this.init();
+        await this.load_modal_html();
         const token = window.authManager?.token;
         if (!token) throw new Error('Authentication required');
+        console.log('Starting RFID scan (tag only)...');
+        this.stopScanning();
+        try {
+            await this.rfidClient.clearScanCache();
+            console.log('Scan cache cleared');
+        } catch (error) {
+            console.warn('Failed to clear scan cache:', error);
+        }
+        const modalEl = document.getElementById('rfidModal');
+        if (!modalEl) throw new Error('RFID modal not found');
 
-        const modalEl = document.getElementById('rfidScanModal');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-
-        modalEl.querySelector('.rfid-scan-status').style.display = '';
-        modalEl.querySelector('.rfid-scan-success').style.display = 'none';
+        const modal = new bootstrap.Modal(modalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+        const statusEl = modalEl.querySelector('.rfid-scan-status');
+        const successEl = modalEl.querySelector('.rfid-scan-success');
+        const conflictEl = modalEl.querySelector('.rfid-conflict');
+        if (statusEl) statusEl.style.display = 'block';
+        if (successEl) successEl.style.display = 'none';
+        if (conflictEl) conflictEl.style.display = 'none';
+        const cleanup = () => {
+            console.log('Modal hidden, cleaning up...');
+            this.stopScanning();
+        };
+        modalEl.addEventListener('hidden.bs.modal', cleanup, { once: true });
 
         modal.show();
-
-        let stopped = false;
-        const stopPolling = () => { stopped = true; };
-
-        modalEl.addEventListener('hidden.bs.modal', stopPolling, { once: true });
-
-        const associateWithPossibleOverride = async (tag, forceOverride = false) => {
-            const assocResponse = await fetch(`${API_BASE}/rfid/tags/${encodeURIComponent(tag.tagId)}/associate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ itemId, forceOverride })
-            });
-
-            const payload = await assocResponse.json().catch(() => ({}));
-            if (assocResponse.ok && payload?.success) {
-                modalEl.querySelector('.rfid-scan-status').style.display = 'none';
-                modalEl.querySelector('.rfid-scan-success').style.display = '';
-                if (onSuccess) onSuccess(tag, payload);
-                setTimeout(() => modal.hide(), 1500);
-                return true;
+        this.isScanning = true;
+        let failureCount = 0;
+        this.currentPollInterval = setInterval(async () => {
+            if (!this.isScanning) {
+                console.log('Scanning stopped, clearing interval');
+                this.stopScanning();
+                return;
             }
-
-            // Handle conflict flow from backend contract
-            if (payload?.requiresConfirmation) {
-                const msg = payload?.message || 'This tag is already assigned. Do you want to override it?';
-                const confirmed = window.confirm(msg);
-                if (confirmed) {
-                    // Retry with forceOverride = true
-                    return await associateWithPossibleOverride(tag, true);
+            try {
+                console.log('Polling for RFID tag...');
+                const result = await this.rfidClient.getLatestScan();
+                console.log('RFID scan result:', result);
+                if (result && result.tagId && result.tagId !== '') {
+                    console.log('New RFID tag scanned:', result.tagId);
+                    this.stopScanning();
+                    if (statusEl) statusEl.style.display = 'none';
+                    if (successEl) {
+                        successEl.style.display = 'block';
+                        successEl.innerHTML = `
+                            <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                            <p class="mt-2">Tag ${result.tagId} detected!</p>
+                        `;
+                    }
+                    setTimeout(() => {
+                        modal.hide();
+                        if (onTagScanned) onTagScanned(result.tagId);
+                    }, 1500);
+                    
+                    return;
                 }
-                // user cancelled: just keep scanning
-                return false;
+                failureCount = 0;
+                
+            } catch (error) {
+                console.error('RFID scan error:', error);
+                failureCount++;
+                if (failureCount >= 5) {
+                    console.error('Too many scan failures, stopping');
+                    this.stopScanning();
+                    modal.hide();
+                    return;
+                }
             }
+        }, 1000);
+    }
 
-            // Non-OK without requiresConfirmation ==> keep scanning
-            console.warn('RFID associate failed:', payload);
-            return false;
+    async openScanModalAndAssociate(itemId, onSuccess = null) {
+        await this.init();
+        await this.load_modal_html();
+        
+        const token = window.authManager?.token;
+        if (!token) return;
+
+        console.log('Starting RFID scan and associate for item:', itemId);
+        this.stopScanning();
+        try {
+            await this.rfidClient.clearScanCache();
+            await this.rfidClient.setAssociationMode(true);
+            console.log('Scan cache cleared and association mode enabled');
+        } catch (error) {
+            console.warn('Failed to prepare for association:', error);
+        }
+        const modalEl = document.getElementById('rfidModal');
+        if (!modalEl) return;
+        const modal = new bootstrap.Modal(modalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+        const statusEl = modalEl.querySelector('.rfid-scan-status');
+        const successEl = modalEl.querySelector('.rfid-scan-success');
+        const conflictEl = modalEl.querySelector('.rfid-conflict');
+        const conflictMessage = modalEl.querySelector('.conflict-message');
+        const scanAnotherBtn = modalEl.querySelector('#scanAnotherBtn');
+        const overrideBtn = modalEl.querySelector('#overrideBtn');
+        if (statusEl) statusEl.style.display = 'block';
+        if (successEl) successEl.style.display = 'none';
+        if (conflictEl) conflictEl.style.display = 'none';
+        const cleanup = async () => {
+            console.log('Modal hidden, cleaning up...');
+            this.stopScanning();
+            try {
+                await this.rfidClient.setAssociationMode(false);
+                console.log('Association mode disabled');
+            } catch (error) {
+                console.warn('Failed to disable association mode:', error);
+            }
         };
 
-        const pollForTags = async () => {
-            if (stopped) return;
+        modalEl.addEventListener('hidden.bs.modal', cleanup, { once: true });
+        modal.show();
+        this.isScanning = true;
+        let failureCount = 0;
+        let currentTagId = null;
+        const associateTag = async (tagId, forceOverride = false) => {
+            console.log('Attempting to associate tag:', tagId, 'with item:', itemId, 'override:', forceOverride);
+            
+            try {
+                const result = await this.rfidClient.associate_tag(tagId, itemId, forceOverride);
+                return { success: true, data: result };
+            } catch (error) {
+                console.error('Association error:', error);
+                return { success: false, error: error.message, data: error.response?.data };
+            }
+        };
+        this.currentPollInterval = setInterval(async () => {
+            if (!this.isScanning) {
+                console.log('Scanning stopped, clearing interval');
+                this.stopScanning();
+                return;
+            }
 
             try {
-                const response = await fetch(`${API_BASE}/rfid/tags/unassociated`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                console.log('Polling for RFID tag (association)...');
+                const result = await this.rfidClient.getLatestScan();
+                console.log('RFID association scan result:', result);
 
-                if (response.ok) {
-                    const tags = await response.json();
-                    if (Array.isArray(tags) && tags.length > 0) {
-                        const tag = tags[0];
-                        const done = await associateWithPossibleOverride(tag, false);
-                        if (done) return; // stop polling if successfully associated (or after modal hides)
+                if (result && result.tagId && result.tagId !== '') {
+                    console.log('RFID tag detected:', result.tagId);
+                    currentTagId = result.tagId;
+                    this.stopScanning();
+                    
+                    const { success, data, error } = await associateTag(result.tagId, false);
+                    if (success && data.success) {
+                        if (statusEl) statusEl.style.display = 'none';
+                        if (successEl) {
+                            successEl.style.display = 'block';
+                            successEl.innerHTML = `
+                                <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                                <p class="mt-2">Tag ${result.tagId} successfully associated!</p>
+                            `;
+                        }
+                        
+                        setTimeout(() => {
+                            modal.hide();
+                            if (onSuccess) onSuccess(result.tagId);
+                        }, 2000);
+                        return;
+                        
+                    } else if (data && data.conflict) {
+                        if (statusEl) statusEl.style.display = 'none';
+                        if (conflictEl) {
+                            conflictEl.style.display = 'block';
+                            if (conflictMessage) {
+                                conflictMessage.textContent = data.message || 'Tag is already associated with another item';
+                            }
+                        }
+
+                        const newScanAnotherBtn = scanAnotherBtn?.cloneNode(true);
+                        const newOverrideBtn = overrideBtn?.cloneNode(true);
+                        
+                        if (scanAnotherBtn && newScanAnotherBtn) {
+                            scanAnotherBtn.parentNode.replaceChild(newScanAnotherBtn, scanAnotherBtn);
+                            newScanAnotherBtn.addEventListener('click', async () => {
+                                console.log('Scan another button clicked');
+                                if (conflictEl) conflictEl.style.display = 'none';
+                                if (statusEl) statusEl.style.display = 'block';
+                                currentTagId = null;
+                                await this.rfidClient.clearScanCache();
+                                this.isScanning = true;
+                                this.startPolling();
+                            });
+                        }
+                        
+                        if (overrideBtn && newOverrideBtn) {
+                            overrideBtn.parentNode.replaceChild(newOverrideBtn, overrideBtn);
+                            newOverrideBtn.addEventListener('click', async () => {
+                                console.log('Override button clicked');
+                                try {
+                                    const { success: overrideSuccess, data: overrideData } = await associateTag(currentTagId, true);
+                                    
+                                    if (overrideSuccess && overrideData.success) {
+                                        if (conflictEl) conflictEl.style.display = 'none';
+                                        if (successEl) {
+                                            successEl.style.display = 'block';
+                                            successEl.innerHTML = `
+                                                <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                                                <p class="mt-2">Tag successfully reassociated!</p>
+                                            `;
+                                        }
+                                        setTimeout(() => {
+                                            modal.hide();
+                                            if (onSuccess) onSuccess(currentTagId);
+                                        }, 2000);
+                                    } else {
+                                        throw new Error(overrideData?.message || 'Override failed');
+                                    }
+                                } catch (error) {
+                                    console.error('Override error:', error);
+                                    if (conflictMessage) {
+                                        conflictMessage.textContent = 'Error: ' + error.message;
+                                    }
+                                }
+                            });
+                        }
+                        
+                        return;
+                    } else {
+                        throw new Error(data?.message || error || 'Association failed');
                     }
                 }
-            } catch (err) {
-                console.warn('Polling for tags failed:', err);
+                
+                failureCount = 0;
+            } catch (error) {
+                console.error('RFID scan error:', error);
+                failureCount++;
+                
+                if (failureCount >= 5) {
+                    if (statusEl) {
+                        statusEl.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                Connection issues. Please check your RFID device and try again.
+                            </div>`;
+                    }
+                    this.stopScanning();
+                }
             }
-
-            setTimeout(pollForTags, 2000);
-        };
-
-        pollForTags();
-        return modal;
+        }, 1000); 
     }
 
+    startPolling() {
+        if (this.currentPollInterval) return; 
+        
+        this.currentPollInterval = setInterval(async () => {
+            if (!this.isScanning) {
+                this.stopScanning();
+                return;
+            }
+            
+            try {
+                const result = await this.rfidClient.getLatestScan();
+            } catch (error) {
+                console.error('Polling error:', error);
+            }
+        }, 1000); 
+    }
 
     async getDeviceStatus() {
-    const token = window.authManager?.token;
-    if (!token) throw new Error('Authentication required');
-
-    const response = await fetch(`${API_BASE}/rfid/devices`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to get device status');
+        await this.init();
+        try {
+            const data = await this.rfidClient.devices();
+            return data.hasDevice ? data.device : null;
+        } catch (error) {
+            console.error('Failed to get device status:', error);
+            return null;
+        }
     }
-
-    return response.json();
-  }
-
-  async getUnassociatedTags() {
-    const token = window.authManager?.token;
-    if (!token) throw new Error('Authentication required');
-
-    const response = await fetch(`${API_BASE}/rfid/tags/unassociated`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to get unassociated tags');
-    }
-
-    return response.json();
-  }
-
-  async getUserTags() {
-    const token = window.authManager?.token;
-    if (!token) throw new Error('Authentication required');
-
-    const response = await fetch(`${API_BASE}/rfid/tags`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to get user tags');
-    }
-
-    return response.json();
-  }
 }
-
-// Export for global use
-window.rfidSetup = new RfidSetupManager();
-export default RfidSetupManager;
+const rfidSetup = new RfidUi();
+window.rfidSetup = rfidSetup;

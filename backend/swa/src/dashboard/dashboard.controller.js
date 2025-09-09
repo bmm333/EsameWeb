@@ -1,42 +1,57 @@
-import { Controller, Get, Req, UseGuards,Dependencies,Inject  } from '@nestjs/common';
-import { DashboardService } from './dashboard.service.js';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { Controller, Get, Req, UseGuards, Dependencies } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { DashboardService } from './dashboard.service';
 
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard)
+@Dependencies(DashboardService)
 export class DashboardController {
-    constructor(@Inject(DashboardService) dashboardService) {
+    constructor(dashboardService) {
         this.dashboardService = dashboardService;
     }
-    @Get()
-    async getDashboard(@Req() req) {
-        const userId = req.user.id;
-        return await this.dashboardService.getDashboardData(userId);
-    }
-
-
     @Get('stats')
     async getStats(@Req() req) {
-        const userId = req.user.id;
-        return await this.dashboardService.getWardrobeStats(userId);
+        try {
+            const userId = req.user.id;
+            console.log('Getting stats for user:', userId);
+            const stats = await this.dashboardService.getStats(userId);
+            console.log('Response data:', stats);
+            return stats;
+        } catch (error) {
+            console.error('Error in getStats:', error);
+            return {
+                totalItems: 0,
+                totalOutfits: 0,
+                availableItems: 0,
+                wornItems: 0
+            };
+        }
+    }
+
+    @Get('outfit')
+    async getTodaysOutfit(@Req() req) {
+        try {
+            const userId = req.user.id;
+            console.log('Getting today\'s outfit for user:', userId);
+            return await this.dashboardService.getTodaysOutfit(userId);
+        } catch (error) {
+            console.error('Error in getTodaysOutfit:', error);
+            return {
+                hasOutfit: false,
+                message: 'Unable to load outfit suggestions at this time'
+            };
+        }
     }
 
     @Get('activity')
     async getActivity(@Req() req) {
-        const userId = req.user.id;
-        return await this.dashboardService.getRecentActivity(userId);
-    }
-
-
-    @Get('today-outfit')
-    async getTodaysOutfit(@Req() req) {
-        const userId = req.user.id;
-        return await this.dashboardService.getTodaysOutfit(userId);
-    }
-
-    @Get('quick-actions')
-    async getQuickActions(@Req() req) {
-        const userId = req.user.id;
-        return await this.dashboardService.getQuickActions(userId);
+        try {
+            const userId = req.user.id;
+            console.log('Getting activity for user:', userId);
+            return await this.dashboardService.getRecentActivity(userId);
+        } catch (error) {
+            console.error('Error in getActivity:', error);
+            return [];
+        }
     }
 }

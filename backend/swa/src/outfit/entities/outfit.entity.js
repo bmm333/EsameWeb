@@ -1,35 +1,29 @@
-import 'reflect-metadata';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity.js';
 
 @Entity('outfits')
-@Index(['userId'])
 export class Outfit {
     @PrimaryGeneratedColumn()
     id;
 
-    @Column({ type: 'varchar', length: 100 })
-    name;
+    @Column({type: 'int'})
+    userId;
 
-    @Column({ type: 'json' })
-    items;
+    @Column({type:'varchar', length: 255 })
+    name;
 
     @Column({ 
         type: 'enum', 
-        enum: ['casual', 'formal', 'business', 'sporty', 'party', 'vacation'], 
+        enum: ['casual', 'work', 'formal', 'sport', 'party'],
         nullable: true 
     })
     occasion;
 
-    @Column({ 
-        type: 'enum', 
-        enum: ['spring', 'summer', 'fall', 'winter', 'all-season'], 
-        default: 'all-season' 
-    })
-    season;
-
     @Column({ type: 'text', nullable: true })
     notes;
+
+    @Column({ type: 'json', nullable: true })
+    items;
 
     @Column({ type: 'boolean', default: false })
     isFavorite;
@@ -41,10 +35,16 @@ export class Outfit {
     lastWorn;
 
     @Column({ type: 'json', nullable: true })
-    wearHistory; 
+    wearHistory;
+
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    image;
+
+    @Column({ type: 'varchar', length: 50, nullable: true })
+    season;
 
     @Column({ type: 'boolean', default: true })
-    isAvailable; 
+    isAvailable;
 
     @CreateDateColumn()
     createdAt;
@@ -52,10 +52,6 @@ export class Outfit {
     @UpdateDateColumn()
     updatedAt;
 
-    @ManyToOne(() => User, user => user.outfits, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'userId' })
+    @ManyToOne(() => User, user => user.outfits)
     user;
-
-    @Column({type:'int'})
-    userId;
 }
