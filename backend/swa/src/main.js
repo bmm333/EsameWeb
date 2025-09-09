@@ -30,7 +30,7 @@ async function bootstrap() {
 
   const port = process.env.PORT;
   // FIX: Correct host configuration
-  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '192.168.1.7';
+  const host = process.env.NODE_ENV === '0.0.0.0';
   
   await app.listen(port, host);
   console.log(`Server running on http://${host}:${port}`);
