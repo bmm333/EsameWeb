@@ -28,7 +28,7 @@ async function bootstrap() {
   }));
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT;
   // FIX: Correct host configuration
   const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '192.168.1.7';
   
