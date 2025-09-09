@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "format": "prettier --write \"**/*.js\"",
-    "build": "npx babel src -d dist",
+    "build": "npx babel src -d dist --extensions \".js\"",
     "start": "node --trace-warnings dist/main.js",
     "start:dev": "nodemon --exec babel-node src/main.js",
     "test": "jest",
