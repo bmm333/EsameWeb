@@ -26,6 +26,7 @@ import { RfidDevice } from './rfid/entities/rfid-device.entity.js';
 import { RfidTag } from './rfid/entities/rfid-tag.entity.js';
 import { Media } from './media/entities/media.entity.js';
 import { Recommendation } from './recommendation/entities/recommendation.entity.js';
+import { RecommendationModule } from './recommendation/recommendation.module';
 
 
 @Module({
@@ -68,7 +69,8 @@ import { Recommendation } from './recommendation/entities/recommendation.entity.
     MediaModule,
     DashboardModule,
     AnalyticsModule,
-    WeatherModule
+    WeatherModule,
+    RecommendationModule
   ],
   controllers: [AppController],
   providers: [AppService],
