@@ -31,7 +31,7 @@ async function bootstrap() {
     forbidNonWhitelisted: true
   }));
   app.useGlobalInterceptors(new _transform.TransformInterceptor());
-  const port = process.env.PORT;
+  const port = process.env.PORT || 3001;
   // FIX: Correct host configuration
   const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '192.168.1.7';
   await app.listen(port, host);
