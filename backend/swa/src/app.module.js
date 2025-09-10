@@ -16,6 +16,7 @@ import { MediaModule } from './media/media.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { WeatherModule } from './weather/weather.module';
+import { RecommendationModule } from './recommendation/recommendation.module';
 
 
 
@@ -32,7 +33,8 @@ import { WeatherModule } from './weather/weather.module';
     MediaModule,
     DashboardModule,
     AnalyticsModule,
-    WeatherModule
+    WeatherModule,
+    RecommendationModule
   ],
   controllers: [AppController],
   providers: [AppService],
