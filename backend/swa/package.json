@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "format": "prettier --write \"**/*.js\"",
+    "build":"./node_modules/.bin/babel src -d dist --extensions \".js\"",
     "start": "babel-node index.js",
     "start:dev": "nodemon",
     "test": "jest",

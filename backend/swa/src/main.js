@@ -14,7 +14,7 @@ async function bootstrap() {
     'http://192.168.1.7:8080',
     'http://localhost:8080',
     'http://localhost:3000',
-    process.env.FRONTEND_URL || 'https://your-app.vercel.app',
+    process.env.FRONTEND_URL || 'https://swa-flax.vercel.app',
   ],
   credentials: true,
   });
@@ -29,7 +29,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TransformInterceptor());
 
   const port = process.env.PORT || 3001;
-  const host = process.env.NODE_ENV === '0.0.0.0'
+  const host = process.env.NODE_ENV === 'development' ? 'localhost' : '0.0.0.0';
   await app.listen(port, host);
   console.log(`Server running on http://${host}:${port}`);
 }
