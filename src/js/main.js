@@ -1,3 +1,10 @@
+const isProd = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+if (isProd) {
+  console.log = () => {};
+  console.debug = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+}
 import { ApiClient } from './services/api-client.js';
 import { AuthManager } from './services/auth-manager.js';
 import { UserContext } from './services/user-context.js';
