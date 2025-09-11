@@ -64,13 +64,13 @@ class RfidUi {
     }
 
     stopScanning() {
-        console.log('Stopping RFID scanning...');
+      /*  console.log('Stopping RFID scanning...');*/
         this.isScanning = false;
         
         if (this.currentPollInterval) {
             clearInterval(this.currentPollInterval);
             this.currentPollInterval = null;
-            console.log('Cleared polling interval');
+          /*  console.log('Cleared polling interval');*/
         }
     }
 
@@ -79,11 +79,11 @@ class RfidUi {
         await this.load_modal_html();
         const token = window.authManager?.token;
         if (!token) throw new Error('Authentication required');
-        console.log('Starting RFID scan (tag only)...');
+      /*  console.log('Starting RFID scan (tag only)...');*/
         this.stopScanning();
         try {
             await this.rfidClient.clearScanCache();
-            console.log('Scan cache cleared');
+        /*    console.log('Scan cache cleared');*/
         } catch (error) {
             console.warn('Failed to clear scan cache:', error);
         }
@@ -101,7 +101,7 @@ class RfidUi {
         if (successEl) successEl.style.display = 'none';
         if (conflictEl) conflictEl.style.display = 'none';
         const cleanup = () => {
-            console.log('Modal hidden, cleaning up...');
+            /*console.log('Modal hidden, cleaning up...');*/
             this.stopScanning();
         };
         modalEl.addEventListener('hidden.bs.modal', cleanup, { once: true });
@@ -111,16 +111,16 @@ class RfidUi {
         let failureCount = 0;
         this.currentPollInterval = setInterval(async () => {
             if (!this.isScanning) {
-                console.log('Scanning stopped, clearing interval');
+                /*console.log('Scanning stopped, clearing interval');*/
                 this.stopScanning();
                 return;
             }
             try {
-                console.log('Polling for RFID tag...');
+                /*console.log('Polling for RFID tag...');*/
                 const result = await this.rfidClient.getLatestScan();
-                console.log('RFID scan result:', result);
+                /*console.log('RFID scan result:', result);*/
                 if (result && result.tagId && result.tagId !== '') {
-                    console.log('New RFID tag scanned:', result.tagId);
+                    /*console.log('New RFID tag scanned:', result.tagId);*/
                     this.stopScanning();
                     if (statusEl) statusEl.style.display = 'none';
                     if (successEl) {
@@ -159,12 +159,12 @@ class RfidUi {
         const token = window.authManager?.token;
         if (!token) return;
 
-        console.log('Starting RFID scan and associate for item:', itemId);
+      /*  console.log('Starting RFID scan and associate for item:', itemId);*/
         this.stopScanning();
         try {
             await this.rfidClient.clearScanCache();
             await this.rfidClient.setAssociationMode(true);
-            console.log('Scan cache cleared and association mode enabled');
+            /*console.log('Scan cache cleared and association mode enabled');*/
         } catch (error) {
             console.warn('Failed to prepare for association:', error);
         }
@@ -184,11 +184,11 @@ class RfidUi {
         if (successEl) successEl.style.display = 'none';
         if (conflictEl) conflictEl.style.display = 'none';
         const cleanup = async () => {
-            console.log('Modal hidden, cleaning up...');
+          /*   console.log('Modal hidden, cleaning up...');*/
             this.stopScanning();
             try {
                 await this.rfidClient.setAssociationMode(false);
-                console.log('Association mode disabled');
+                /*console.log('Association mode disabled');*/
             } catch (error) {
                 console.warn('Failed to disable association mode:', error);
             }
@@ -200,8 +200,8 @@ class RfidUi {
         let failureCount = 0;
         let currentTagId = null;
         const associateTag = async (tagId, forceOverride = false) => {
-            console.log('Attempting to associate tag:', tagId, 'with item:', itemId, 'override:', forceOverride);
-            
+            /*console.log('Attempting to associate tag:', tagId, 'with item:', itemId, 'override:', forceOverride);*/
+
             try {
                 const result = await this.rfidClient.associate_tag(tagId, itemId, forceOverride);
                 return { success: true, data: result };
@@ -212,18 +212,18 @@ class RfidUi {
         };
         this.currentPollInterval = setInterval(async () => {
             if (!this.isScanning) {
-                console.log('Scanning stopped, clearing interval');
+                /*console.log('Scanning stopped, clearing interval');*/
                 this.stopScanning();
                 return;
             }
 
             try {
-                console.log('Polling for RFID tag (association)...');
+                /*console.log('Polling for RFID tag (association)...');*/
                 const result = await this.rfidClient.getLatestScan();
-                console.log('RFID association scan result:', result);
+                /*console.log('RFID association scan result:', result);*/
 
                 if (result && result.tagId && result.tagId !== '') {
-                    console.log('RFID tag detected:', result.tagId);
+                    /*console.log('RFID tag detected:', result.tagId);*/
                     currentTagId = result.tagId;
                     this.stopScanning();
                     
@@ -259,7 +259,7 @@ class RfidUi {
                         if (scanAnotherBtn && newScanAnotherBtn) {
                             scanAnotherBtn.parentNode.replaceChild(newScanAnotherBtn, scanAnotherBtn);
                             newScanAnotherBtn.addEventListener('click', async () => {
-                                console.log('Scan another button clicked');
+                                /*console.log('Scan another button clicked');*/
                                 if (conflictEl) conflictEl.style.display = 'none';
                                 if (statusEl) statusEl.style.display = 'block';
                                 currentTagId = null;
@@ -272,7 +272,7 @@ class RfidUi {
                         if (overrideBtn && newOverrideBtn) {
                             overrideBtn.parentNode.replaceChild(newOverrideBtn, overrideBtn);
                             newOverrideBtn.addEventListener('click', async () => {
-                                console.log('Override button clicked');
+                                /*console.log('Override button clicked');*/
                                 try {
                                     const { success: overrideSuccess, data: overrideData } = await associateTag(currentTagId, true);
                                     

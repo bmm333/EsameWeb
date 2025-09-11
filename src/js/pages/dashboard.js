@@ -103,7 +103,7 @@ export function render() {
 }
 
 export async function init() {
-  console.log('Dashboard: Initializing...');
+  /*console.log('Dashboard: Initializing...');*/
   document.querySelectorAll('#dashboardPage [data-nav]').forEach(a => {
     a.addEventListener('click', e => {
       e.preventDefault();
@@ -119,7 +119,7 @@ export async function init() {
 }
 
 async function loadDashboardData(dashClient) {
-  console.log('Dashboard: Loading dashboard data...');
+  /*console.log('Dashboard: Loading dashboard data...');*/
   loadStats(dashClient);
   loadTodaysOutfit(dashClient);
   loadRecentActivity(dashClient);
@@ -129,7 +129,7 @@ async function loadUserProfile() {
   try {
     let user = window.app?.userContext?.profile;
     if (!user) {
-      console.log('Dashboard: Fetching user profile...');
+      /*console.log('Dashboard: Fetching user profile...');*/
       const profileResponse = await window.app.api.get('/user/profile');
       user = profileResponse?.user;
       if (window.app.userContext) {
@@ -172,7 +172,7 @@ async function loadWeather(weatherClient) {
     }
 
     if (user?.location) {
-      console.log('Dashboard: Fetching weather for:', user.location);
+      /*console.log('Dashboard: Fetching weather for:', user.location);*/
       const weather = await weatherClient.getCurrent(user.location);
       
       if (weather && weather.temperature !== undefined) {
@@ -234,10 +234,10 @@ function getWeatherIcon(condition) {
 
 async function loadStats(dashClient) {
   try {
-    console.log('Dashboard: Fetching stats...');
+    /*console.log('Dashboard: Fetching stats...');*/
     const stats = await dashClient.getStats();
-    console.log('Dashboard: Stats response:', stats);
-    
+    /*console.log('Dashboard: Stats response:', stats);*/
+
     const statsEl = document.getElementById('wardrobeStats');
     if (statsEl && stats) {
       const totalItems = stats.totalItems || 0;
@@ -296,10 +296,10 @@ async function loadStats(dashClient) {
 
 async function loadTodaysOutfit(dashClient) {
   try {
-    console.log('Dashboard: Fetching today\'s outfit...');
+    /*console.log('Dashboard: Fetching today\'s outfit...');*/
     const outfitData = await dashClient.getTodaysOutfit();
-    console.log('Dashboard: Outfit response:', outfitData);
-    
+    /*console.log('Dashboard: Outfit response:', outfitData);*/
+
     const outfitEl = document.getElementById('todayOutfit');
     if (!outfitEl) return;
     
@@ -361,10 +361,10 @@ async function loadTodaysOutfit(dashClient) {
 
 async function loadRecentActivity(dashClient) {
   try {
-    console.log('Dashboard: Fetching recent activity...');
+  /*  console.log('Dashboard: Fetching recent activity...');*/
     const activities = await dashClient.getRecentActivity();
-    console.log('Dashboard: Activity response:', activities);
-    
+   /* console.log('Dashboard: Activity response:', activities);*/
+
     const activityEl = document.getElementById('recentActivity');
     if (!activityEl) return;
     

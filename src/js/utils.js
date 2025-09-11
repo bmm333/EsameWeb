@@ -28,9 +28,6 @@ export const Utils = {
         return Utils.formatDate(date);
     },
 
-    /**
-     * Debounce function calls
-     */
     debounce: (func, wait) => {
         let timeout;
         return function executedFunction(...args) {
@@ -63,13 +60,6 @@ export const Utils = {
             return fallback;
         }
     },
-
-    /**
-     * Show notification
-     */
-    showNotification: (message, type = 'info') => {
-        console.log(`1 1 1 1${type.toUpperCase()}: ${message}`);
-    }
 };
 
 export default Utils;

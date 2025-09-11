@@ -88,7 +88,7 @@ export function initHeader() {
         if (btn) {
             btn.addEventListener('click', async (e) => {
                 e.preventDefault();
-                console.log('Logout clicked');
+                /*console.log('Logout clicked');*/
                 try {
                     if (window.app?.logout) {
                         await window.app.logout();
@@ -127,7 +127,7 @@ export function initHeader() {
         }
     }, 100);
 
-    console.log('Header: Initialization complete');
+    /*console.log('Header: Initialization complete');*/
 }
 
 async function loadUserProfileForHeader() {
@@ -140,7 +140,7 @@ async function loadUserProfileForHeader() {
         }
         let user = window.app?.userContext?.profile;
         if (!user && window.app?.api) {
-            console.log('Header: Loading user profile...');
+            /*console.log('Header: Loading user profile...');*/
             const profileResponse = await window.app.api.get('/user/profile');
             user = profileResponse?.user;
             if (window.app.userContext) {
@@ -148,7 +148,7 @@ async function loadUserProfileForHeader() {
             }
         }
         if (user) {
-            console.log('Header: User profile loaded:', user.firstName);
+            /*console.log('Header: User profile loaded:', user.firstName);*/
             updateUserInHeader(user);
         } else {
             showLoginState();

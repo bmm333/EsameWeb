@@ -1,5 +1,3 @@
-import { APP_CONFIG } from '../config/app-config.js';
-
 export async function render() {
   const user = window.app.userContext.get();
   return `
@@ -445,7 +443,7 @@ export async function init() {
       changeEmailForm?.addEventListener('submit', async (e) => {
           e.preventDefault();
           if (isSubmitting) {
-              console.log('Email change already in progress, ignoring submission');
+              /*console.log('Email change already in progress, ignoring submission');*/
               return;
           }
           const newEmail = getValue('newEmail');
@@ -460,15 +458,15 @@ export async function init() {
           try {
               submitBtn.disabled = true;
               submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Changing...';
-  
-              console.log('Submitting email change request...');
-              
+
+              /*console.log('Submitting email change request...');*/
+
               const response = await apiRef.put('/settings/email', {
                   newEmail,
                   password
               });
-  
-              console.log('Email change response:', response);
+
+              /*console.log('Email change response:', response);*/
               modal.hide();
               changeEmailForm.reset();
               showAlert('settingsGlobalAlert', 'Email change initiated! Please check your new email for verification.', 'success');

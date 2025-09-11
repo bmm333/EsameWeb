@@ -4,7 +4,7 @@ export class ThemeManager {
     }
 
     init() {
-        console.log('ThemeManager: Initializing with theme:', this.currentTheme);
+       /* console.log('ThemeManager: Initializing with theme:', this.currentTheme);*/
         this.applyTheme(this.currentTheme);
         this.setupThemeEventDelegation();
     }
@@ -17,7 +17,7 @@ export class ThemeManager {
                                 e.target.closest('[data-theme-toggle]');
             if (themeSwitcher) {
                 e.preventDefault();
-                console.log('Theme switcher clicked via delegation');
+               /* console.log('Theme switcher clicked via delegation');*/
                 this.toggleTheme();
             }
         });
@@ -38,7 +38,7 @@ export class ThemeManager {
     }
 
     setTheme(theme) {
-        console.log('ThemeManager: Setting theme to:', theme);
+        /*console.log('ThemeManager: Setting theme to:', theme);*/
         this.currentTheme = theme;
         localStorage.setItem('theme', theme);
         this.applyTheme(theme);
@@ -191,7 +191,7 @@ export class ThemeManager {
 
     toggleTheme() {
         const newTheme = this.currentTheme === 'light' ? 'dark' : 'light';
-        console.log('ThemeManager: Toggling theme from', this.currentTheme, 'to', newTheme);
+       /* console.log('ThemeManager: Toggling theme from', this.currentTheme, 'to', newTheme);*/
         this.setTheme(newTheme);
         return newTheme;
     }

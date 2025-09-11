@@ -89,7 +89,7 @@ export async function init() {
             buttonText.classList.add('d-none');
             buttonLoader.classList.remove('d-none');
             const password = passwordInput.value;
-            console.log('Sending reset password request...');
+        /*    console.log('Sending reset password request...');*/
             const response = await window.app.api.post('/auth/reset-password', {
                 token: token,
                 newPassword: password

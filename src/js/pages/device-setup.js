@@ -256,7 +256,7 @@ export async function init() {
     }
 
     const show_step = (step_number) => {
-        console.log('🔄 Showing step:', step_number);
+      /*console.log('Showing step:', step_number);*/
         current_step = step_number;
   
         const progress = (step_number / 4) * 100;
@@ -284,7 +284,7 @@ export async function init() {
     };
 
     els.step1_continue?.addEventListener('click', () => {
-        console.log('📍 Step 1 continue clicked');
+      /*console.log('Step 1 continue clicked');*/
         show_step(2);
     });
 

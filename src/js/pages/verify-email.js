@@ -42,7 +42,7 @@ export async function render() {
 }
 
 export async function init() {
-    console.log('📧 Initializing email verification page');
+   /* console.log('Initializing email verification page');*/
     
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');

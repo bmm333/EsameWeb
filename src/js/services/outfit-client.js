@@ -5,17 +5,17 @@ export class OutfitClient {
 
     async create(outfitData) {
         try {
-            console.log('Creating outfit with data:', outfitData);
+          /*  console.log('Creating outfit with data:', outfitData);*/
             const payload = {
                 name: outfitData.name,
                 occasion: outfitData.occasion || null,
                 notes: outfitData.notes || null,
                 itemIds: outfitData.itemIds || []
             };
-            
-            console.log('Sending payload:', payload);
+
+            /*console.log('Sending payload:', payload);*/
             const response = await this.api.post('/outfit', payload);
-            console.log('Outfit created successfully:', response);
+            /*console.log('Outfit created successfully:', response);*/
             return response;
         } catch (error) {
             console.error('OutfitClient.create error:', error);

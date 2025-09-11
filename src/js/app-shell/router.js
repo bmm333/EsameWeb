@@ -6,7 +6,7 @@ export class Router {
         this.guard = guard;
         this.isStarted = false;
         this.currentPath = null;
-        console.log('Router initialized with', this.routes.length, 'routes');
+        /*console.log('Router initialized with', this.routes.length, 'routes');*/
     }
 
     start() {
@@ -36,13 +36,13 @@ export class Router {
         if (this.currentPath === path) {
             return;
         }
-        console.log('Resolving route:', path);
+        /*console.log('Resolving route:', path);*/
 
         const route = this.routes.find(r => r.path === path) ||
                       this.routes.find(r => r.path === '*');
 
         if (!route) {
-            console.warn('No route match for', path);
+            /*console.warn('No route match for', path);*/
             return;
         }
 
@@ -71,7 +71,7 @@ export class Router {
             if (typeof mod.init === 'function') {
                 try { await mod.init(); } catch(err){ console.error('Landing init error', err); }
             }
-            console.log('Route resolved (landing):', path);
+            /*console.log('Route resolved (landing):', path);*/
             return;
         }
 
@@ -100,7 +100,7 @@ export class Router {
         }
 
         this.currentPath = path;
-        console.log('Route resolved:', path);
+        /*console.log('Route resolved:', path);*/
     }
 
     navigate(path) {

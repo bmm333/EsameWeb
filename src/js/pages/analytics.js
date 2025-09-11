@@ -154,7 +154,7 @@ export async function render() {
 }
 
 export async function init() {
-    console.log('Analytics page: Initializing...');
+  /*  console.log('Analytics page: Initializing...');*/
     
     const api = window.app.api;
     const analyticsClient = new AnalyticsClient(api);
@@ -190,23 +190,23 @@ export async function init() {
     function showLoading(show) {
         const spinner = document.getElementById('loadingSpinner');
         const content = document.getElementById('analyticsContent');
-        
-        console.log('showLoading called with:', show);
+
+        /*console.log('showLoading called with:', show);
         console.log('Spinner element:', spinner);
-        console.log('Content element:', content);
+        console.log('Content element:', content);*/
         
         if (spinner) {
             spinner.style.display = show ? 'block' : 'none';
-            console.log('Spinner display set to:', spinner.style.display);
+            /*console.log('Spinner display set to:', spinner.style.display);*/
         }
         if (content) {
             content.style.display = show ? 'none' : 'block';
-            console.log('Content display set to:', content.style.display);
+            /*console.log('Content display set to:', content.style.display);*/
         }
     }
 
     function renderAnalytics(data) {
-        console.log('Rendering analytics with data:', data);
+        /*console.log('Rendering analytics with data:', data);*/    
         renderBasicStats(data.basicStats);
         renderMostWornItems(data.mostWornItems);
         renderCategoryStats(data.categoryStats);
@@ -489,5 +489,5 @@ export async function init() {
         renderRarelyUsedItems(analyticsData.rarelyUsedItems);
     };
 
-    console.log('Analytics page: Initialization complete');
+    /*console.log('Analytics page: Initialization complete');*/
 }

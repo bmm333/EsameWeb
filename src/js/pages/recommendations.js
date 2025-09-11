@@ -237,7 +237,7 @@ export async function init() {
     }
     async function generateRecommendations() {
         if (isGenerating || isProcessing) {
-            console.log('Already generating recommendations, ignoring request');
+            /*console.log('Already generating recommendations, ignoring request');*/
             return;
         }
 
@@ -261,9 +261,9 @@ export async function init() {
                 limit: parseInt(document.getElementById('limitFilter')?.value) || 6
             };
 
-            console.log('Calling generateRecommendations API with:', preferences);
+       /*     console.log('Calling generateRecommendations API with:', preferences);*/
             const newRecs = await recClient.generateRecommendations(preferences);
-            console.log('API returned:', newRecs.length, 'recommendations');
+          /*  console.log('API returned:', newRecs.length, 'recommendations');*/
             
             if (newRecs.length === 0) {
                 showEmptyState();
@@ -290,7 +290,7 @@ export async function init() {
 
     async function loadRecommendations() {
         if (isProcessing) {
-            console.log('Already processing, ignoring load request');
+           /* console.log('Already processing, ignoring load request');*/
             return;
         }
 
@@ -304,12 +304,12 @@ export async function init() {
                 limit: parseInt(document.getElementById('limitFilter')?.value) || 6
             };
 
-            console.log('Loading recommendations with filters:', filters);
+          /*  console.log('Loading recommendations with filters:', filters);*/
             const recs = await recClient.getRecommendations(filters);
-            console.log('Loaded recommendations:', recs.length);
+          /*  console.log('Loaded recommendations:', recs.length);*/
 
             const activeRecs = recs.filter(rec => !rec.rejectedAt && !rec.wasWorn);
-            console.log('Active recommendations after filtering:', activeRecs.length);
+          /*  console.log('Active recommendations after filtering:', activeRecs.length);*/
 
             recommendations = deduplicateRecommendations(activeRecs);
 
@@ -340,11 +340,11 @@ export async function init() {
                 seen.add(key);
                 unique.push(rec);
             } else {
-                console.log(`Filtering out duplicate recommendation: ${rec.title} (ID: ${rec.id})`);
+                /*console.log(`Filtering out duplicate recommendation: ${rec.title} (ID: ${rec.id})`);*/
             }
         }
-        
-        console.log(`Deduplication: ${recs.length} -> ${unique.length} unique recommendations`);
+
+        /*console.log(`Deduplication: ${recs.length} -> ${unique.length} unique recommendations`);*/
         return unique;
     }
 
@@ -362,7 +362,7 @@ export async function init() {
             return;
         }
 
-        console.log('Rendering recommendations:', list.length);
+        /*console.log('Rendering recommendations:', list.length);*/
         container.innerHTML = list.map(recommendationToCard).join('');
         setupEventListeners(container);
     }
@@ -410,8 +410,8 @@ export async function init() {
                 isProcessing = false;
                 return;
             }
-            
-            console.log('Rejecting recommendation:', recId);
+
+            /*console.log('Rejecting recommendation:', recId);*/
             await recClient.rejectRecommendation(recId, reason || 'No reason provided');
             
             recommendations = recommendations.filter(r => r.id !== recId);
@@ -430,7 +430,7 @@ export async function init() {
         isProcessing = true;
         
         try {
-            console.log('Marking as worn:', recId);
+            /*console.log('Marking as worn:', recId);*/
             await recClient.markAsWorn(recId);
             
             recommendations = recommendations.filter(r => r.id !== recId);
@@ -454,8 +454,8 @@ export async function init() {
                 isProcessing = false;
                 return;
             }
-            
-            console.log('Marking as worn from modal:', id);
+
+            /*console.log('Marking as worn from modal:', id);*/
             await recClient.markAsWorn(id);
             
             recommendations = recommendations.filter(r => r.id !== id);

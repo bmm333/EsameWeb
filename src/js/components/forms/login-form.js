@@ -106,7 +106,7 @@ export class LoginForm {
                 rememberMe: form.rememberMe?.checked || false
             };
 
-            console.log('Login form data:', data);
+          /*  console.log('Login form data:', data);*/
 
             if (this.options.onSubmit) {
                 const result = await this.options.onSubmit(data);

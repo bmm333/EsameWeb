@@ -5,156 +5,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="074921e9-2906-4b40-a430-adb7dffe02ab" name="Changes" comment="FEAT:OK">
-      <change afterPath="$PROJECT_DIR$/src/js/app-shell/app-shell.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/app-shell/header.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/app-shell/navigation.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/app-shell/router.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/components/forms/login-form.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/components/modals/add-item-moda.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/components/modals/confirm-modal.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/components/ui/loading-spinner.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/components/ui/pagination.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/components/ui/toast.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/config/api-config.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/config/app-config.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/pages/verify-email.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/services/api-client.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/services/dashboard-client.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/services/items-client.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/services/media-client.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/services/outfit-client.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/services/rfid-client.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/services/theme-manager.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/services/user-context.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/services/weather-client.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/utils/constants.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/utils/formatters.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/utils/helpers.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/js/utils/validators.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/analytics/analytics.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/analytics/analytics.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/auth.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/auth/auth.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/auth.controller.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/auth.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/auth/auth.module.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/auth.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/auth/auth.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/auth.service.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/dto/login.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/guards/jwt-auth.guard.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/auth/guards/jwt-auth.guard.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/auth/strategies/jwt.strategy.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/auth/strategies/jwt.strategy.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/common/guard/trial.guard.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/common/guard/trial.guard.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/dashboard/dashboard.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/dashboard/dashboard.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/dashboard/dashboard.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/dashboard/dashboard.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/dashboard/dto/create-dashboard.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/dashboard/dto/update-dashboard.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/dto/create-item.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/dto/item-associate.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/dto/location-update.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/dto/update-item.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/entities/item.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/item/entities/item.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/item.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/item/item.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/item.controller.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/item.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/item/item.module.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/item.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/item/item.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/item/item.service.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/mailing/mailing.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/mailing/mailing.service.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/swa/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/swa/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/swa/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/media/media.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/media/media.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/media/media.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/media/media.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/notification/dto/create-notification.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/notification/entities/notification.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/notification/entities/notification.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/notification/notification.controller.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/notification/notification.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/notification/notification.module.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/notification/notification.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/notification/notification.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/notification/notification.service.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/outfit/dto/create-outfit.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/outfit/dto/update-outfit.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/outfit/entities/outfit.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/outfit/entities/outfit.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/outfit/outfit.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/outfit/outfit.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/outfit/outfit.controller.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/outfit/outfit.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/outfit/outfit.module.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/outfit/outfit.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/outfit/outfit.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/outfit/outfit.service.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/recommendation/dto/generate-recommendation.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/recommendation/entities/recommendation.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/recommendation/entities/recommendation.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/recommendation/recommendation.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/recommendation/recommendation.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/recommendation/recommendation.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/recommendation/recommendation.module.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/recommendation/recommendation.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/recommendation/recommendation.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/dto/device-config.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/dto/device-registration.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/dto/rfid-realtime.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/dto/rfid-scan.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/dto/tag-detection.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/dto/wifi-config.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/entities/rfid-device.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/rfid/entities/rfid-device.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/entities/rfid-tag.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/rfid/entities/rfid-tag.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/rfid.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/rfid/rfid.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/rfid.controller.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/rfid.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/rfid/rfid.module.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/rfid.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/rfid/rfid.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/rfid/rfid.service.spec.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/schelduing/dto/create-scheldue.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/schelduing/dto/update-scheldue.dto.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/schelduing/entities/scheldue.entity.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/schelduing/schelduing.controller.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/schelduing/schelduing.module.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/schelduing/schelduing.service.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/settings/settings.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/settings/settings.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/settings/settings.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/settings/settings.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/dto/user-profile-setup.dto.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/dto/user-profile-setup.dto.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/entities/user-avoid.entity.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/entities/user-color-preferences.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/entities/user-color-preferences.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/entities/user-lifestyle.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/entities/user-lifestyle.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/entities/user-occasion.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/entities/user-occasion.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/entities/user-shop.entity.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/entities/user-size.entity.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/entities/user.entity.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/entities/user.entity.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/tests/user.controller.spec.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/tests/user.controller.spec.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/user.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/user.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/user.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/user.module.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/swa/src/user/user.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/swa/src/user/user.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/device-setup.html" beforeDir="false" afterPath="$PROJECT_DIR$/device-setup.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/login.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notifications.html" beforeDir="false" afterPath="$PROJECT_DIR$/notifications.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scheldue.html" beforeDir="false" afterPath="$PROJECT_DIR$/scheldue.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/base.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/base.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/components.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/components.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/layout.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/layout.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/pages/auth.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/pages/auth.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/pages/dashboard.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/pages/dashboard.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/pages/device-setup.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/pages/device-setup.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/pages/landing.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/pages/landing.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/pages/onboarding.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/pages/onboarding.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/pages/outfit.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/pages/outfit.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/pages/settings.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/pages/settings.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/pages/setup.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/pages/setup.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/pages/wardrobe.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/pages/wardrobe.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/styles.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/css/variables.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/css/variables.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/auth-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/services/auth-manager.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/app-shell/header.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/app-shell/header.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/app-shell/navigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/app-shell/navigation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/app-shell/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/app-shell/router.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/components/forms/login-form.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/components/forms/login-form.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/components/forms/signup-form.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/components/forms/signup-form.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/onboarding-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/onboarding-manager.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/pages/analytics.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/analytics.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/pages/auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/auth.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/pages/dashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/dashboard.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/pages/device-setup.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/device-setup.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/pages/notifications.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/pages/onboarding.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/onboarding.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/pages/outfit.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/outfit.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/pages/recommendations.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/recommendations.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/pages/reset-password.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/reset-password.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/pages/rfid.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/rfid.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/pages/schelduing.js" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/pages/settings.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/settings.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/pages/wardrobe.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/wardrobe.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/js/services/push-service.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/pages/verify-email.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/pages/verify-email.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/services/api-client.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/services/api-client.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/services/auth-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/services/auth-manager.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/services/outfit-client.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/services/outfit-client.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/js/services/theme-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/services/theme-manager.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/js/utils.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/js/utils.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sw.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/verify-email.html" beforeDir="false" afterPath="$PROJECT_DIR$/verify-email.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wardrobe.html" beforeDir="false" afterPath="$PROJECT_DIR$/wardrobe.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -260,6 +133,7 @@
       <workItem from="1757337256982" duration="29000" />
       <workItem from="1757347987582" duration="1278000" />
       <workItem from="1757355023514" duration="58000" />
+      <workItem from="1757544334976" duration="295000" />
     </task>
     <task id="LOCAL-00001" summary="FEAT: Configured BABEL properly , now Decorators work fine. Added User Endpoints.Validation Pipe.Postgres Integration.">
       <option name="closed" value="true" />

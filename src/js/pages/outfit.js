@@ -196,7 +196,7 @@ export async function render() {
 }
 
 export async function init() {
-    console.log('Outfit page: Initializing...');
+    /*console.log('Outfit page: Initializing...');*/
     const api = window.app.api;
     const outfitClient = new OutfitClient(api);
     const itemsClient = new ItemsClient(api);
@@ -212,10 +212,10 @@ export async function init() {
     await loadOutfits();
     async function loadOutfits(filters = {}) {
         try {
-            console.log('Loading outfits with filters:', filters);
+            /*console.log('Loading outfits with filters:', filters);*/
             showLoading(true);
             const response = await outfitClient.list(filters);
-            console.log('Outfits response:', response);
+            /*console.log('Outfits response:', response);*/
             outfits = Array.isArray(response) ? response : (response?.outfits || []);
             renderOutfits(outfits);
         } catch (error) {
@@ -455,7 +455,7 @@ export async function init() {
                 e.stopImmediatePropagation();
                 
                 const itemId = parseInt(card.dataset.itemId);
-                console.log('Item clicked:', itemId);
+                /*console.log('Item clicked:', itemId);*/
                 toggleItemSelection(itemId);
                 
                 return false;
@@ -484,14 +484,14 @@ export async function init() {
             document.addEventListener('click', handleOutfitCardClick);
         }
     function toggleItemSelection(itemId) {
-        console.log('Toggling selection for item:', itemId);
-        
+       /* console.log('Toggling selection for item:', itemId);*/
+
         if (selectedItems.has(itemId)) {
             selectedItems.delete(itemId);
-            console.log('Removed item from selection');
+            /*console.log('Removed item from selection');*/
         } else {
             selectedItems.add(itemId);
-            console.log('Added item to selection');
+            /*console.log('Added item to selection');*/
         }
         
         updateSelectedItemsDisplay();
@@ -712,36 +712,36 @@ export async function init() {
         const searchInput = document.getElementById('searchOutfits');
         
         // Debug logging
-        console.log('Checkbox element:', checkbox);
-        console.log('Checkbox checked state:', checkbox?.checked);
+       /* console.log('Checkbox element:', checkbox);
+        console.log('Checkbox checked state:', checkbox?.checked);*/
         
         const filters = {
             occasion: occasionFilter?.value || '',
             season: seasonFilter?.value || '',
-            favorite: checkbox?.checked ?? false,  // Use ?? instead of ||
+            favorite: checkbox?.checked ?? false, 
             search: searchInput?.value || ''
         };
 
-        console.log('Applying filters:', filters);
+       /* console.log('Applying filters:', filters);*/
         loadOutfits(filters);
     }
 
     function showLoading(show) {
-        console.log('showLoading called with:', show);
-        
+       /* console.log('showLoading called with:', show); */
+
         const spinner = document.getElementById('loadingSpinner');
         const container = document.getElementById('outfitsContainer');
         
         if (spinner) {
             spinner.style.display = show ? 'block' : 'none';
-            console.log('Spinner display set to:', spinner.style.display);
+            /* console.log('Spinner display set to:', spinner.style.display); */
         } else {
             console.warn('Spinner element not found');
         }
         
         if (container) {
             container.style.display = show ? 'none' : 'block';
-            console.log('Container display set to:', container.style.display);
+            /* console.log('Container display set to:', container.style.display); */
         } else {
             console.warn('Container element not found');
         }
@@ -787,5 +787,5 @@ export async function init() {
         };
     }
 
-    console.log('Outfit page: Initialization complete');
+    /*console.log('Outfit page: Initialization complete');*/
 }

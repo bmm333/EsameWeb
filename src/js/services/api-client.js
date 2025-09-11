@@ -24,10 +24,8 @@ export class ApiClient {
     async request(method, url, data = null) {
         const token = this.getToken();
         const fullUrl = this.baseUrl + url;
-        
-        console.log(`API Request: ${method} ${fullUrl}`);
-        if (data) console.log('Request data:', data);
-        
+
+      /*  console.log(`API Request: ${method} ${fullUrl}`);*/        
         const config = {
             method,
             headers: {
@@ -47,9 +45,9 @@ export class ApiClient {
         try {
             let response = await fetch(fullUrl, config);
             
-            // ✅ Handle 401 with automatic token refresh
+            
             if (response.status === 401 && !url.includes('/auth/')) {
-                console.log('API: 401 detected, attempting token refresh');
+              /*  console.log('API: 401 detected, attempting token refresh');*/
                 
                 if (!this.isRefreshing) {
                     this.isRefreshing = true;
@@ -75,7 +73,7 @@ export class ApiClient {
                 }
             }
             
-            console.log(`API Response: ${response.status} ${response.statusText}`);
+           /* console.log(`API Response: ${response.status} ${response.statusText}`);*/
             
             if (!response.ok) {
                 let errorMessage = `${response.status} ${response.statusText}`;
@@ -100,13 +98,13 @@ export class ApiClient {
             }
 
             const responseText = await response.text();
-            console.log('Response text:', responseText);
+          /*  console.log('Response text:', responseText);*/
             
             if (!responseText) return null;
             
             try {
                 const result = JSON.parse(responseText);
-                console.log('Parsed response:', result);
+               /* console.log('Parsed response:', result);*/
                 return result;
             } catch (e) {
                 console.error('Failed to parse response as JSON:', e);

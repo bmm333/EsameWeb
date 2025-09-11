@@ -12,7 +12,7 @@ export function setupNavigation() {
 export function forceLandingHide() {
     const landingEl = document.getElementById('landing-page');
     if (landingEl) {
-        console.log('Landing element found - hiding');
+        /*console.log('Landing element found - hiding');    */
         landingEl.style.display = 'none';
         landingEl.classList.add('d-none');
         landingEl.setAttribute('aria-hidden', 'true');
@@ -20,7 +20,7 @@ export function forceLandingHide() {
     
     const landingElements = document.querySelectorAll('[data-landing]');
     landingElements.forEach(el => {
-        console.log('Additional landing element found - hiding');
+        /*console.log('Additional landing element found - hiding');*/
         el.style.display = 'none';
         el.classList.add('d-none');
     });

@@ -285,7 +285,7 @@ export class SignupForm {
                 agreeTerms: form.agreeTerms?.checked || false
             };
 
-            console.log('Signup form data:', data); // Debug log
+          /*  console.log('Signup form data:', data); // Debug log*/
 
             if (this.options.onSubmit) {
                 const result = await this.options.onSubmit(data);

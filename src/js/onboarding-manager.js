@@ -132,12 +132,12 @@ export class OnboardingManager {
     this.profileData.defaultWeatherLocation = document.getElementById('weatherLoc')?.value?.trim() || '';
     this.profileData.gender = document.getElementById('gender')?.value || '';
     
-    console.log('Profile data saved:', {
+    /*console.log('Profile data saved:', {
       firstName: this.profileData.firstName,
       lastName: this.profileData.lastName,
       location: this.profileData.defaultWeatherLocation,
       gender: this.profileData.gender
-    });
+    });*/
   }
 
   saveStylePreferences() {
@@ -146,8 +146,7 @@ export class OnboardingManager {
       selectedStyles.push(option.dataset.style);
     });
     this.profileData.stylePreferences = selectedStyles;
-    
-    console.log('Style preferences saved:', this.profileData.stylePreferences);
+    /*console.log('Style preferences saved:', this.profileData.stylePreferences);*/
   }
 
   saveColorPreferences() {
@@ -160,8 +159,7 @@ export class OnboardingManager {
       });
     });
     this.profileData.colorPreferences = selectedColors;
-    
-    console.log('Color preferences saved:', this.profileData.colorPreferences);
+    /*console.log('Color preferences saved:', this.profileData.colorPreferences);*/
   }
 
   updateStepDisplay() {
@@ -205,7 +203,7 @@ export class OnboardingManager {
         colorPreferences: this.profileData.colorPreferences
       };
 
-      console.log('Submitting onboarding data:', completeProfileData);
+      /*console.log('Submitting onboarding data:', completeProfileData);*/
 
       const response = await window.app.api.put('/user/profile', completeProfileData);
       

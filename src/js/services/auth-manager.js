@@ -6,7 +6,7 @@ export class AuthManager {
         this.user = null;
         this.token = localStorage.getItem('token');
         this.refreshToken = localStorage.getItem('refreshToken');
-        console.log('AuthManager initialized');
+      /*  console.log('AuthManager initialized');*/
     }
 
     async login(credentials) {
@@ -27,7 +27,7 @@ export class AuthManager {
                 trial: payload.trial || false
             };
             
-            console.log('Login successful');
+            /*console.log('Login successful');*/
             return res;
         } catch (error) {
             console.error('Login error:', error);
@@ -40,7 +40,7 @@ export class AuthManager {
                 throw new Error('No refresh token available');
             }
 
-            console.log('AuthManager: Attempting token refresh');
+          /*  console.log('AuthManager: Attempting token refresh');*/
             
             const response = await fetch(`${this.api.baseUrl}/auth/refresh`, {
                 method: 'POST',
@@ -59,8 +59,8 @@ export class AuthManager {
             localStorage.setItem('token', this.token);
             localStorage.setItem('refreshToken', this.refreshToken);
             this.api.setToken(this.token);
-            
-            console.log('AuthManager: Token refresh successful');
+
+            /*console.log('AuthManager: Token refresh successful');*/
             return this.token;
 
         } catch (error) {
@@ -77,8 +77,8 @@ async signup(signupData) {
     }
     
     const normalizedPassword = password.trim();
-    console.log('Signup - Normalized password length:', normalizedPassword.length);
-    
+   /* console.log('Signup - Normalized password length:', normalizedPassword.length);*/
+
     if (!normalizedPassword) {
         throw new BadRequestException('Password cannot be empty');
     }
@@ -118,7 +118,7 @@ async signup(signupData) {
         
         try {
             await this.mailingService.sendVerificationEmail(savedUser, verificationToken);
-            console.log('Verification mail sent successfully');
+            /*console.log('Verification mail sent successfully');*/
         } catch (error) {
             console.error('Failed to send verification email:', error);
         }
@@ -191,7 +191,7 @@ async signup(signupData) {
         if (appRoot) appRoot.style.display = 'none';
         
         history.pushState({}, '', '/');
-        console.log('Authentication cleared');
+       /* console.log('Authentication cleared');*/
     }
 
     async validateToken() {
