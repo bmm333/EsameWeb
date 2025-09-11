@@ -1,3 +1,5 @@
+import { APP_CONFIG } from '../config/app-config.js';
+
 export async function render() {
   const user = window.app.userContext.get();
   return `
@@ -98,21 +100,27 @@ export async function render() {
               
               <div class="mb-4">
                 <label class="form-label">Theme</label>
-                <div class="btn-group w-100" role="group">
-                  <input type="radio" class="btn-check" name="theme" id="themeLight" value="light" autocomplete="off">
-                  <label class="btn btn-outline-primary" for="themeLight">
-                    <i class="bi bi-sun me-2"></i>Light
-                  </label>
+                <div class="d-flex flex-wrap gap-2" role="group">
+                  <div class="flex-fill">
+                    <input type="radio" class="btn-check" name="theme" id="themeLight" value="light" autocomplete="off">
+                    <label class="btn btn-outline-primary w-100" for="themeLight">
+                      <i class="bi bi-sun me-2"></i>Light
+                    </label>
+                  </div>
                   
-                  <input type="radio" class="btn-check" name="theme" id="themeDark" value="dark" autocomplete="off">
-                  <label class="btn btn-outline-primary" for="themeDark">
-                    <i class="bi bi-moon me-2"></i>Dark
-                  </label>
+                  <div class="flex-fill">
+                    <input type="radio" class="btn-check" name="theme" id="themeDark" value="dark" autocomplete="off">
+                    <label class="btn btn-outline-primary w-100" for="themeDark">
+                      <i class="bi bi-moon me-2"></i>Dark
+                    </label>
+                  </div>
                   
-                  <input type="radio" class="btn-check" name="theme" id="themeSystem" value="system" autocomplete="off">
-                  <label class="btn btn-outline-primary" for="themeSystem">
-                    <i class="bi bi-circle-half me-2"></i>System
-                  </label>
+                  <div class="flex-fill">
+                    <input type="radio" class="btn-check" name="theme" id="themeSystem" value="system" autocomplete="off">
+                    <label class="btn btn-outline-primary w-100" for="themeSystem">
+                      <i class="bi bi-circle-half me-2"></i>System
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -443,7 +451,6 @@ export async function init() {
       changeEmailForm?.addEventListener('submit', async (e) => {
           e.preventDefault();
           if (isSubmitting) {
-              /*console.log('Email change already in progress, ignoring submission');*/
               return;
           }
           const newEmail = getValue('newEmail');
@@ -458,15 +465,11 @@ export async function init() {
           try {
               submitBtn.disabled = true;
               submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Changing...';
-
-              /*console.log('Submitting email change request...');*/
-
               const response = await apiRef.put('/settings/email', {
                   newEmail,
                   password
               });
-
-              /*console.log('Email change response:', response);*/
+  
               modal.hide();
               changeEmailForm.reset();
               showAlert('settingsGlobalAlert', 'Email change initiated! Please check your new email for verification.', 'success');
